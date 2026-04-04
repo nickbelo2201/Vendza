@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -rn \"inf-adega\\\\|@inf-adega\\\\|INF Adega\\\\|INF_Adega\" 'C:/Users/USER/OneDrive/Área de Trabalho/INF_Adega/INF_Adega_Oficial/app/apps' --include=*.ts --include=*.tsx --include=*.json)",
+      "Bash(grep -rn \"inf-adega\\\\|@inf-adega\\\\|INF Adega\\\\|INF_Adega\" 'C:/Users/USER/OneDrive/Área de Trabalho/INF_Adega/INF_Adega_Oficial/app/packages' --include=*.ts --include=*.tsx --include=*.json)",
+      "Bash(grep -rn \"adega\\\\|Adega\\\\|inf-adega\\\\|@inf-adega\\\\|vinho\\\\|wine\\\\|bebida\\\\|cerveja\" 'C:/Users/USER/OneDrive/Área de Trabalho/INF_Adega/INF_Adega_Oficial/app/packages/types/src' --include=*.ts)",
+      "Bash(grep -rn \"adega\\\\|Adega\\\\|inf-adega\\\\|@inf-adega\\\\|vinho\\\\|wine\\\\|bebida\\\\|cerveja\" 'C:/Users/USER/OneDrive/Área de Trabalho/INF_Adega/INF_Adega_Oficial/app/packages/ui/src' --include=*.ts --include=*.tsx)",
+      "Bash(grep -rn \"adega\\\\|Adega\\\\|inf-adega\\\\|@inf-adega\\\\|vinho\\\\|wine\\\\|bebida\\\\|cerveja\" 'C:/Users/USER/OneDrive/Área de Trabalho/INF_Adega/INF_Adega_Oficial/app/packages/utils/src' --include=*.ts)",
+      "Bash(cd:*)",
+      "Bash(sed -i 's/infadega/vendza/g' partner-smoke.ts)",
+      "Bash(sed -i 's/inf-adega/vendza/g' partner-smoke.ts)",
+      "Bash(sed -i 's/INF Adega/Vendza/g' partner-smoke.ts)",
+      "Bash(corepack pnpm:*)",
+      "Read(//c/Users/USER/.claude/**)",
+      "Read(//c/Users/USER/.agents/**)",
+      "Read(//c/Users/USER/.agents-global/**)",
+      "Bash(gh auth:*)",
+      "Bash(cp:*)",
+      "Bash(cp -r \"/c/Users/USER/.agents\" \"/c/Users/USER/nicholas-ios-framework/framework-nicholas-ios/.agents\")",
+      "Bash(cp -r \"/c/Users/USER/.agents-global\" \"/c/Users/USER/nicholas-ios-framework/framework-nicholas-ios/.agents-global\")",
+      "Bash(gh repo:*)"
+    ]
+  }
+}
