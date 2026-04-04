@@ -1,0 +1,319 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand Bible tokens */
+  --cream: #F7F3EE;
+  --green: #2D6A4F;
+  --amber: #E07B39;
+  --blue: #1B3A4B;
+  --carbon: #1A1A2E;
+  --text-muted: #6B7280;
+  --surface: #FFFFFF;
+
+  /* Aliases internos */
+  --bg: var(--cream);
+  --text: var(--carbon);
+  --accent: var(--green);
+  --accent-soft: #d4edda;
+  --border: #E5DDD5;
+  --warning: var(--amber);
+  --success: var(--green);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 24px rgba(26, 26, 46, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--cream);
+  color: var(--carbon);
+  font-family: 'Inter', sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* ===== BOTÕES ===== */
+.wc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity 0.15s;
+}
+
+.wc-btn:hover {
+  opacity: 0.88;
+}
+
+.wc-btn-primary {
+  background: var(--green);
+  color: #fff;
+}
+
+.wc-btn-secondary {
+  background: var(--surface);
+  color: var(--carbon);
+  border: 1px solid var(--border);
+}
+
+.wc-btn-amber {
+  background: var(--amber);
+  color: #fff;
+}
+
+/* ===== CARDS ===== */
+.wc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* ===== BADGES ===== */
+.wc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wc-badge-green {
+  background: #d4edda;
+  color: var(--green);
+}
+
+.wc-badge-amber {
+  background: #fde8d8;
+  color: var(--amber);
+}
+
+.wc-badge-blue {
+  background: #d0e8f4;
+  color: var(--blue);
+}
+
+/* ===== INPUTS ===== */
+.wc-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--carbon);
+  font-size: 15px;
+}
+
+.wc-input:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
+/* ===== LAYOUT ===== */
+.wc-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wc-main {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 56px;
+  width: 100%;
+}
+
+.wc-footer {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ===== PRODUTO GRID ===== */
+.wc-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.wc-product-card {
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wc-product-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ===== PREÇOS ===== */
+.wc-price {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.wc-price-old {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  font-size: 13px;
+}
+
+.wc-price-now {
+  color: var(--green);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* ===== TOAST ===== */
+.wc-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--carbon);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  z-index: 9999;
+  animation: wc-slide-in 0.2s ease;
+}
+
+@keyframes wc-slide-in {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ===== TABELAS ===== */
+.wc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.wc-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.wc-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== TIMELINE ===== */
+.wc-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.wc-timeline-item {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 16px;
+  position: relative;
+}
+
+.wc-timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.wc-timeline-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.wc-timeline-dot.active {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+/* ===== UTILITY ===== */
+.wc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wc-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wc-note {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: #fde8d8;
+  border-left: 4px solid var(--amber);
+  color: var(--carbon);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .wc-main {
+    padding: 0 16px 40px;
+  }
+}

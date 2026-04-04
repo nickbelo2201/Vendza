@@ -1,0 +1,452 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StoreStatus {
+  open
+  closed
+  paused
+}
+
+enum StoreUserRole {
+  owner
+  manager
+  operator
+}
+
+enum DeliveryZoneMode {
+  neighborhood_radius
+}
+
+enum InventoryMovementType {
+  manual_adjustment
+  replenishment
+  sale
+  cancellation
+}
+
+enum OrderChannel {
+  web
+  whatsapp
+  manual
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  ready_for_delivery
+  out_for_delivery
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  pix
+  cash
+  card_on_delivery
+  card_online
+}
+
+enum PaymentStatus {
+  pending
+  authorized
+  paid
+  failed
+  refunded
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  stores    Store[]
+
+  @@map("tenants")
+}
+
+model Store {
+  id                     String      @id @default(uuid()) @db.Uuid
+  tenantId               String      @map("tenant_id") @db.Uuid
+  name                   String
+  slug                   String      @unique
+  whatsappPhone          String      @map("whatsapp_phone")
+  status                 StoreStatus @default(closed)
+  timezone               String      @default("America/Sao_Paulo")
+  minimumOrderValueCents Int         @default(0) @map("minimum_order_value_cents")
+  logoUrl                String?     @map("logo_url")
+  primaryColor           String?     @map("primary_color")
+  supportEmail           String?     @map("support_email")
+  createdAt              DateTime    @default(now()) @map("created_at")
+  updatedAt              DateTime    @updatedAt @map("updated_at")
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  users              StoreUser[]
+  hours              StoreHour[]
+  deliveryZones      DeliveryZone[]
+  customers          Customer[]
+  categories         Category[]
+  products           Product[]
+  inventoryItems     InventoryItem[]
+  inventoryMovements InventoryMovement[]
+  orders             Order[]
+
+  @@index([tenantId])
+  @@map("stores")
+}
+
+model StoreUser {
+  id         String        @id @default(uuid()) @db.Uuid
+  storeId    String        @map("store_id") @db.Uuid
+  authUserId String?       @map("auth_user_id") @db.Uuid
+  name       String
+  email      String
+  role       StoreUserRole @default(operator)
+  isActive   Boolean       @default(true) @map("is_active")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  store       Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orderEvents OrderEvent[]
+
+  @@unique([storeId, email])
+  @@index([storeId, role])
+  @@map("store_users")
+}
+
+model StoreHour {
+  id        String   @id @default(uuid()) @db.Uuid
+  storeId   String   @map("store_id") @db.Uuid
+  weekday   Int
+  opensAt   String   @map("opens_at")
+  closesAt  String   @map("closes_at")
+  isClosed  Boolean  @default(false) @map("is_closed")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, weekday])
+  @@map("store_hours")
+}
+
+model DeliveryZone {
+  id                       String           @id @default(uuid()) @db.Uuid
+  storeId                  String           @map("store_id") @db.Uuid
+  label                    String
+  mode                     DeliveryZoneMode @default(neighborhood_radius)
+  neighborhoodsJson        Json             @map("neighborhoods_json")
+  centerLat                Float?           @map("center_lat")
+  centerLng                Float?           @map("center_lng")
+  radiusMeters             Int?             @map("radius_meters")
+  deliveryFeeCents         Int              @default(0) @map("delivery_fee_cents")
+  minimumOrderValueCents   Int              @default(0) @map("minimum_order_value_cents")
+  estimatedDeliveryMinutes Int              @default(45) @map("estimated_delivery_minutes")
+  isActive                 Boolean          @default(true) @map("is_active")
+  createdAt                DateTime         @default(now()) @map("created_at")
+  updatedAt                DateTime         @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, isActive])
+  @@map("delivery_zones")
+}
+
+model Customer {
+  id              String            @id @default(uuid()) @db.Uuid
+  storeId         String            @map("store_id") @db.Uuid
+  name            String
+  phone           String
+  email           String?
+  birthDate       DateTime?         @map("birth_date") @db.Date
+  lastOrderAt     DateTime?         @map("last_order_at")
+  totalSpentCents Int               @default(0) @map("total_spent_cents")
+  isInactive      Boolean           @default(false) @map("is_inactive")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  store     Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  addresses CustomerAddress[]
+  notes     CustomerNote[]
+  tags      CustomerTag[]
+  orders    Order[]
+
+  @@unique([storeId, phone])
+  @@index([storeId, lastOrderAt])
+  @@index([storeId, isInactive])
+  @@map("customers")
+}
+
+model CustomerAddress {
+  id            String   @id @default(uuid()) @db.Uuid
+  customerId    String   @map("customer_id") @db.Uuid
+  label         String?
+  recipientName String?  @map("recipient_name")
+  phone         String?
+  street        String
+  number        String
+  complement    String?
+  neighborhood  String
+  city          String
+  state         String
+  postalCode    String   @map("postal_code")
+  latitude      Float?
+  longitude     Float?
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, isPrimary])
+  @@map("customer_addresses")
+}
+
+model CustomerNote {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  body       String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@map("customer_notes")
+}
+
+model CustomerTag {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  label      String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, label])
+  @@map("customer_tags")
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  storeId   String   @map("store_id") @db.Uuid
+  name      String
+  slug      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, isActive, sortOrder])
+  @@map("categories")
+}
+
+model Product {
+  id             String   @id @default(uuid()) @db.Uuid
+  storeId        String   @map("store_id") @db.Uuid
+  categoryId     String?  @map("category_id") @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  imageUrl       String?  @map("image_url")
+  listPriceCents Int      @map("list_price_cents")
+  salePriceCents Int?     @map("sale_price_cents")
+  isAvailable    Boolean  @default(true) @map("is_available")
+  isFeatured     Boolean  @default(false) @map("is_featured")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  store         Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category      Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  variants      ProductVariant[]
+  bundles       ProductBundle[]
+  inventoryItem InventoryItem?
+  orderItems    OrderItem[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, categoryId, isAvailable])
+  @@map("products")
+}
+
+model ProductVariant {
+  id             String   @id @default(uuid()) @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  name           String
+  sku            String?
+  unitLabel      String?  @map("unit_label")
+  volumeMl       Int?     @map("volume_ml")
+  listPriceCents Int      @map("list_price_cents")
+  salePriceCents Int?     @map("sale_price_cents")
+  isDefault      Boolean  @default(false) @map("is_default")
+  isAvailable    Boolean  @default(true) @map("is_available")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([productId, isAvailable])
+  @@map("product_variants")
+}
+
+model ProductBundle {
+  id               String   @id @default(uuid()) @db.Uuid
+  productId        String   @map("product_id") @db.Uuid
+  name             String
+  slug             String
+  bundlePriceCents Int      @map("bundle_price_cents")
+  itemsJson        Json     @map("items_json")
+  isAvailable      Boolean  @default(true) @map("is_available")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, slug])
+  @@map("product_bundles")
+}
+
+model InventoryItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  storeId        String   @map("store_id") @db.Uuid
+  productId      String   @unique @map("product_id") @db.Uuid
+  currentStock   Int      @default(0) @map("current_stock")
+  safetyStock    Int      @default(0) @map("safety_stock")
+  allowBackorder Boolean  @default(false) @map("allow_backorder")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  store     Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product   Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
+
+  @@unique([storeId, productId])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id              String                @id @default(uuid()) @db.Uuid
+  inventoryItemId String                @map("inventory_item_id") @db.Uuid
+  storeId         String                @map("store_id") @db.Uuid
+  type            InventoryMovementType
+  quantityDelta   Int                   @map("quantity_delta")
+  reason          String
+  createdByUserId String?               @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime              @default(now()) @map("created_at")
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  store         Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
+  @@index([inventoryItemId, createdAt])
+  @@map("inventory_movements")
+}
+
+model Order {
+  id                   String        @id @default(uuid()) @db.Uuid
+  storeId              String        @map("store_id") @db.Uuid
+  customerId           String        @map("customer_id") @db.Uuid
+  publicId             String        @map("public_id")
+  channel              OrderChannel
+  status               OrderStatus   @default(pending)
+  paymentMethod        PaymentMethod @map("payment_method")
+  paymentStatus        PaymentStatus @default(pending) @map("payment_status")
+  customerName         String        @map("customer_name")
+  customerPhone        String        @map("customer_phone")
+  customerEmail        String?       @map("customer_email")
+  deliveryStreet       String        @map("delivery_street")
+  deliveryNumber       String        @map("delivery_number")
+  deliveryComplement   String?       @map("delivery_complement")
+  deliveryNeighborhood String        @map("delivery_neighborhood")
+  deliveryCity         String        @map("delivery_city")
+  deliveryState        String        @map("delivery_state")
+  deliveryPostalCode   String        @map("delivery_postal_code")
+  deliveryLat          Float?        @map("delivery_lat")
+  deliveryLng          Float?        @map("delivery_lng")
+  subtotalCents        Int           @map("subtotal_cents")
+  deliveryFeeCents     Int           @default(0) @map("delivery_fee_cents")
+  discountCents        Int           @default(0) @map("discount_cents")
+  totalCents           Int           @map("total_cents")
+  notes                String?
+  placedAt             DateTime      @default(now()) @map("placed_at")
+  confirmedAt          DateTime?     @map("confirmed_at")
+  deliveredAt          DateTime?     @map("delivered_at")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items    OrderItem[]
+  events   OrderEvent[]
+  payments OrderPayment[]
+
+  @@unique([storeId, publicId])
+  @@index([storeId, status, placedAt])
+  @@index([storeId, customerId, placedAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  orderId         String   @map("order_id") @db.Uuid
+  productId       String   @map("product_id") @db.Uuid
+  variantId       String?  @map("variant_id") @db.Uuid
+  productName     String   @map("product_name")
+  variantName     String?  @map("variant_name")
+  quantity        Int
+  unitPriceCents  Int      @map("unit_price_cents")
+  totalPriceCents Int      @map("total_price_cents")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderEvent {
+  id              String   @id @default(uuid()) @db.Uuid
+  orderId         String   @map("order_id") @db.Uuid
+  type            String
+  payloadJson     Json     @map("payload_json")
+  createdByUserId String?  @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdByUser StoreUser? @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
+}
+
+model OrderPayment {
+  id                String        @id @default(uuid()) @db.Uuid
+  orderId           String        @map("order_id") @db.Uuid
+  method            PaymentMethod
+  status            PaymentStatus @default(pending)
+  provider          String
+  providerReference String?       @map("provider_reference")
+  amountCents       Int           @map("amount_cents")
+  rawPayload        Json?         @map("raw_payload")
+  paidAt            DateTime?     @map("paid_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, status])
+  @@map("order_payments")
+}

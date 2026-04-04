@@ -1,0 +1,27 @@
+{
+  "name": "@vendza/web-client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "node -e \"try { require('node:fs').rmSync('.next', { recursive: true, force: true }) } catch(e) { console.warn('limpar .next:', e.message) }\" && next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.100.0",
+    "@vendza/ui": "workspace:*",
+    "@vendza/utils": "workspace:*",
+    "next": "15.5.14",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.2"
+  }
+}

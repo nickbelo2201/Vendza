@@ -1,0 +1,277 @@
+{
+  "projectName": "Vendza",
+  "branchName": "ralph/vendza-v1",
+  "userStories": [
+    {
+      "id": "S1-01",
+      "title": "Storefront API: config, categories e products list com Prisma real",
+      "priority": 1,
+      "passes": true,
+      "description": "Substituir mock-data nas rotas GET /storefront/config, GET /catalog/categories e GET /catalog/products por queries Prisma reais. Criar apps/api/src/modules/storefront/storefront-service.ts com as funções getStorefrontConfig(storeSlug), getCategories(storeId), getProducts(storeId, filters). O storeId deve ser resolvido pelo STORE_SLUG da env. Remover dependência de mock-data.ts nessas 3 rotas.",
+      "acceptanceCriteria": [
+        "GET /v1/storefront/config retorna dados reais da Store pelo slug da env STORE_SLUG",
+        "GET /v1/catalog/categories retorna categories do banco filtradas por storeId",
+        "GET /v1/catalog/products retorna produtos disponíveis com filtros category/search/featured/offer",
+        "meta.stub é false nas 3 respostas",
+        "pnpm typecheck passa no apps/api"
+      ]
+    },
+    {
+      "id": "S1-02",
+      "title": "Storefront API: product by slug com Prisma real",
+      "priority": 2,
+      "passes": true,
+      "description": "Substituir getProductBySlug() mock por query Prisma real em GET /catalog/products/:slug. Incluir join com Category para retornar categorySlug. Retornar 404 com envelope correto se produto não encontrado ou não disponível.",
+      "acceptanceCriteria": [
+        "GET /v1/catalog/products/heineken-long-neck retorna produto real do banco",
+        "Resposta inclui categorySlug",
+        "GET /v1/catalog/products/inexistente retorna 404",
+        "meta.stub é false",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S1-03",
+      "title": "Storefront API: cart quote com pricing real",
+      "priority": 3,
+      "passes": true,
+      "description": "Implementar POST /cart/quote com lógica real: buscar preços dos produtos no banco, calcular subtotal usando salePriceCents (ou listPriceCents se null), buscar DeliveryZone pelo campo neighborhood do endereço (ou usar zona padrão), retornar subtotalCents, deliveryFeeCents, totalCents, etaMinutes. Se produto não disponível retornar erro 422.",
+      "acceptanceCriteria": [
+        "POST /v1/cart/quote com productId real retorna subtotal, frete e total corretos",
+        "Produto indisponível retorna 422",
+        "meta.stub é false",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S1-04",
+      "title": "Storefront API: create order real (upsert customer + order + items + event)",
+      "priority": 4,
+      "passes": true,
+      "description": "Implementar POST /orders com Prisma real: (1) Resolver storeId pelo STORE_SLUG env. (2) Upsert Customer por phone+storeId. (3) Gerar publicId sequencial no formato PED-NNNN (contar orders da store + 1, zero-pad 4). (4) Criar Order com todos os campos snapshot (customerName, customerPhone, endereço, totais). (5) Criar OrderItems com snapshot de nome e preço. (6) Criar OrderEvent type='placed'. Retornar { publicId, totalCents, status }.",
+      "acceptanceCriteria": [
+        "POST /v1/orders cria registro real no banco",
+        "publicId gerado no formato PED-0002 (sequencial)",
+        "Customer é upsert-ed por phone+storeId",
+        "OrderEvent type=placed criado",
+        "Resposta retorna publicId e totalCents",
+        "meta.stub é false",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S1-05",
+      "title": "Storefront API: get order by publicId com timeline",
+      "priority": 5,
+      "passes": true,
+      "description": "Implementar GET /orders/:publicId com Prisma real. Buscar Order por publicId+storeId. Incluir OrderItems (com productName, quantity, unitPriceCents, totalPriceCents) e OrderEvents ordenados por createdAt. Mapear OrderEvents para timeline com label legível: placed='Pedido recebido', confirmed='Pedido confirmado', preparing='Em preparo', etc. Retornar 404 se não encontrado.",
+      "acceptanceCriteria": [
+        "GET /v1/orders/PED-0001 retorna pedido real com items e timeline",
+        "Timeline tem label legível para cada status",
+        "OrderEvents ordenados por createdAt ASC",
+        "404 para publicId inexistente",
+        "meta.stub é false",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S2-01",
+      "title": "Web-client: design system globals.css + lib/api.ts + layout.tsx",
+      "priority": 6,
+      "passes": true,
+      "description": "Construir o sistema de design completo para o web-client seguindo o Brand Bible: (1) globals.css com tokens CSS (--cream: #F7F3EE, --green: #2D6A4F, --amber: #E07B39, --blue: #1B3A4B), Google Fonts (Inter + Space Grotesk), componentes base (.wc-btn, .wc-card, .wc-badge, .wc-input, tabelas, toasts). (2) apps/web-client/src/lib/api.ts com fetchStorefront<T>(path, options) que chama http://localhost:3333/v1{path}. (3) Atualizar layout.tsx com as fontes e meta tags corretas. Fundo: Cream Canvas.",
+      "acceptanceCriteria": [
+        "globals.css tem todos os tokens Brand Bible",
+        "Google Fonts carregando (Inter + Space Grotesk)",
+        "fetchStorefront funciona para GET e POST",
+        "Layout renderiza sem erros",
+        "pnpm typecheck passa no apps/web-client"
+      ]
+    },
+    {
+      "id": "S2-02",
+      "title": "Web-client: CarrinhoContext com localStorage",
+      "priority": 7,
+      "passes": true,
+      "description": "Criar apps/web-client/src/context/CarrinhoContext.tsx: (1) Estado: items: CarrinhoItem[] (id, productId, name, slug, imagemUrl, unitPriceCents, quantity). (2) Ações: adicionarItem, removerItem, atualizarQuantidade, limparCarrinho. (3) Computed: totalItens, subtotalCents. (4) Persistência em localStorage (key: 'vendza_carrinho'). (5) Exportar hook useCarrinho(). Adicionar CarrinhoProvider ao layout.tsx.",
+      "acceptanceCriteria": [
+        "useCarrinho() disponível em qualquer página",
+        "Items persistem após reload da página",
+        "totalItens e subtotalCents calculados corretamente",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S2-03",
+      "title": "Web-client: Home page com catálogo real",
+      "priority": 8,
+      "passes": true,
+      "description": "Construir apps/web-client/src/app/page.tsx como Server Component: (1) Buscar categorias e produtos reais da API. (2) Seção hero com nome da loja e tagline. (3) Grid de produtos com card: imagem placeholder, nome, preço lista/venda, badge 'Destaque' e botão 'Adicionar'. (4) Filtro por categoria (tabs Client Component). (5) Age gate modal (Client Component) com localStorage 'vendza_age_verified'. Design: Cream Canvas bg, cards brancos, CTAs verde Adega.",
+      "acceptanceCriteria": [
+        "Home carrega produtos reais do banco",
+        "Filtro por categoria funciona",
+        "Age gate aparece na primeira visita",
+        "Botão adicionar chama useCarrinho().adicionarItem",
+        "Design segue Brand Bible",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S2-04",
+      "title": "Web-client: Produto detail page",
+      "priority": 9,
+      "passes": true,
+      "description": "Construir apps/web-client/src/app/produto/[slug]/page.tsx como Server Component: (1) Buscar produto por slug da API. (2) Exibir nome, descrição, preços (lista riscado + venda em destaque), badge de categoria. (3) Botão 'Adicionar ao carrinho' (Client Component) com feedback visual. (4) Botão voltar. (5) 404 se produto não encontrado ou indisponível.",
+      "acceptanceCriteria": [
+        "Página de produto carrega dados reais",
+        "Preço de venda em destaque, lista riscado",
+        "Botão adicionar ao carrinho funciona",
+        "404 para slug inválido",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S2-05",
+      "title": "Web-client: Header + CartSheet (drawer lateral)",
+      "priority": 10,
+      "passes": true,
+      "description": "Construir componentes: (1) apps/web-client/src/components/Header.tsx: logo Vendza, nome da loja (via StorefrontConfig), ícone carrinho com badge de quantidade (useCarrinho().totalItens), abre/fecha CartSheet. (2) apps/web-client/src/components/CartSheet.tsx: drawer lateral direito, lista de items com nome/quantidade editável/preço, subtotal, botão 'Ir para checkout' → /checkout, botão remover por item. Integrar Header no layout.tsx.",
+      "acceptanceCriteria": [
+        "Badge do carrinho mostra quantidade correta",
+        "CartSheet abre/fecha com clique no ícone",
+        "Itens listados com preço e quantidade editável",
+        "Subtotal atualiza ao mudar quantidade",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S2-06",
+      "title": "Web-client: Checkout page - form e submit",
+      "priority": 11,
+      "passes": true,
+      "description": "Construir apps/web-client/src/app/checkout/page.tsx como Client Component: (1) Redirecionar para / se carrinho vazio. (2) Form: nome (required), telefone (required, formato 55+DDD+número), email (opcional). (3) Endereço: rua, número, bairro (required), cidade, estado. (4) Método de pagamento: PIX / Dinheiro / Cartão na entrega (radio buttons). (5) Resumo do pedido com itens e totais. (6) Submit: POST /v1/orders, em sucesso limpar carrinho e redirecionar para /pedidos/[publicId]. (7) Mostrar erro se API falhar.",
+      "acceptanceCriteria": [
+        "Campos obrigatórios validados antes de submit",
+        "POST /v1/orders enviado com dados corretos",
+        "Em sucesso: carrinho limpo + redirect para tracking",
+        "Erro da API exibido ao usuário",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S2-07",
+      "title": "Web-client: Order tracking page com timeline",
+      "priority": 12,
+      "passes": true,
+      "description": "Construir apps/web-client/src/app/pedidos/[publicId]/page.tsx como Server Component com Client Component para realtime futuro: (1) Buscar pedido por publicId da API. (2) Exibir: número do pedido, status atual com badge colorido, timeline visual de eventos (pontos conectados, evento concluído = verde, pendente = cinza). (3) Lista de itens com quantidade e preço. (4) Total, método de pagamento. (5) Botão WhatsApp: link wa.me/55{whatsappPhone}?text=Pedido+{publicId}. (6) 404 se publicId inválido.",
+      "acceptanceCriteria": [
+        "Tracking carrega pedido real por publicId",
+        "Timeline visual com eventos ordenados",
+        "Status atual em destaque",
+        "Botão WhatsApp com link correto",
+        "404 para publicId inválido",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S3-01",
+      "title": "Realtime: Socket.io na API Fastify",
+      "priority": 13,
+      "passes": true,
+      "description": "Instalar e configurar Socket.io no servidor Fastify: (1) Instalar socket.io em apps/api. (2) Criar apps/api/src/plugins/socketio.ts: plugin Fastify que anexa io ao servidor, configura CORS (origins: localhost:3000 e 3001), exporta getIO() singleton. (3) Integrar no apps/api/src/server.ts após criar o servidor Fastify. (4) Definir rooms: store:{storeId} (para partner) e order:{publicId} (para cliente). (5) Rota GET /v1/health deve confirmar socket ativo.",
+      "acceptanceCriteria": [
+        "Socket.io iniciado junto com Fastify",
+        "CORS configurado para localhost:3000 e 3001",
+        "getIO() exportado e acessível nos services",
+        "pnpm typecheck passa na API"
+      ]
+    },
+    {
+      "id": "S3-02",
+      "title": "Realtime: emitir order:created e order:status_changed da API",
+      "priority": 14,
+      "passes": true,
+      "description": "Adicionar emissão de eventos Socket.io nos momentos certos: (1) Em storefront-service.ts após criar order: getIO().to('store:{storeId}').emit('order:created', { publicId, customerName, totalCents, status }). (2) Em partner/orders-service.ts após mudar status: getIO().to('store:{storeId}').emit('order:status_changed', { publicId, status, updatedAt }) E getIO().to('order:{publicId}').emit('order:status_changed', { status, updatedAt }).",
+      "acceptanceCriteria": [
+        "order:created emitido para room store:{storeId} após POST /orders",
+        "order:status_changed emitido para rooms store e order após PATCH status",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S3-03",
+      "title": "Realtime: web-partner recebe order:created com badge",
+      "priority": 15,
+      "passes": true,
+      "description": "Adicionar Socket.io client no web-partner: (1) Instalar socket.io-client em apps/web-partner. (2) Criar apps/web-partner/src/hooks/useSocket.ts: conecta ao servidor, entra na room store:{storeId} usando storeId do session. (3) Criar apps/web-partner/src/components/OrderNotification.tsx: Client Component que mostra badge/toast quando chega order:created. Incrementa contador. (4) Integrar no dashboard layout. Ao clicar, navegar para /pedidos.",
+      "acceptanceCriteria": [
+        "Socket conecta ao criar sessão no partner",
+        "Badge aparece quando novo pedido chega",
+        "Clique no badge navega para /pedidos",
+        "pnpm typecheck passa no web-partner"
+      ]
+    },
+    {
+      "id": "S3-04",
+      "title": "Realtime: web-client tracking auto-atualiza com Socket.io",
+      "priority": 16,
+      "passes": true,
+      "description": "Adicionar Socket.io client no web-client para tracking em tempo real: (1) Instalar socket.io-client em apps/web-client. (2) Criar apps/web-client/src/components/OrderTracker.tsx: Client Component que recebe publicId e storeId, conecta ao socket, entra na room order:{publicId}, ouve order:status_changed e atualiza o estado local da timeline sem reload. (3) Substituir a parte de timeline no pedidos/[publicId]/page.tsx por este Client Component.",
+      "acceptanceCriteria": [
+        "Tracking page conecta ao socket via room order:{publicId}",
+        "Timeline atualiza automaticamente quando partner muda status",
+        "Sem reload da página necessário",
+        "pnpm typecheck passa no web-client"
+      ]
+    },
+    {
+      "id": "S4-01",
+      "title": "Redis + BullMQ: setup e plugin Fastify",
+      "priority": 17,
+      "passes": true,
+      "description": "Instalar e configurar Redis/BullMQ na API: (1) Instalar bullmq e ioredis em apps/api. (2) Criar apps/api/src/plugins/redis.ts: plugin Fastify que cria conexão ioredis usando REDIS_URL env, exporta getRedis() e registra no app. Tratar caso REDIS_URL ausente graciosamente (warn + skip). (3) Criar apps/api/src/jobs/queues.ts: definir Queue orderPlaced e orderStatusChanged usando getRedis(). (4) Registrar plugin no server.ts.",
+      "acceptanceCriteria": [
+        "Servidor inicia sem Redis sem crash (apenas warn)",
+        "Com REDIS_URL válido, filas são criadas",
+        "getRedis() exportado",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S4-02",
+      "title": "Redis + BullMQ: workers e graceful shutdown",
+      "priority": 18,
+      "passes": true,
+      "description": "Implementar workers BullMQ: (1) Criar apps/api/src/jobs/workers.ts: Worker para 'order.placed' que loga o evento e tem placeholder para WhatsApp (console.log('TODO WhatsApp: ...')). Worker para 'order.status_changed' idem. (2) Adicionar enqueue nos lugares certos: storefront-service enfileira orderPlaced após criar order; orders-service enfileira orderStatusChanged após mudar status. (3) Implementar graceful shutdown em server.ts: fechar workers e filas antes de encerrar processo (SIGTERM/SIGINT).",
+      "acceptanceCriteria": [
+        "Workers processam jobs e logam corretamente",
+        "Jobs enfileirados ao criar/atualizar pedido",
+        "Graceful shutdown fecha workers sem erros",
+        "pnpm typecheck passa"
+      ]
+    },
+    {
+      "id": "S5-01",
+      "title": "Build: typecheck em todos os apps",
+      "priority": 19,
+      "passes": true,
+      "description": "Executar pnpm typecheck em todos os apps (api, web-partner, web-client) e corrigir TODOS os erros TypeScript encontrados. Não deixar nenhum erro. Foco em: tipos ausentes, imports quebrados, tipos incompatíveis entre packages compartilhados.",
+      "acceptanceCriteria": [
+        "cd app && pnpm typecheck retorna 0 erros em todos os workspaces",
+        "Nenhum 'any' implícito não intencional"
+      ]
+    },
+    {
+      "id": "S5-02",
+      "title": "Build: pnpm build all + .env.example atualizado",
+      "priority": 20,
+      "passes": true,
+      "description": "Executar pnpm build em todos os apps e corrigir erros de build. Atualizar apps/.env.example com TODAS as variáveis necessárias para V1, marcando obrigatórias vs opcionais: DATABASE_URL (req), DIRECT_URL (req), SUPABASE_URL (req), SUPABASE_ANON_KEY (req), SUPABASE_SERVICE_ROLE_KEY (req), STORE_SLUG (req), REDIS_URL (opcional), NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL.",
+      "acceptanceCriteria": [
+        "cd app && pnpm build retorna 0 erros em todos os workspaces",
+        ".env.example atualizado com todas as vars V1",
+        "Vars marcadas como # REQUIRED ou # OPTIONAL"
+      ]
+    }
+  ]
+}

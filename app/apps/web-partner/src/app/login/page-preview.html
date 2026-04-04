@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Vendza — Gestão Inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{
+  font-family:'Inter',sans-serif;
+  background:#fff;
+  color:#0f172a;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ════════════════════════════════════════════════════════
+   TOKENS
+════════════════════════════════════════════════════════ */
+:root{
+  --g:     #1A7A5E;
+  --gn:    #15a87c;
+  --gl:    #e8f5f0;
+  --gll:   #f0faf6;
+  --amb:   #E8902A;
+  --ambl:  #fff4e6;
+  --night: #0f172a;
+  --s1:    #1e293b;
+  --s2:    #334155;
+  --s3:    #64748b;
+  --s4:    #94a3b8;
+  --s5:    #cbd5e1;
+  --s6:    #e2e8f0;
+  --s7:    #f1f5f9;
+  --s8:    #f8fafc;
+  --white: #ffffff;
+  --glow:  0 0 0 3px rgba(26,122,94,.15), 0 8px 32px rgba(26,122,94,.2);
+  --shadow-sm: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md: 0 4px 16px rgba(15,23,42,.08), 0 2px 6px rgba(15,23,42,.04);
+  --shadow-lg: 0 12px 40px rgba(15,23,42,.12), 0 4px 12px rgba(15,23,42,.06);
+  --shadow-xl: 0 24px 64px rgba(15,23,42,.16), 0 8px 20px rgba(15,23,42,.08);
+  --r:8px; --rl:16px; --rxl:24px; --rf:9999px;
+}
+
+/* ════════════════════════════════════════════════════════
+   BACKGROUND — STRIPE / LINEAR MESH GRADIENT
+════════════════════════════════════════════════════════ */
+/* Dot grid — presente em toda a tela */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(circle, rgba(26,122,94,.13) 1px, transparent 1px);
+  background-size:30px 30px;
+  opacity:.55;
+}
+/* Bloom verde principal — top right, grande e suave */
+body::after{
+  content:'';position:fixed;top:-250px;right:-150px;z-index:0;pointer-events:none;
+  width:900px;height:900px;border-radius:50%;
+  background:radial-gradient(ellipse at 45% 45%,
+    rgba(26,122,94,.13) 0%,
+    rgba(34,212,153,.06) 35%,
+    transparent 70%);
+  filter:blur(72px);
+}
+/* Blob âmbar — bottom left */
+.bg-amb{
+  position:fixed;bottom:-200px;left:-150px;z-index:0;pointer-events:none;
+  width:720px;height:720px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(232,144,42,.09) 0%,transparent 60%);
+  filter:blur(80px);
+}
+/* Blob verde mid — centro esquerdo */
+.bg-mid{
+  position:fixed;top:45%;left:-80px;z-index:0;pointer-events:none;
+  width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(26,122,94,.05) 0%,transparent 70%);
+  filter:blur(60px);
+}
+/* Blob teal faint — centro direito */
+.bg-teal{
+  position:fixed;top:30%;right:10%;z-index:0;pointer-events:none;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(34,212,153,.04) 0%,transparent 70%);
+  filter:blur(50px);
+}
+
+/* ════════════════════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════════════════════ */
+.navbar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--s6);
+  transition:box-shadow .3s;
+}
+.navbar.scrolled{box-shadow:var(--shadow-sm);}
+
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-wordmark{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-weight:800;font-size:20px;letter-spacing:-.03em;color:var(--night);
+}
+.nav-wordmark em{font-style:normal;color:var(--amb);}
+
+.nav-links{display:flex;gap:2px;}
+.nav-a{
+  padding:6px 16px;border-radius:var(--r);
+  font-size:13px;font-weight:500;color:var(--s3);
+  text-decoration:none;transition:all .18s;
+}
+.nav-a:hover{color:var(--night);background:var(--s7);}
+
+.nav-actions{display:flex;align-items:center;gap:10px;}
+.nav-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;color:var(--gn);
+  background:var(--gl);border:1px solid rgba(26,122,94,.2);
+  padding:4px 12px;border-radius:var(--rf);
+}
+.nb-dot{width:5px;height:5px;background:var(--gn);border-radius:50%;
+  box-shadow:0 0 6px var(--gn);animation:pls 1.8s infinite;}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.3}}
+
+.btn-demo{
+  padding:8px 18px;border-radius:var(--r);font-size:13px;font-weight:600;
+  color:var(--s2);border:1px solid var(--s5);background:#fff;
+  cursor:pointer;transition:all .18s;
+}
+.btn-demo:hover{border-color:var(--g);color:var(--g);background:var(--gl);}
+
+.btn-login{
+  padding:9px 22px;border-radius:var(--r);font-size:13px;font-weight:700;
+  color:#fff;background:var(--g);border:none;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;gap:6px;
+  letter-spacing:.01em;
+}
+.btn-login:hover{background:var(--gn);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.btn-login svg{transition:transform .2s;}
+.btn-login:hover svg{transform:translateX(2px);}
+
+/* ════════════════════════════════════════════════════════
+   HERO SECTION
+════════════════════════════════════════════════════════ */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;
+  padding:0 80px;
+  padding-top:64px;
+  gap:40px;
+  overflow:hidden;
+}
+
+/* ─── LEFT PANEL ─────────────────────────────────────── */
+.hero-left{
+  display:flex;flex-direction:column;
+  padding:60px 0;
+}
+
+.h-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--gl);border:1px solid rgba(26,122,94,.25);
+  border-radius:var(--rf);padding:6px 16px;
+  margin-bottom:48px;width:fit-content;
+  animation:rise .6s ease both;
+}
+.h-badge-dot{width:5px;height:5px;background:var(--gn);border-radius:50%;
+  box-shadow:0 0 6px var(--gn);animation:pls 1.5s infinite;}
+.h-badge-txt{font-size:11px;font-weight:700;color:var(--gn);text-transform:uppercase;letter-spacing:.1em;}
+.h-badge-sep{color:var(--s5);}
+.h-badge-sub{font-size:11px;color:var(--s3);}
+
+/* ─── GIANT HEADLINE — HackerRank style on white ─────── */
+.headline{margin-bottom:32px;}
+
+.hl-back{
+  display:block;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:clamp(52px,5.5vw,80px);line-height:1.02;
+  letter-spacing:-.04em;
+  color:rgba(15,23,42,.1);  /* very faded on white — same optical trick */
+  user-select:none;
+  animation:rise .65s ease .08s both;
+}
+.hl-back2{
+  display:block;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:clamp(52px,5.5vw,80px);line-height:1.02;
+  letter-spacing:-.04em;
+  color:rgba(15,23,42,.18);
+  user-select:none;
+  animation:rise .65s ease .16s both;
+}
+.hl-front{
+  display:block;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:clamp(48px,5vw,76px);line-height:1.1;
+  letter-spacing:-.04em;
+  color:var(--s4);
+  animation:rise .65s ease .24s both;
+  margin-top:2px;
+}
+.hl-green{
+  color:var(--g);
+  position:relative;
+}
+/* underline animated accent */
+.hl-green::after{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--g),var(--gn));
+  border-radius:2px;
+  transform:scaleX(0);transform-origin:left;
+  animation:underline 1s ease .9s forwards;
+}
+@keyframes underline{to{transform:scaleX(1)}}
+.hl-amb{color:var(--amb);}
+
+/* inline icon inside headline */
+.hl-inline-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:clamp(52px,5.5vw,72px);height:clamp(52px,5.5vw,72px);
+  flex-shrink:0;
+  animation:spinonce 1.2s ease .4s both;
+}
+@keyframes spinonce{
+  from{transform:rotate(-20deg) scale(.7);opacity:0}
+  to{transform:rotate(0deg) scale(1);opacity:1}
+}
+
+/* sub */
+.h-sub{
+  font-size:17px;line-height:1.75;color:var(--s3);
+  max-width:460px;margin-bottom:40px;
+  animation:rise .7s ease .35s both;
+}
+.h-sub strong{color:var(--s1);font-weight:600;}
+
+/* CTAs */
+.h-ctas{
+  display:flex;gap:12px;flex-wrap:wrap;
+  margin-bottom:48px;
+  animation:rise .7s ease .42s both;
+}
+.btn-h-p{
+  display:flex;align-items:center;gap:8px;
+  padding:13px 26px;border-radius:12px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;
+  color:#fff;background:var(--g);border:none;cursor:pointer;
+  transition:box-shadow .3s, transform .25s cubic-bezier(.34,1.4,.64,1);
+  letter-spacing:.01em;
+  position:relative;overflow:hidden;isolation:isolate;
+}
+.btn-h-p > *{position:relative;z-index:1;}
+/* cursor-follow radial fill */
+.btn-h-p::after{
+  content:'';position:absolute;
+  width:220%;padding-bottom:220%;
+  left:var(--mx,50%);top:var(--my,50%);
+  transform:translate(-50%,-50%) scale(0);
+  background:radial-gradient(circle, rgba(255,255,255,.22) 0%, transparent 55%);
+  transition:transform .5s cubic-bezier(.34,1.3,.64,1), opacity .4s;
+  opacity:0;z-index:0;pointer-events:none;border-radius:50%;
+}
+.btn-h-p:hover::after{transform:translate(-50%,-50%) scale(1);opacity:1;}
+.btn-h-p:hover{
+  background:var(--gn);
+  box-shadow:0 8px 32px rgba(26,122,94,.35), 0 2px 8px rgba(26,122,94,.2);
+  transform:translateY(-2px);
+}
+.btn-h-p:active{transform:translateY(0) scale(.98);}
+.btn-h-s{
+  display:flex;align-items:center;gap:8px;
+  padding:13px 22px;border-radius:12px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:15px;
+  color:var(--s2);background:#fff;border:1.5px solid var(--s5);cursor:pointer;
+  transition:all .22s;
+}
+.btn-h-s:hover{border-color:var(--g);color:var(--g);background:var(--gl);}
+
+/* stats strip */
+.h-stats{
+  display:flex;gap:0;
+  border:1px solid var(--s6);border-radius:12px;
+  overflow:hidden;background:#fff;
+  box-shadow:var(--shadow-sm);
+  width:fit-content;
+  animation:rise .8s ease .5s both;
+}
+.hst{padding:14px 24px;border-right:1px solid var(--s6);}
+.hst:last-child{border-right:none;}
+.hst-val{
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;
+  color:var(--night);display:block;margin-bottom:1px;
+}
+.hst-val.green{color:var(--g);}
+.hst-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--s4);}
+
+
+/* ─── RIGHT PANEL — VISUAL STAGE ─────────────────────── */
+.hero-right{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  padding:60px 0 60px 20px;
+  min-height:600px;
+}
+
+/* ─ MAIN DASHBOARD CARD ─ */
+.dash-card{
+  width:100%;max-width:520px;
+  background:#fff;
+  border:1px solid rgba(26,122,94,.15);
+  border-radius:var(--rxl);
+  box-shadow:
+    0 32px 80px rgba(15,23,42,.18),
+    0 8px 24px rgba(15,23,42,.10),
+    0 0 0 1px rgba(26,122,94,.08),
+    0 24px 60px rgba(26,122,94,.12);
+  overflow:hidden;
+  transform:perspective(1400px) rotateY(-6deg) rotateX(3deg);
+  transition:transform .4s ease, box-shadow .4s ease;
+  animation:rise .7s ease .3s both, tiltFloat 6s ease-in-out 1.2s infinite alternate;
+  position:relative;z-index:3;
+}
+.dash-card:hover{
+  transform:perspective(1400px) rotateY(-2deg) rotateX(1deg);
+  box-shadow:
+    0 40px 100px rgba(15,23,42,.2),
+    0 12px 32px rgba(15,23,42,.12),
+    0 0 0 1px rgba(26,122,94,.12),
+    0 32px 80px rgba(26,122,94,.16);
+}
+@keyframes tiltFloat{
+  0%{transform:perspective(1400px) rotateY(-6deg) rotateX(3deg) translateY(0)}
+  100%{transform:perspective(1400px) rotateY(-4deg) rotateX(2deg) translateY(-10px)}
+}
+
+/* titlebar */
+.dc-bar{
+  height:40px;background:var(--s8);border-bottom:1px solid var(--s6);
+  display:flex;align-items:center;padding:0 16px;gap:6px;
+}
+.dc-dot{width:9px;height:9px;border-radius:50%;}
+.dc-url{
+  flex:1;text-align:center;
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--s4);
+}
+
+/* dashboard body */
+.dc-body{padding:18px;}
+
+/* top stats */
+.dc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.dc-s{background:var(--s8);border-radius:10px;padding:12px 14px;border:1px solid var(--s6);}
+.dc-sv{
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;
+  color:var(--night);margin-bottom:3px;
+}
+.dc-sv.green{color:var(--g);}
+.dc-sv.amber{color:var(--amb);}
+.dc-sl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--s4);}
+.dc-delta{font-size:9px;color:var(--g);font-weight:600;margin-top:2px;}
+
+/* revenue chart */
+.dc-chart{
+  background:var(--s8);border-radius:12px;
+  padding:14px 16px 10px;
+  border:1px solid var(--s6);margin-bottom:14px;
+}
+.dc-chart-header{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;
+}
+.dc-chart-title{font-size:11px;font-weight:600;color:var(--s2);}
+.dc-chart-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--g);}
+.chart-area{
+  height:72px;display:flex;align-items:flex-end;gap:5px;
+  position:relative;
+}
+/* trend line overlay */
+.chart-area::before{
+  content:'';position:absolute;
+  top:8px;left:5px;right:5px;bottom:0;
+  background:linear-gradient(180deg,rgba(26,122,94,.08) 0%,transparent 100%);
+  border-radius:6px;
+  clip-path:polygon(0 80%, 14% 65%, 28% 70%, 42% 45%, 56% 30%, 70% 20%, 84% 10%, 100% 5%, 100% 100%, 0 100%);
+}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar{
+  width:100%;border-radius:4px 4px 0 0;
+  transform-origin:bottom;
+  animation:barUp .8s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes barUp{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+.bar-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--s4);}
+
+/* mini order board */
+.dc-board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dc-col-head{
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  padding:4px 8px;border-radius:5px;margin-bottom:5px;text-align:center;
+}
+.dc-item{
+  border-radius:6px;padding:7px 9px;margin-bottom:5px;
+  border-left:2px solid;background:var(--s8);
+  transition:transform .2s;
+}
+.dc-item:hover{transform:translateX(2px);}
+.dc-iname{font-size:9px;color:var(--s2);margin-bottom:1px;}
+.dc-ival{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--night);}
+
+/* ─ VENZO MASCOTE — floating ─ */
+.venzo-float{
+  position:absolute;
+  top:-20px;right:-30px;
+  z-index:5;
+  animation:vFloat 3.5s ease-in-out infinite;
+  filter:
+    drop-shadow(0 8px 24px rgba(26,122,94,.45))
+    drop-shadow(0 0 40px rgba(34,212,153,.3))
+    drop-shadow(0 24px 48px rgba(26,122,94,.2));
+}
+/* glow ring atrás do Venzo */
+.venzo-glow{
+  position:absolute;
+  top:-40px;right:-60px;
+  width:200px;height:200px;
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(26,122,94,.18) 0%,rgba(34,212,153,.08) 40%,transparent 70%);
+  filter:blur(24px);
+  z-index:4;
+  animation:vFloat 3.5s ease-in-out infinite;
+  animation-delay:.15s;
+}
+@keyframes vFloat{
+  0%,100%{transform:translateY(0) rotate(-2deg)}
+  50%{transform:translateY(-18px) rotate(2deg)}
+}
+
+/* Venzo speech bubble */
+.venzo-bubble{
+  position:absolute;top:10px;right:115px;
+  background:var(--night);color:#fff;
+  font-size:11px;font-weight:600;
+  padding:7px 13px;border-radius:12px 12px 2px 12px;
+  white-space:nowrap;z-index:6;
+  box-shadow:var(--shadow-md);
+  animation:vFloat 3.5s ease-in-out infinite;
+  animation-delay:.3s;
+}
+.venzo-bubble::after{
+  content:'';position:absolute;right:-6px;bottom:0;
+  width:0;height:0;
+  border-left:8px solid var(--night);
+  border-top:6px solid transparent;
+}
+
+/* ─ FLOATING NOTIFICATION CARDS ─ */
+.notif{
+  position:absolute;
+  background:#fff;
+  border:1px solid var(--s6);
+  border-radius:12px;
+  padding:10px 14px;
+  box-shadow:var(--shadow-md);
+  display:flex;align-items:center;gap:10px;
+  z-index:4;
+  white-space:nowrap;
+  opacity:0;
+}
+.notif-icon{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.notif-info{}
+.notif-title{font-size:12px;font-weight:600;color:var(--night);}
+.notif-sub{font-size:10px;color:var(--s4);margin-top:1px;}
+.notif-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-left:auto;padding-left:12px;}
+
+/* positions + animations */
+.notif-1{
+  top:60px;left:-60px;
+  animation:notifIn .6s ease .8s forwards, notifFloat1 4s ease-in-out 1.5s infinite;
+}
+.notif-2{
+  bottom:140px;left:-40px;
+  animation:notifIn .6s ease 1.2s forwards, notifFloat2 4.5s ease-in-out 2s infinite;
+}
+.notif-3{
+  bottom:60px;right:-30px;
+  animation:notifIn .6s ease 1.6s forwards, notifFloat3 5s ease-in-out 2.5s infinite;
+}
+@keyframes notifIn{
+  from{opacity:0;transform:translateX(-16px) scale(.95)}
+  to{opacity:1;transform:translateX(0) scale(1)}
+}
+@keyframes notifFloat1{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes notifFloat2{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+@keyframes notifFloat3{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* ─ GLOW ring behind card ─ */
+.card-glow{
+  position:absolute;
+  width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(26,122,94,.08) 0%,transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:1;pointer-events:none;
+  animation:glowPulse 4s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.15);opacity:1}}
+
+/* ════════════════════════════════════════════════════════
+   FEATURES SECTION (white scroll)
+════════════════════════════════════════════════════════ */
+.features{
+  position:relative;z-index:1;
+  padding:100px 80px;
+  background:#fff;
+  border-top:1px solid var(--s6);
+}
+.feat-header{text-align:center;margin-bottom:72px;}
+.feat-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--g);margin-bottom:16px;
+}
+.feat-tag::before,.feat-tag::after{content:'';width:20px;height:1.5px;background:var(--g);border-radius:1px;}
+.feat-h{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:clamp(32px,4vw,48px);letter-spacing:-.03em;
+  color:var(--night);margin-bottom:16px;line-height:1.15;
+}
+.feat-h .g{color:var(--g);}
+.feat-desc{font-size:16px;color:var(--s3);max-width:520px;margin:0 auto;line-height:1.7;}
+
+/* ════════════════════════════════════════════════════════
+   FEATURES — BENTO 2.0
+════════════════════════════════════════════════════════ */
+.feat-bento{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:260px 210px auto;
+  gap:14px;
+  max-width:1100px;margin:0 auto 80px;
+}
+
+/* ─ AI CARD — hero 2×2, dark ─ */
+.fb-ai{
+  grid-column:1/3;grid-row:1/3;
+  background:var(--night);
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.06);
+  padding:36px 40px;
+  position:relative;overflow:hidden;
+  cursor:default;
+}
+/* grid circuit pattern atrás */
+.fb-ai::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(26,122,94,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(26,122,94,.06) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse 80% 70% at 80% 60%,transparent 30%,black 100%);
+}
+/* bloom verde dentro do card */
+.fb-ai::after{
+  content:'';position:absolute;
+  top:-100px;right:-80px;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(26,122,94,.18) 0%,rgba(34,212,153,.08) 45%,transparent 70%);
+  filter:blur(50px);pointer-events:none;
+}
+.fb-ai-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(232,144,42,.15);
+  border:1px solid rgba(232,144,42,.3);
+  border-radius:var(--rf);
+  padding:4px 12px;
+  font-size:10px;font-weight:700;color:var(--amb);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:24px;position:relative;z-index:1;
+}
+.fb-ai-badge::before{content:'✦ ';}
+.fb-ai-icon{
+  font-size:36px;margin-bottom:16px;
+  position:relative;z-index:1;
+  display:inline-block;
+  filter:drop-shadow(0 0 16px rgba(232,144,42,.4));
+}
+.fb-ai-t{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:clamp(22px,2.2vw,30px);letter-spacing:-.025em;
+  color:#fff;margin-bottom:12px;line-height:1.2;
+  position:relative;z-index:1;
+}
+.fb-ai-d{
+  font-size:14px;color:rgba(255,255,255,.5);
+  line-height:1.75;max-width:380px;
+  position:relative;z-index:1;margin-bottom:28px;
+}
+/* live activity strip */
+.fb-ai-activity{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;
+  padding:10px 16px;
+  position:relative;z-index:1;
+  margin-bottom:20px;width:fit-content;
+}
+.fb-ai-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--gn);
+  box-shadow:0 0 8px var(--gn);
+  animation:pls 1.4s infinite;flex-shrink:0;
+}
+.fb-ai-tw{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;color:rgba(255,255,255,.7);
+  min-width:220px;
+}
+.fb-ai-cursor{
+  display:inline-block;width:2px;height:13px;
+  background:var(--gn);margin-left:2px;
+  animation:blink .8s step-end infinite;
+  vertical-align:text-bottom;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* tags */
+.fb-ai-tags{
+  display:flex;gap:8px;flex-wrap:wrap;
+  position:relative;z-index:1;
+}
+.fb-ai-tag{
+  padding:4px 12px;border-radius:var(--rf);
+  background:rgba(26,122,94,.15);
+  border:1px solid rgba(26,122,94,.25);
+  font-size:11px;font-weight:600;color:rgba(255,255,255,.65);
+  letter-spacing:.02em;
+}
+
+/* ─ REGULAR BENTO CARDS ─ */
+.fb-card{
+  background:#fff;
+  border-radius:24px;
+  border:1px solid var(--s6);
+  padding:28px;
+  position:relative;overflow:hidden;
+  cursor:default;
+  transition:border-color .3s, box-shadow .3s, transform .25s;
+}
+.fb-card:hover{
+  border-color:rgba(26,122,94,.25);
+  box-shadow:0 12px 40px rgba(15,23,42,.08), 0 2px 8px rgba(26,122,94,.06);
+  transform:translateY(-2px);
+}
+/* spotlight border ao hover — via CSS var setada por JS */
+.fb-card::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(
+    280px circle at var(--mx,50%) var(--my,50%),
+    rgba(26,122,94,.05),
+    transparent 70%
+  );
+  opacity:0;transition:opacity .3s;z-index:0;
+}
+.fb-card:hover::before{opacity:1;}
+.fb-card > *{position:relative;z-index:1;}
+
+.fb-icon{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:16px;
+  transition:transform .3s;
+}
+.fb-icon svg{flex-shrink:0;}
+.fb-card:hover .fb-icon{transform:scale(1.08);}
+.fb-t{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;
+  color:var(--night);margin-bottom:7px;
+}
+.fb-d{font-size:12.5px;color:var(--s3);line-height:1.7;}
+.fb-badge{
+  display:inline-flex;align-items:center;gap:4px;margin-top:14px;
+  font-size:10px;font-weight:700;color:var(--g);
+  background:var(--gl);border:1px solid rgba(26,122,94,.15);
+  padding:3px 10px;border-radius:var(--rf);
+}
+.fb-badge.amb{color:var(--amb);background:var(--ambl);}
+
+/* mini kanban dentro do card board */
+.fb-mini-board{
+  display:flex;gap:8px;margin-top:14px;
+  width:100%;box-sizing:border-box;
+  overflow:hidden;
+}
+.fb-mini-col{
+  flex:1;min-width:0; /* impede overflow */
+}
+.fb-mini-head{
+  font-size:8.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;padding:3px 6px;border-radius:5px;
+  text-align:center;margin-bottom:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.fb-mini-item{
+  border-radius:6px;padding:5px 8px;margin-bottom:4px;
+  border-left:2px solid;background:var(--s8);
+  font-size:9px;color:var(--s2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* card canal — spotlight border animado */
+.fb-canal{
+  position:relative;border-radius:24px;overflow:hidden;
+}
+.fb-canal::after{
+  content:'';position:absolute;
+  inset:-1px;border-radius:25px;
+  background:conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(26,122,94,0) 0deg,
+    rgba(26,122,94,.35) 60deg,
+    rgba(34,212,153,.2) 120deg,
+    rgba(26,122,94,0) 180deg
+  );
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+  padding:1px;
+  opacity:0;transition:opacity .4s;
+  animation:none;
+  pointer-events:none;
+  z-index:10;
+}
+.fb-canal:hover::after{opacity:1;animation:spinBorder 3s linear infinite;}
+
+/* spin border keyframe */
+@keyframes spinBorder{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ─ CTA BLOCK ─ */
+.cta-block{
+  max-width:900px;margin:0 auto;
+  background:linear-gradient(135deg,var(--night) 0%,#0d2e24 100%);
+  border-radius:24px;padding:64px 80px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.cta-block::before{
+  content:'';position:absolute;top:-100px;right:-100px;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(26,122,94,.2) 0%,transparent 65%);
+}
+.cta-block::after{
+  content:'';position:absolute;bottom:-80px;left:-80px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(232,144,42,.1) 0%,transparent 65%);
+}
+.cta-gtag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--gn);margin-bottom:16px;position:relative;z-index:1;}
+.cta-gt{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:clamp(28px,3.5vw,40px);letter-spacing:-.03em;
+  color:#fff;margin-bottom:14px;line-height:1.2;position:relative;z-index:1;
+}
+.cta-gd{font-size:15px;color:rgba(255,255,255,.45);margin-bottom:36px;position:relative;z-index:1;}
+.cta-btns{display:flex;gap:12px;justify-content:center;position:relative;z-index:1;flex-wrap:wrap;}
+.btn-cp{
+  padding:13px 28px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;
+  font-weight:700;font-size:15px;color:#fff;background:var(--g);border:none;cursor:pointer;
+  transition:box-shadow .3s, transform .25s cubic-bezier(.34,1.4,.64,1);
+  display:flex;align-items:center;gap:8px;
+  position:relative;overflow:hidden;isolation:isolate;
+}
+.btn-cp > *{position:relative;z-index:1;}
+.btn-cp::after{
+  content:'';position:absolute;
+  width:220%;padding-bottom:220%;
+  left:var(--mx,50%);top:var(--my,50%);
+  transform:translate(-50%,-50%) scale(0);
+  background:radial-gradient(circle,rgba(255,255,255,.22) 0%,transparent 55%);
+  transition:transform .5s cubic-bezier(.34,1.3,.64,1),opacity .4s;
+  opacity:0;z-index:0;pointer-events:none;border-radius:50%;
+}
+.btn-cp:hover::after{transform:translate(-50%,-50%) scale(1);opacity:1;}
+.btn-cp:hover{background:var(--gn);box-shadow:0 8px 32px rgba(26,122,94,.35);transform:translateY(-1px);}
+.btn-cp:active{transform:translateY(0) scale(.98);}
+.btn-cs{
+  padding:13px 24px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;
+  font-weight:600;font-size:15px;color:rgba(255,255,255,.65);
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);cursor:pointer;
+  transition:all .22s;
+}
+.btn-cs:hover{color:#fff;background:rgba(255,255,255,.12);}
+
+/* ════════════════════════════════════════════════════════
+   LOGIN MODAL
+════════════════════════════════════════════════════════ */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(15,23,42,.6);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;
+  transition:opacity .3s ease, visibility .3s ease;
+  padding:24px;
+}
+.modal-backdrop.open{opacity:1;visibility:visible;}
+.modal-backdrop.open .modal-card{transform:scale(1) translateY(0);opacity:1;}
+
+.modal-card{
+  width:100%;max-width:420px;
+  background:#fff;
+  border-radius:24px;
+  box-shadow:0 32px 80px rgba(15,23,42,.3), 0 8px 24px rgba(15,23,42,.12);
+  border:1px solid var(--s6);
+  padding:40px;
+  transform:scale(.95) translateY(12px);
+  opacity:0;
+  transition:transform .35s cubic-bezier(.34,1.3,.64,1), opacity .3s ease;
+  position:relative;
+}
+
+/* close button */
+.modal-close{
+  position:absolute;top:18px;right:18px;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--s7);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--s3);font-size:16px;line-height:1;
+  transition:all .18s;
+}
+.modal-close:hover{background:var(--s6);color:var(--night);}
+
+/* modal logo */
+.modal-logo{display:flex;align-items:center;gap:8px;margin-bottom:28px;}
+.modal-wm{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.03em;color:var(--night);}
+.modal-wm em{font-style:normal;color:var(--amb);}
+
+/* modal header */
+.modal-h{margin-bottom:28px;}
+.modal-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.025em;color:var(--night);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--s3);line-height:1.6;}
+.modal-sub strong{color:var(--s1);font-weight:500;}
+
+/* inputs */
+.inp-group{margin-bottom:14px;}
+.inp-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--s4);margin-bottom:6px;}
+.inp{
+  width:100%;padding:11px 14px;border-radius:var(--r);
+  border:1.5px solid var(--s5);background:#fff;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--night);
+  outline:none;transition:all .2s;
+}
+.inp::placeholder{color:var(--s5);}
+.inp:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(26,122,94,.1);}
+.inp-wrap{position:relative;}
+.inp-eye{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--s4);
+  font-size:15px;line-height:1;transition:color .2s;padding:4px;
+}
+.inp-eye:hover{color:var(--night);}
+
+/* remember + forgot */
+.inp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.inp-check{display:flex;align-items:center;gap:7px;cursor:pointer;}
+.inp-check input{
+  width:15px;height:15px;border-radius:4px;accent-color:var(--g);cursor:pointer;
+}
+.inp-check span{font-size:12px;color:var(--s3);}
+.inp-forgot{font-size:12px;color:var(--g);text-decoration:none;font-weight:600;}
+.inp-forgot:hover{text-decoration:underline;}
+
+/* submit */
+.btn-submit{
+  width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;
+  color:#fff;background:var(--g);
+  transition:all .22s;display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:.01em;position:relative;overflow:hidden;
+}
+.btn-submit::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);
+}
+.btn-submit:hover{background:var(--gn);box-shadow:0 6px 20px rgba(26,122,94,.3);transform:translateY(-1px);}
+.btn-submit svg{transition:transform .2s;}
+.btn-submit:hover svg{transform:translateX(3px);}
+
+/* divider */
+.modal-div{display:flex;align-items:center;gap:12px;margin:20px 0;}
+.modal-div::before,.modal-div::after{content:'';flex:1;height:1px;background:var(--s6);}
+.modal-div span{font-size:11px;color:var(--s4);}
+
+/* new user */
+.modal-new{text-align:center;font-size:13px;color:var(--s4);}
+.modal-new a{color:var(--g);font-weight:600;text-decoration:none;}
+.modal-new a:hover{text-decoration:underline;}
+
+/* social proof */
+.modal-sp{
+  display:flex;align-items:center;gap:12px;
+  margin-top:24px;padding-top:20px;border-top:1px solid var(--s6);
+}
+.sp-avs{display:flex;}
+.sp-av{
+  width:28px;height:28px;border-radius:50%;
+  border:2px solid #fff;margin-left:-6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.sp-av:first-child{margin-left:0;}
+.sp-t{font-size:11px;color:var(--s3);line-height:1.5;}
+.sp-t strong{color:var(--s1);}
+
+/* ════════════════════════════════════════════════════════
+   ANIMATIONS & UTILS
+════════════════════════════════════════════════════════ */
+@keyframes rise{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════════════════
+   COMO FUNCIONA
+════════════════════════════════════════════════════════ */
+.how{
+  position:relative;z-index:1;
+  padding:100px 80px;
+  background:var(--s8);
+  border-top:1px solid var(--s6);
+  border-bottom:1px solid var(--s6);
+}
+.how-inner{max-width:1100px;margin:0 auto;}
+.how-header{text-align:center;margin-bottom:72px;}
+
+.how-steps{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:0;position:relative;
+}
+/* connecting line between steps */
+.how-steps::before{
+  content:'';position:absolute;
+  top:28px;left:calc(16.66% + 12px);right:calc(16.66% + 12px);
+  height:1px;background:linear-gradient(90deg,transparent,var(--s5) 20%,var(--s5) 80%,transparent);
+  z-index:0;pointer-events:none;
+}
+.how-step{
+  padding:0 40px;text-align:center;
+  position:relative;z-index:1;
+}
+.how-step:first-child{padding-left:0;}
+.how-step:last-child{padding-right:0;}
+.how-num{
+  width:56px;height:56px;border-radius:50%;
+  background:#fff;border:1.5px solid var(--s5);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;
+  color:var(--g);
+  box-shadow:var(--shadow-sm);
+  transition:all .3s;
+  position:relative;
+}
+.how-num::after{
+  content:'';position:absolute;inset:-4px;
+  border-radius:50%;border:1px solid transparent;
+  background:linear-gradient(135deg,var(--g),var(--gn)) border-box;
+  mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+  opacity:0;transition:opacity .3s;
+}
+.how-step:hover .how-num::after{opacity:1;}
+.how-step:hover .how-num{border-color:transparent;box-shadow:0 0 0 3px rgba(26,122,94,.12);}
+.how-step-t{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+  font-size:16px;color:var(--night);margin-bottom:10px;
+}
+.how-step-d{font-size:13.5px;color:var(--s3);line-height:1.75;max-width:260px;margin:0 auto;}
+.how-step-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--gl);color:var(--g);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;
+  transition:transform .3s;
+}
+.how-step:hover .how-step-icon{transform:scale(1.08);}
+
+/* ════════════════════════════════════════════════════════
+   PARA QUEM É
+════════════════════════════════════════════════════════ */
+.segments{
+  position:relative;z-index:1;
+  padding:100px 80px;background:#fff;
+  border-top:1px solid var(--s6);
+}
+.seg-inner{max-width:1100px;margin:0 auto;}
+.seg-header{margin-bottom:56px;}
+.seg-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:16px;
+}
+.seg-card{
+  background:var(--s8);
+  border:1px solid var(--s6);border-radius:20px;
+  padding:32px;
+  transition:all .3s;cursor:default;
+  position:relative;overflow:hidden;
+}
+.seg-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:3px;background:var(--g);
+  border-radius:3px 0 0 3px;
+  transform:scaleY(0);transform-origin:bottom;
+  transition:transform .3s cubic-bezier(.34,1.2,.64,1);
+}
+.seg-card:hover{background:#fff;box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.seg-card:hover::before{transform:scaleY(1);}
+.seg-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:var(--rf);
+  background:var(--gl);border:1px solid rgba(26,122,94,.15);
+  font-size:11px;font-weight:700;color:var(--g);
+  margin-bottom:16px;letter-spacing:.04em;
+}
+.seg-t{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+  font-size:18px;color:var(--night);margin-bottom:12px;
+}
+.seg-dor{
+  font-size:13px;color:var(--s3);line-height:1.7;
+  padding-left:14px;border-left:2px solid var(--s5);
+  margin-bottom:12px;
+}
+.seg-resolve{
+  font-size:13px;color:var(--s2);line-height:1.7;
+}
+.seg-resolve strong{color:var(--g);}
+
+/* ════════════════════════════════════════════════════════
+   PRICING
+════════════════════════════════════════════════════════ */
+.pricing{
+  position:relative;z-index:1;
+  padding:100px 80px;background:var(--s8);
+  border-top:1px solid var(--s6);
+}
+.price-inner{max-width:1100px;margin:0 auto;}
+.price-grid{
+  display:grid;grid-template-columns:1.2fr .8fr;
+  gap:16px;margin-top:56px;
+}
+.price-card{
+  background:#fff;border-radius:24px;
+  border:1px solid var(--s6);padding:40px;
+  position:relative;overflow:hidden;
+}
+.price-card.main{
+  border-color:rgba(26,122,94,.25);
+  box-shadow:0 8px 32px rgba(26,122,94,.08);
+}
+.price-card.main::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--g),var(--gn));
+}
+.price-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--gl);border:1px solid rgba(26,122,94,.2);
+  border-radius:var(--rf);padding:4px 12px;
+  font-size:10px;font-weight:700;color:var(--g);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:24px;
+}
+.price-name{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-size:22px;color:var(--night);margin-bottom:8px;
+}
+.price-val{
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  font-size:48px;letter-spacing:-.03em;color:var(--night);
+  line-height:1;margin-bottom:4px;
+}
+.price-val sup{font-size:20px;vertical-align:top;margin-top:8px;margin-right:2px;}
+.price-val span{font-size:16px;font-weight:500;color:var(--s4);}
+.price-per{font-size:12px;color:var(--s4);margin-bottom:28px;}
+.price-per strong{color:var(--g);}
+.price-divider{height:1px;background:var(--s6);margin-bottom:24px;}
+.price-items{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:32px;}
+.price-items li{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13.5px;color:var(--s2);
+}
+.price-items li::before{
+  content:'';display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;width:18px;height:18px;border-radius:50%;
+  background:var(--gl);
+  background-image:url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l2.5 2.5L9 1' stroke='%231A7A5E' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:center;
+  margin-top:1px;
+}
+.price-cta{width:100%;}
+.price-ai-note{
+  font-size:12px;color:var(--s4);line-height:1.7;
+  padding:16px;background:rgba(232,144,42,.04);
+  border:1px solid rgba(232,144,42,.12);
+  border-radius:12px;margin-top:16px;
+}
+.price-ai-note strong{color:var(--amb);}
+/* comparison row */
+.price-compare{
+  margin-top:40px;
+  background:#fff;border-radius:16px;border:1px solid var(--s6);
+  overflow:hidden;
+}
+.pc-head{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  background:var(--s8);border-bottom:1px solid var(--s6);
+}
+.pc-head div{
+  padding:12px 20px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--s4);
+}
+.pc-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  border-bottom:1px solid var(--s6);
+}
+.pc-row:last-child{border-bottom:none;}
+.pc-cell{
+  padding:14px 20px;font-size:13px;color:var(--s2);
+  display:flex;align-items:center;gap:8px;
+}
+.pc-cell.label{font-weight:600;color:var(--s1);}
+.pc-cell.bad{color:#ef4444;}
+.pc-cell.good{color:var(--g);font-weight:600;}
+
+/* ════════════════════════════════════════════════════════
+   FAQ
+════════════════════════════════════════════════════════ */
+.faq{
+  position:relative;z-index:1;
+  padding:100px 80px;background:#fff;
+  border-top:1px solid var(--s6);
+}
+.faq-inner{max-width:860px;margin:0 auto;}
+.faq-list{margin-top:56px;display:flex;flex-direction:column;gap:0;}
+.faq-item{
+  border-bottom:1px solid var(--s6);
+  overflow:hidden;
+}
+.faq-item:first-child{border-top:1px solid var(--s6);}
+.faq-q{
+  width:100%;background:none;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:22px 0;text-align:left;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+  font-size:15px;color:var(--night);
+  transition:color .2s;
+}
+.faq-q:hover{color:var(--g);}
+.faq-icon{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--s7);border:1px solid var(--s6);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .3s;color:var(--s3);
+}
+.faq-item.open .faq-icon{background:var(--gl);border-color:rgba(26,122,94,.2);color:var(--g);transform:rotate(45deg);}
+.faq-item.open .faq-q{color:var(--g);}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .4s cubic-bezier(.34,1.2,.64,1);
+}
+.faq-item.open .faq-a{max-height:200px;}
+.faq-a p{
+  padding-bottom:22px;
+  font-size:14px;color:var(--s3);line-height:1.8;
+}
+
+/* Offset para navbar fixa ao usar âncoras */
+.features,.how,.segments,.pricing,.faq{scroll-margin-top:72px;}
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════ */
+@media(max-width:1100px){
+  .hero{grid-template-columns:1fr 1fr;padding:0 48px;gap:24px;}
+  .hl-back,.hl-back2,.hl-front{font-size:clamp(42px,4.5vw,64px);}
+}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding:0 32px;}
+  .hero-right{display:none;}
+  .features,.how,.segments,.pricing,.faq{padding:60px 32px;}
+  .feat-bento{grid-template-columns:1fr 1fr;grid-template-rows:auto;}
+  .fb-ai{grid-column:1/3;grid-row:auto;}
+  .cta-block{padding:40px 32px;}
+  .how-steps{grid-template-columns:1fr;}
+  .how-steps::before{display:none;}
+  .how-step{padding:0 0 48px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;}
+  .how-num{margin:0 0 16px;}
+  .how-step-icon{margin:0 0 12px;}
+  .how-step-d{margin:0;text-align:left;}
+  .seg-grid{grid-template-columns:1fr;}
+  .price-grid{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .navbar{padding:0 20px;}
+  .nav-links{display:none;}
+  .nav-badge{display:none;}
+  .features,.how,.segments,.pricing,.faq{padding:48px 20px;}
+  .feat-bento{grid-template-columns:1fr;grid-template-rows:auto;}
+  .fb-ai{grid-column:auto;grid-row:auto;}
+  .pc-head,.pc-row{grid-template-columns:1fr 1fr;}
+  .pc-head div:last-child,.pc-cell:nth-child(3){display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-amb"></div>
+<div class="bg-mid"></div>
+<div class="bg-teal"></div>
+
+<!-- ════ NAVBAR ════════════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <a href="#" class="nav-logo">
+    <!-- Logo SVG -->
+    <svg width="28" height="28" viewBox="0 0 72 72" fill="none">
+      <defs>
+        <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22D499"/>
+          <stop offset="100%" stop-color="#1A7A5E"/>
+        </linearGradient>
+        <filter id="lf1"><feGaussianBlur stdDeviation="1.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path d="M36 2 L68 20 L68 56 L36 74 L4 56 L4 20 Z"
+        fill="#e8f5f0" stroke="rgba(26,122,94,0.4)" stroke-width="1.5"/>
+      <path d="M4 36 L11 36" stroke="rgba(26,122,94,0.35)" stroke-width="0.8" stroke-dasharray="2 2"/>
+      <path d="M61 36 L68 36" stroke="rgba(26,122,94,0.35)" stroke-width="0.8" stroke-dasharray="2 2"/>
+      <path d="M16 22L29 54L36 38L43 54L56 22"
+        stroke="url(#lg1)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#lf1)"/>
+      <path d="M16 22L29 54L36 38L43 54L56 22"
+        stroke="#1A7A5E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="36" cy="38" r="4" fill="#E8902A"/>
+      <circle cx="36" cy="38" r="2" fill="#FFB347"/>
+    </svg>
+    <div class="nav-wordmark">Vend<em>z</em>a</div>
+  </a>
+
+  <div class="nav-links">
+    <a href="#features" class="nav-a" onclick="scrollTo('features',event)">Produto</a>
+    <a href="#segmentos" class="nav-a" onclick="scrollTo('segmentos',event)">Segmentos</a>
+    <a href="#precos" class="nav-a" onclick="scrollTo('precos',event)">Preços</a>
+    <a href="#faq" class="nav-a" onclick="scrollTo('faq',event)">Dúvidas</a>
+  </div>
+
+  <div class="nav-actions">
+    <div class="nav-badge">
+      <div class="nb-dot"></div>
+      IA disponível
+    </div>
+    <button class="btn-demo" onclick="scrollTo('features',event)">Ver demo</button>
+    <button class="btn-login" onclick="openModal()">
+      Entrar
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ════ HERO ═══════════════════════════════════════════════ -->
+<section class="hero">
+
+  <!-- ─── LEFT: COPY ─── -->
+  <div class="hero-left">
+
+    <div class="h-badge">
+      <div class="h-badge-dot"></div>
+      <span class="h-badge-txt">Novo</span>
+      <span class="h-badge-sep">·</span>
+      <span class="h-badge-sub">Gestão + IA para comércio local brasileiro</span>
+    </div>
+
+    <!-- Headline — faded + bright layers -->
+    <div class="headline">
+      <span class="hl-back"></span>
+      <span class="hl-back2"></span>
+      <div class="hl-front">
+        <span class="hl-green">Gestão operacional</span><br>
+        <span>com </span><span class="hl-amb">IA</span><span> para</span><br>
+        <span>comércio local</span>
+      </div>
+    </div>
+
+    <p class="h-sub">
+      Canal de venda próprio, board de pedidos, CRM e automação com IA.<br/>
+      <strong>Um dia de configuração.</strong> Controle real a partir daí.
+    </p>
+
+    <div class="h-ctas">
+      <button class="btn-h-p" onclick="openModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Começar agora — grátis
+      </button>
+      <button class="btn-h-s" onclick="document.getElementById('como-funciona').scrollIntoView({behavior:'smooth'})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Ver como funciona
+      </button>
+    </div>
+
+    <div class="h-stats">
+      <div class="hst">
+        <span class="hst-val green" data-target="4.2" data-prefix="R$" data-suffix="M">R$4.2M</span>
+        <span class="hst-lbl">processados</span>
+      </div>
+      <div class="hst">
+        <span class="hst-val" data-target="312" data-suffix="+">312+</span>
+        <span class="hst-lbl">comerciantes</span>
+      </div>
+      <div class="hst">
+        <span class="hst-val" data-target="18" data-suffix="k">18k</span>
+        <span class="hst-lbl">pedidos/mês</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── RIGHT: VISUAL STAGE ─── -->
+  <div class="hero-right">
+
+    <div class="card-glow"></div>
+
+    <!-- Glow ring atrás do Venzo -->
+    <div class="venzo-glow"></div>
+
+    <!-- Venzo mascote flutuando -->
+    <div class="venzo-float" style="width:90px;height:100px;">
+      <svg width="90" height="100" viewBox="0 0 200 220" fill="none">
+        <defs>
+          <filter id="vf1">
+            <feGaussianBlur stdDeviation="6" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="vbg1" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#22A376"/>
+            <stop offset="100%" stop-color="#0d4a36"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="100" cy="115" rx="68" ry="76" fill="#1A7A5E" filter="url(#vf1)" opacity=".3"/>
+        <ellipse cx="100" cy="115" rx="60" ry="68" fill="url(#vbg1)"/>
+        <ellipse cx="80" cy="92" rx="24" ry="17" fill="rgba(255,255,255,0.1)" transform="rotate(-18 80 92)"/>
+        <circle cx="76" cy="104" r="14" fill="white"/>
+        <circle cx="124" cy="104" r="14" fill="white"/>
+        <circle cx="78" cy="106" r="7" fill="#0f172a"/>
+        <circle cx="126" cy="106" r="7" fill="#0f172a"/>
+        <circle cx="80" cy="104" r="2.5" fill="white"/>
+        <circle cx="128" cy="104" r="2.5" fill="white"/>
+        <path d="M82 122 Q100 136 118 122" stroke="white" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        <circle cx="100" cy="50" r="9" fill="#E8902A" filter="url(#vf1)" opacity=".8"/>
+        <circle cx="100" cy="50" r="6" fill="#E8902A"/>
+        <circle cx="100" cy="50" r="3" fill="#FFB347"/>
+        <path d="M33 108 Q16 96 18 80" stroke="#1A7A5E" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="77" r="9" fill="#1A7A5E"/>
+        <path d="M167 108 Q184 96 182 80" stroke="#1A7A5E" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <circle cx="184" cy="77" r="9" fill="#1A7A5E"/>
+        <!-- polegar para cima na mão direita -->
+        <path d="M179 71 L183 76 L191 68" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Speech bubble do Venzo -->
+    <div class="venzo-bubble">Tudo no controle ↑</div>
+
+    <!-- Notification cards flutuando -->
+    <div class="notif notif-1">
+      <div class="notif-icon" style="background:#e8f5f0;color:var(--g);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+      </div>
+      <div class="notif-info">
+        <div class="notif-title">Novo pedido!</div>
+        <div class="notif-sub">Pedro Alves · agora</div>
+      </div>
+      <div class="notif-val" style="color:var(--g);">R$187</div>
+    </div>
+
+    <div class="notif notif-2">
+      <div class="notif-icon" style="background:#e8f5f0;color:var(--g);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+      </div>
+      <div class="notif-info">
+        <div class="notif-title">Faturamento subindo</div>
+        <div class="notif-sub">+23% este mês</div>
+      </div>
+      <div class="notif-val" style="color:var(--g);">↑</div>
+    </div>
+
+    <div class="notif notif-3">
+      <div class="notif-icon" style="background:#f0fdf4;color:var(--g);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <div class="notif-info">
+        <div class="notif-title">Entregue com sucesso</div>
+        <div class="notif-sub">Maria Costa · 2min</div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Card -->
+    <div class="dash-card">
+
+      <!-- Window bar -->
+      <div class="dc-bar">
+        <div class="dc-dot" style="background:#ff5f57;"></div>
+        <div class="dc-dot" style="background:#febc2e;"></div>
+        <div class="dc-dot" style="background:#28c840;"></div>
+        <div class="dc-url">vendza.com.br/painel</div>
+      </div>
+
+      <div class="dc-body">
+
+        <!-- Stats row -->
+        <div class="dc-stats">
+          <div class="dc-s">
+            <div class="dc-sv green">R$3.840</div>
+            <div class="dc-sl">Hoje</div>
+            <div class="dc-delta">↑ +18%</div>
+          </div>
+          <div class="dc-s">
+            <div class="dc-sv amber">7</div>
+            <div class="dc-sl">Em aberto</div>
+          </div>
+          <div class="dc-s">
+            <div class="dc-sv">234</div>
+            <div class="dc-sl">Clientes</div>
+          </div>
+        </div>
+
+        <!-- Revenue chart — bars animated up -->
+        <div class="dc-chart">
+          <div class="dc-chart-header">
+            <span class="dc-chart-title">Faturamento — últimos 7 dias</span>
+            <span class="dc-chart-val">R$26.4k</span>
+          </div>
+          <div class="chart-area">
+            <!-- each bar: height = percentage of max value -->
+            <div class="bar-wrap">
+              <div class="bar" style="height:38%;background:var(--s5);animation-delay:.05s;"></div>
+              <div class="bar-lbl">Seg</div>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" style="height:52%;background:var(--s5);animation-delay:.12s;"></div>
+              <div class="bar-lbl">Ter</div>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" style="height:44%;background:var(--s5);animation-delay:.19s;"></div>
+              <div class="bar-lbl">Qua</div>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" style="height:68%;background:rgba(26,122,94,.35);animation-delay:.26s;"></div>
+              <div class="bar-lbl">Qui</div>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" style="height:82%;background:rgba(26,122,94,.5);animation-delay:.33s;"></div>
+              <div class="bar-lbl">Sex</div>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" style="height:91%;background:var(--g);animation-delay:.4s;"></div>
+              <div class="bar-lbl">Sáb</div>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" style="height:100%;background:linear-gradient(180deg,var(--gn),var(--g));animation-delay:.47s;box-shadow:0 0 12px rgba(26,122,94,.3);"></div>
+              <div class="bar-lbl" style="color:var(--g);font-weight:700;">Dom</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini order board -->
+        <div class="dc-board">
+          <div>
+            <div class="dc-col-head" style="background:rgba(59,130,246,.08);color:#3b82f6;">Novos</div>
+            <div class="dc-item" style="border-color:#3b82f6;">
+              <div class="dc-iname">Pedro A.</div>
+              <div class="dc-ival">R$187</div>
+            </div>
+            <div class="dc-item" style="border-color:#3b82f6;">
+              <div class="dc-iname">Sara M.</div>
+              <div class="dc-ival">R$94</div>
+            </div>
+          </div>
+          <div>
+            <div class="dc-col-head" style="background:rgba(232,144,42,.08);color:var(--amb);">Preparo</div>
+            <div class="dc-item" style="border-color:var(--amb);">
+              <div class="dc-iname">Carlos R.</div>
+              <div class="dc-ival">R$312</div>
+            </div>
+          </div>
+          <div>
+            <div class="dc-col-head" style="background:rgba(34,197,94,.08);color:#16a34a;">Entregue</div>
+            <div class="dc-item" style="border-color:#16a34a;">
+              <div class="dc-iname">Ana L. ✓</div>
+              <div class="dc-ival">R$156</div>
+            </div>
+            <div class="dc-item" style="border-color:#16a34a;">
+              <div class="dc-iname">Rita S. ✓</div>
+              <div class="dc-ival">R$231</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /dashboard card -->
+
+  </div>
+  <!-- /hero-right -->
+
+</section>
+
+<!-- ════ FEATURES SECTION ═════════════════════════════════ -->
+<section class="features" id="features">
+
+  <div class="feat-header">
+    <div class="feat-tag">Por que a Vendza</div>
+    <h2 class="feat-h">Chega de improvisar.<br/><span class="g">Hora de ter controle.</span></h2>
+    <p class="feat-desc">Cada parte do seu negócio conectada. Do pedido ao cliente fiel, sem depender de marketplace nem de planilha.</p>
+  </div>
+
+  <!-- BENTO GRID -->
+  <div class="feat-bento">
+
+    <!-- ── IA HERO CARD (2×2) ── -->
+    <div class="fb-ai">
+      <div class="fb-ai-badge">Exclusivo Vendza</div>
+      <!-- Ícone CPU — representa IA sem ser genérico -->
+      <div class="fb-ai-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gn);">
+          <rect x="6" y="6" width="12" height="12" rx="2"/>
+          <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>
+          <path d="M10 10h4v4h-4z" fill="rgba(34,212,153,.3)" stroke="var(--gn)"/>
+        </svg>
+      </div>
+      <h3 class="fb-ai-t">IA que atende<br/>o seu negócio</h3>
+      <p class="fb-ai-d">Não é automação genérica. Você descreve o que precisa — recuperar cliente inativo, avisar sobre promoção, prever falta de estoque — e a IA faz. Configurada pra sua operação, não pra operação de outra pessoa.</p>
+      <div class="fb-ai-activity">
+        <div class="fb-ai-dot"></div>
+        <span class="fb-ai-tw" id="ai-tw"></span><span class="fb-ai-cursor"></span>
+      </div>
+      <div class="fb-ai-tags">
+        <span class="fb-ai-tag">WhatsApp</span>
+        <span class="fb-ai-tag">Estoque</span>
+        <span class="fb-ai-tag">Reativação</span>
+        <span class="fb-ai-tag">Relatórios</span>
+        <span class="fb-ai-tag">RH</span>
+      </div>
+    </div>
+
+    <!-- ── CANAL DE VENDA (col3, row1) ── -->
+    <div class="fb-card fb-canal">
+      <div class="fb-icon" style="background:var(--gl);color:var(--g);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+      </div>
+      <div class="fb-t">Venda sem pagar comissão</div>
+      <div class="fb-d">Sua loja no seu domínio, com catálogo, checkout e entrega configurados por você. O cliente é seu — não do marketplace.</div>
+      <div class="fb-badge">✓ Zero comissão</div>
+    </div>
+
+    <!-- ── BOARD DE PEDIDOS (col3, row2) ── -->
+    <div class="fb-card" style="padding:20px 20px 16px;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="display:flex;align-items:center;color:#3b82f6;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="3" x2="21" y2="3"/>
+            <rect x="3" y="6" width="5" height="12" rx="1.5"/>
+            <rect x="9.5" y="6" width="5" height="7" rx="1.5"/>
+            <rect x="16" y="6" width="5" height="10" rx="1.5"/>
+          </svg>
+        </span>
+        <div class="fb-t" style="margin-bottom:0;font-size:13px;">Board em tempo real</div>
+      </div>
+      <div class="fb-mini-board" style="flex:1;">
+        <div class="fb-mini-col">
+          <div class="fb-mini-head" style="background:rgba(59,130,246,.08);color:#3b82f6;">Novo</div>
+          <div class="fb-mini-item" style="border-color:#3b82f6;">R$187</div>
+          <div class="fb-mini-item" style="border-color:#3b82f6;">R$94</div>
+        </div>
+        <div class="fb-mini-col">
+          <div class="fb-mini-head" style="background:rgba(232,144,42,.08);color:var(--amb);">Prep.</div>
+          <div class="fb-mini-item" style="border-color:var(--amb);">R$312</div>
+          <div class="fb-mini-item" style="border-color:var(--amb);">R$78</div>
+        </div>
+        <div class="fb-mini-col">
+          <div class="fb-mini-head" style="background:rgba(26,122,94,.08);color:var(--g);">Entregue</div>
+          <div class="fb-mini-item" style="border-color:var(--g);">✓ R$156</div>
+          <div class="fb-mini-item" style="border-color:var(--g);">✓ R$231</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CRM (col1, row3) ── -->
+    <div class="fb-card">
+      <div class="fb-icon" style="background:rgba(139,92,246,.08);color:#8b5cf6;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="7" rx="9" ry="3"/>
+          <path d="M3 7v10c0 1.66 3.99 3 9 3s9-1.34 9-3V7"/>
+          <path d="M3 12c0 1.66 3.99 3 9 3s9-1.34 9-3"/>
+        </svg>
+      </div>
+      <div class="fb-t">Sabe quem é fiel</div>
+      <div class="fb-d">Histórico completo de cada cliente: o que comprou, quando sumiu, quanto gastou. Pare de tratar regular como desconhecido.</div>
+      <div class="fb-badge">✓ Automático</div>
+    </div>
+
+    <!-- ── WHATSAPP (col2, row3) ── -->
+    <div class="fb-card">
+      <div class="fb-icon" style="background:rgba(37,211,102,.08);color:#15a877;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          <line x1="8" y1="9" x2="16" y2="9"/>
+          <line x1="8" y1="13" x2="13" y2="13"/>
+        </svg>
+      </div>
+      <div class="fb-t">WhatsApp vira painel</div>
+      <div class="fb-d">Pedido que chega no WhatsApp entra direto no board. Sem copiar manualmente, sem post-it, sem esquecimento no meio da correria.</div>
+      <div class="fb-badge">✓ Integração nativa</div>
+    </div>
+
+    <!-- ── DASHBOARD (col3, row3) ── -->
+    <div class="fb-card">
+      <div class="fb-icon" style="background:var(--gl);color:var(--g);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="2" y1="20" x2="22" y2="20" stroke-width="1.5"/>
+          <rect x="3" y="11" width="4" height="9" rx="1"/>
+          <rect x="10" y="6" width="4" height="14" rx="1"/>
+          <rect x="17" y="3" width="4" height="17" rx="1"/>
+        </svg>
+      </div>
+      <div class="fb-t">Números que fazem sentido</div>
+      <div class="fb-d">Faturamento real, ticket médio, produtos mais vendidos e clientes inativos. Tudo numa tela, sem precisar puxar planilha.</div>
+      <div class="fb-badge">✓ Dados reais</div>
+    </div>
+
+  </div>
+
+  <div class="cta-block">
+    <div class="cta-gtag">Pronto para parar de trabalhar pra marketplace?</div>
+    <h3 class="cta-gt">Controle total.<br/>Zero comissão. Começa hoje.</h3>
+    <p class="cta-gd">Canal próprio, board de pedidos e CRM em um dia. Sem contrato e sem surpresa na fatura.</p>
+    <div class="cta-btns">
+      <button class="btn-cp" onclick="openModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Criar minha conta
+      </button>
+      <button class="btn-cs" style="display:flex;align-items:center;gap:8px;" onclick="openModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          <line x1="8" y1="9" x2="16" y2="9"/>
+        </svg>
+        Falar com a equipe
+      </button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ════ COMO FUNCIONA ══════════════════════════════════════ -->
+<section class="how" id="como-funciona">
+  <div class="how-inner">
+    <div class="how-header">
+      <div class="feat-tag">Como funciona</div>
+      <h2 class="feat-h">Três passos.<br/><span class="g">Do caos ao controle.</span></h2>
+      <p class="feat-desc">Sem migração complicada. Sem treinar equipe por semanas. Sem pagar nada extra pra começar.</p>
+    </div>
+    <div class="how-steps">
+
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="how-num">01</div>
+        <div class="how-step-t">Seu canal em minutos</div>
+        <p class="how-step-d">Configure sua loja, catálogo e zona de entrega. Sem depender de marketplace, sem comissão de terceiro.</p>
+      </div>
+
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="3" x2="21" y2="3"/>
+            <rect x="3" y="6" width="5" height="12" rx="1.5"/>
+            <rect x="9.5" y="6" width="5" height="7" rx="1.5"/>
+            <rect x="16" y="6" width="5" height="10" rx="1.5"/>
+          </svg>
+        </div>
+        <div class="how-num">02</div>
+        <div class="how-step-t">Todos os pedidos num lugar</div>
+        <p class="how-step-d">WhatsApp, loja online e balcão aparecem no mesmo board. Nenhum pedido se perde, nenhum cliente fica sem resposta.</p>
+      </div>
+
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="6" width="12" height="12" rx="2"/>
+            <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>
+            <path d="M10 10h4v4h-4z" fill="rgba(26,122,94,.2)" stroke="none"/>
+          </svg>
+        </div>
+        <div class="how-num">03</div>
+        <div class="how-step-t">A IA trabalha por você</div>
+        <p class="how-step-d">Recuperação de clientes sumidos, avisos de estoque, relatórios automáticos. Automação sob medida pro seu negócio.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════ PARA QUEM É ══════════════════════════════════════ -->
+<section class="segments" id="segmentos">
+  <div class="seg-inner">
+    <div class="seg-header">
+      <div class="feat-tag">Para quem é</div>
+      <h2 class="feat-h">Feito para quem<br/><span class="g">vende de verdade.</span></h2>
+      <p class="feat-desc" style="max-width:600px;">Adegas, restaurantes, distribuidoras e qualquer comércio que entrega. Se você vende, a Vendza organiza.</p>
+    </div>
+    <div class="seg-grid">
+
+      <div class="seg-card">
+        <div class="seg-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Adega / Bebidas
+        </div>
+        <div class="seg-t">Pare de pagar 30% pro Zé Delivery.</div>
+        <div class="seg-dor">Marketplace come sua margem e os clientes ficam com eles — você só vê a entrega.</div>
+        <div class="seg-resolve">Canal direto com vitrine de vinhos, cervejas e destilados. <strong>O cliente compra no seu link, a margem fica com você.</strong></div>
+      </div>
+
+      <div class="seg-card">
+        <div class="seg-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="9" x2="16" y2="9"/></svg>
+          Restaurante / Delivery
+        </div>
+        <div class="seg-t">Pedido no WhatsApp, anotação no papel, esquecimento no rush.</div>
+        <div class="seg-dor">No pico da noite, pedidos caem no chat e você não sabe o que entrou, o que saiu ou o que esqueceu.</div>
+        <div class="seg-resolve">Board em tempo real com todos os canais integrados. <strong>Cozinha vê, entregador vê, dono vê — ao mesmo tempo.</strong></div>
+      </div>
+
+      <div class="seg-card">
+        <div class="seg-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="9" ry="3"/><path d="M3 7v10c0 1.66 3.99 3 9 3s9-1.34 9-3V7"/><path d="M3 12c0 1.66 3.99 3 9 3s9-1.34 9-3"/></svg>
+          Distribuidora / B2B
+        </div>
+        <div class="seg-t">Carteira grande, histórico de ninguém.</div>
+        <div class="seg-dor">Cliente B2B precisa de atendimento personalizado, mas você não tem histórico de pedido de nenhum deles.</div>
+        <div class="seg-resolve">CRM com histórico por cliente, pedidos recorrentes e automação de follow-up. <strong>Você age antes de perder o contrato.</strong></div>
+      </div>
+
+      <div class="seg-card">
+        <div class="seg-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="20" x2="22" y2="20" stroke-width="1.5"/><rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="17" rx="1"/></svg>
+          Comércio local
+        </div>
+        <div class="seg-t">Faturamento existe. Mas de onde vem?</div>
+        <div class="seg-dor">Você vende, mas não sabe de onde vem o resultado nem como repetir o que deu certo no mês anterior.</div>
+        <div class="seg-resolve">Dashboard com métricas reais e IA que identifica padrão de compra. <strong>Você age antes de perder o cliente.</strong></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════ PRICING ══════════════════════════════════════════ -->
+<section class="pricing" id="precos">
+  <div class="price-inner">
+    <div class="seg-header">
+      <div class="feat-tag">Preços</div>
+      <h2 class="feat-h">Um preço.<br/><span class="g">Tudo incluso.</span></h2>
+      <p class="feat-desc" style="max-width:520px;">Sem taxa por pedido. Sem cobrança por cliente. Sem surpresa no mês.</p>
+    </div>
+    <div class="price-grid">
+
+      <!-- Plano principal -->
+      <div class="price-card main">
+        <div class="price-tag">✓ Plano único</div>
+        <div class="price-name">Vendza Plataforma</div>
+        <div class="price-val"><sup>R$</sup>350<span>/mês</span></div>
+        <div class="price-per">Sem fidelidade. Cancele quando quiser. <strong>14 dias grátis.</strong></div>
+        <div class="price-divider"></div>
+        <ul class="price-items">
+          <li>Vitrine própria com domínio customizável</li>
+          <li>Board de pedidos em tempo real</li>
+          <li>CRM com histórico completo de clientes</li>
+          <li>WhatsApp integrado ao painel</li>
+          <li>Dashboard de métricas e relatórios</li>
+          <li>Catálogo ilimitado de produtos</li>
+          <li>App para o cliente (PWA, sem instalação)</li>
+          <li>Suporte humanizado — não é bot</li>
+        </ul>
+        <button class="btn-h-p price-cta" onclick="openModal()" style="justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Começar 14 dias grátis
+        </button>
+      </div>
+
+      <!-- IA sob medida -->
+      <div class="price-card">
+        <div class="price-tag" style="background:var(--ambl);border-color:rgba(232,144,42,.3);color:var(--amb);">✦ Exclusivo</div>
+        <div class="price-name">IA sob medida</div>
+        <div class="price-val" style="font-size:32px;color:var(--amb);">Sob consulta</div>
+        <div class="price-per">Escopo definido antes de começar. Sem surpresa.</div>
+        <div class="price-divider"></div>
+        <ul class="price-items">
+          <li>Agente de WhatsApp treinado no seu negócio</li>
+          <li>Campanhas automáticas de reativação</li>
+          <li>Análise inteligente de estoque</li>
+          <li>Previsão de demanda semanal</li>
+          <li>Engenheiro de IA dedicado</li>
+          <li>Relatórios automáticos por e-mail ou WhatsApp</li>
+        </ul>
+        <button class="btn-h-s price-cta" style="justify-content:center;width:100%;padding:13px 26px;" onclick="openModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="9" x2="16" y2="9"/></svg>
+          Falar com a equipe
+        </button>
+        <div class="price-ai-note">
+          <strong>Não é um chatbot genérico.</strong> Cada automação é configurada para a operação do seu negócio — com escopo e entrega definidos antes de cobrar.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Comparação -->
+    <div class="price-compare">
+      <div class="pc-head">
+        <div></div>
+        <div>Vendza</div>
+        <div>Zé Delivery / iFood</div>
+      </div>
+      <div class="pc-row">
+        <div class="pc-cell label">Taxa por pedido</div>
+        <div class="pc-cell good">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Zero comissão
+        </div>
+        <div class="pc-cell bad">20–30% por pedido</div>
+      </div>
+      <div class="pc-row">
+        <div class="pc-cell label">Dados dos clientes</div>
+        <div class="pc-cell good">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          São seus, sempre
+        </div>
+        <div class="pc-cell bad">Ficam com a plataforma</div>
+      </div>
+      <div class="pc-row">
+        <div class="pc-cell label">CRM nativo</div>
+        <div class="pc-cell good">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Incluso
+        </div>
+        <div class="pc-cell bad">Não existe</div>
+      </div>
+      <div class="pc-row">
+        <div class="pc-cell label">Sua marca, seu domínio</div>
+        <div class="pc-cell good">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          100%
+        </div>
+        <div class="pc-cell bad">Você é só mais um</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════ FAQ ══════════════════════════════════════════════ -->
+<section class="faq" id="faq">
+  <div class="faq-inner">
+    <div class="seg-header" style="text-align:center;">
+      <div class="feat-tag">Dúvidas frequentes</div>
+      <h2 class="feat-h">Perguntas que<br/><span class="g">todo dono faz.</span></h2>
+    </div>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          R$350/mês é tudo ou tem cobrança extra?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+        </button>
+        <div class="faq-a"><p>Tudo incluso no plano único: canal de venda, board, CRM, WhatsApp integrado e dashboard. Automação com IA sob medida é cobrada à parte, com escopo definido antes de começar. Sem cobrança por pedido ou por cliente.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Meus clientes precisam baixar algum aplicativo?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+        </button>
+        <div class="faq-a"><p>Não. Sua loja funciona no navegador, como um site — sem instalação de nada. O cliente acessa pelo link, pede e paga. Você compartilha o link no WhatsApp, no Instagram ou onde quiser.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Posso continuar usando o WhatsApp do jeito que uso hoje?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+        </button>
+        <div class="faq-a"><p>Sim. Os pedidos recebidos no seu WhatsApp entram automaticamente no board. Você atende no chat normalmente — o que muda é que o pedido aparece registrado, organizado e rastreável no painel, sem depender de memória ou papel.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Quanto tempo leva para começar a vender?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+        </button>
+        <div class="faq-a"><p>Em uma tarde, você já está operando. Cadastra a loja, sobe o catálogo e configura a área de entrega. Nossa equipe te acompanha no onboarding sem custo extra — não é uma gravação, é uma pessoa.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Tem fidelidade ou multa para cancelar?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+        </button>
+        <div class="faq-a"><p>Sem fidelidade e sem multa. Você cancela quando quiser, pelo painel, e a cobrança para no mês seguinte. Seus dados ficam disponíveis para exportação por 30 dias após o cancelamento.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Qual a diferença real para o Zé Delivery e Neemo?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+        </button>
+        <div class="faq-a"><p>Zé Delivery cobra comissão e os clientes ficam com eles — você é só mais um fornecedor. Neemo tem painel pesado e CRM pouco acionável. Vendza é canal próprio, com CRM desde o primeiro dia, sem comissão e sem complexidade desnecessária.</p></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════ LOGIN MODAL ══════════════════════════════════════ -->
+<div class="modal-backdrop" id="modal" onclick="handleBackdropClick(event)">
+  <div class="modal-card" id="modal-card">
+
+    <button class="modal-close" onclick="closeModal()" aria-label="Fechar">✕</button>
+
+    <!-- Logo -->
+    <div class="modal-logo">
+      <svg width="28" height="28" viewBox="0 0 72 72" fill="none">
+        <defs>
+          <linearGradient id="mlg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#22D499"/>
+            <stop offset="100%" stop-color="#1A7A5E"/>
+          </linearGradient>
+          <filter id="mlf"><feGaussianBlur stdDeviation="1.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path d="M36 2 L68 20 L68 56 L36 74 L4 56 L4 20 Z"
+          fill="#e8f5f0" stroke="rgba(26,122,94,0.4)" stroke-width="1.5"/>
+        <path d="M16 22L29 54L36 38L43 54L56 22"
+          stroke="url(#mlg)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#mlf)"/>
+        <path d="M16 22L29 54L36 38L43 54L56 22"
+          stroke="#1A7A5E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="36" cy="38" r="4.5" fill="#E8902A" filter="url(#mlf)" opacity=".8"/>
+        <circle cx="36" cy="38" r="3" fill="#E8902A"/>
+        <circle cx="36" cy="38" r="1.5" fill="#FFB347"/>
+      </svg>
+      <div class="modal-wm">Vend<em>z</em>a</div>
+    </div>
+
+    <!-- Header -->
+    <div class="modal-h">
+      <h2 class="modal-title">Acessar painel</h2>
+      <p class="modal-sub">Bem-vindo de volta. <strong>Seu negócio está esperando.</strong></p>
+    </div>
+
+    <!-- Email -->
+    <div class="inp-group">
+      <label class="inp-label" for="m-email">E-mail</label>
+      <input class="inp" type="email" id="m-email" placeholder="seu@email.com.br" autocomplete="email"/>
+    </div>
+
+    <!-- Senha -->
+    <div class="inp-group">
+      <label class="inp-label" for="m-pass">Senha</label>
+      <div class="inp-wrap">
+        <input class="inp" type="password" id="m-pass" placeholder="••••••••••••" autocomplete="current-password"/>
+        <button class="inp-eye" type="button" onclick="togglePass()" aria-label="Mostrar senha">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Remember + forgot -->
+    <div class="inp-row">
+      <label class="inp-check">
+        <input type="checkbox" id="m-rem"/>
+        <span>Lembrar por 30 dias</span>
+      </label>
+      <a href="#" class="inp-forgot">Esqueceu a senha?</a>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn-submit" type="button" id="btn-submit" onclick="handleLogin()">
+      Entrar no painel
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </button>
+
+    <!-- Divider -->
+    <div class="modal-div"><span>ou</span></div>
+
+    <!-- New user -->
+    <p class="modal-new">
+      Novo na Vendza? <a href="#">Fale com nosso time →</a>
+    </p>
+
+    <!-- Social proof -->
+    <div class="modal-sp">
+      <div class="sp-avs">
+        <div class="sp-av" style="background:linear-gradient(135deg,#1A7A5E,#22D499);">R</div>
+        <div class="sp-av" style="background:linear-gradient(135deg,#E8902A,#FFB347);">D</div>
+        <div class="sp-av" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);">Z</div>
+        <div class="sp-av" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);">C</div>
+        <div class="sp-av" style="background:var(--s6);font-size:9px;color:var(--s3);">+308</div>
+      </div>
+      <div class="sp-t"><strong>312 comerciantes</strong> já gerenciam com a Vendza</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ SCRIPTS ═══════════════════════════════════════════ -->
+<script>
+/* ─ Smooth scroll helper (respeita navbar fixa) ─ */
+function scrollTo(id, e){
+  if(e) e.preventDefault();
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ─ Login handler (preview — sem auth real) ─ */
+function handleLogin(){
+  const email = document.getElementById('m-email').value.trim();
+  const pass  = document.getElementById('m-pass').value;
+  const btn   = document.getElementById('btn-submit');
+  if(!email){
+    document.getElementById('m-email').focus();
+    document.getElementById('m-email').style.borderColor='#ef4444';
+    document.getElementById('m-email').style.boxShadow='0 0 0 3px rgba(239,68,68,.12)';
+    setTimeout(()=>{
+      document.getElementById('m-email').style.borderColor='';
+      document.getElementById('m-email').style.boxShadow='';
+    },2000);
+    return;
+  }
+  if(!pass){
+    document.getElementById('m-pass').focus();
+    document.getElementById('m-pass').style.borderColor='#ef4444';
+    document.getElementById('m-pass').style.boxShadow='0 0 0 3px rgba(239,68,68,.12)';
+    setTimeout(()=>{
+      document.getElementById('m-pass').style.borderColor='';
+      document.getElementById('m-pass').style.boxShadow='';
+    },2000);
+    return;
+  }
+  /* Estado loading */
+  btn.disabled=true;
+  btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .7s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Entrando...';
+  /* Redireciona para o painel real após 900ms */
+  setTimeout(()=>{
+    window.location.href='/';
+  }, 900);
+}
+
+/* ─ Modal ─ */
+function openModal(){
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>document.getElementById('m-email').focus(), 350);
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow='';
+}
+function handleBackdropClick(e){
+  if(e.target===document.getElementById('modal')) closeModal();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModal();});
+
+/* ─ Password toggle ─ */
+function togglePass(){
+  const i=document.getElementById('m-pass');
+  i.type=i.type==='password'?'text':'password';
+}
+
+/* ─ Navbar scroll shadow ─ */
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY>20);
+});
+
+/* ─ Stats counter animation ─ */
+function countUp(el){
+  const target = parseFloat(el.dataset.target);
+  const prefix = el.dataset.prefix||'';
+  const suffix = el.dataset.suffix||'';
+  const decimals = el.dataset.target.includes('.')?1:0;
+  let start=null;
+  const duration=1800;
+  function step(ts){
+    if(!start) start=ts;
+    const p=Math.min((ts-start)/duration,1);
+    const ease=1-Math.pow(1-p,4);
+    el.textContent=prefix+(target*ease).toFixed(decimals)+suffix;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('[data-target]').forEach(countUp);
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:.5});
+const statsBlock=document.querySelector('.h-stats');
+if(statsBlock) io.observe(statsBlock);
+
+/* ─ Headline stagger entrance ─ */
+['.hl-back','.hl-back2','.hl-front'].forEach((sel,i)=>{
+  const el=document.querySelector(sel);
+  if(!el) return;
+  el.style.cssText+=`opacity:0;transform:translateY(22px);
+    transition:opacity .7s ease ${i*.14}s,transform .7s cubic-bezier(.34,1.2,.64,1) ${i*.14}s;`;
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      el.style.opacity='1';el.style.transform='translateY(0)';
+    });
+  });
+});
+
+/* ─ FAQ accordion ─ */
+function toggleFaq(btn){
+  const item=btn.closest('.faq-item');
+  const isOpen=item.classList.contains('open');
+  // fecha todos
+  document.querySelectorAll('.faq-item.open').forEach(i=>{if(i!==item)i.classList.remove('open');});
+  item.classList.toggle('open',!isOpen);
+}
+
+/* ─ AI Typewriter ─ */
+(function(){
+  const el = document.getElementById('ai-tw');
+  if(!el) return;
+  const msgs = [
+    'Analisando padrões de compra...',
+    'Reativando 14 clientes inativos...',
+    'Gerando relatório de estoque...',
+    'Agendando campanha de WhatsApp...',
+    'Prevendo demanda para o fim de semana...',
+    'Identificando produtos com baixa saída...',
+  ];
+  let mi=0, ci=0, deleting=false, pause=0;
+  function tick(){
+    if(pause>0){pause--;setTimeout(tick,50);return;}
+    const msg=msgs[mi];
+    if(!deleting){
+      el.textContent=msg.slice(0,ci+1);
+      ci++;
+      if(ci===msg.length){pause=60;deleting=true;}
+      setTimeout(tick,55);
+    } else {
+      el.textContent=msg.slice(0,ci-1);
+      ci--;
+      if(ci===0){deleting=false;mi=(mi+1)%msgs.length;pause=10;}
+      setTimeout(tick,30);
+    }
+  }
+  setTimeout(tick,1200);
+})();
+
+/* ─ Cursor-follow radial fill nos CTAs ─ */
+document.querySelectorAll('.btn-h-p, .btn-cp').forEach(btn=>{
+  btn.addEventListener('mousemove',e=>{
+    const r=btn.getBoundingClientRect();
+    btn.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    btn.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+
+/* ─ Spotlight nos bento cards ─ */
+document.querySelectorAll('.fb-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    card.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+
+/* ─ Bento cards entrance animation ─ */
+const bentoCards=document.querySelectorAll('.fb-card,.fb-ai');
+const bIo=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting){
+      const idx=Array.from(bentoCards).indexOf(e.target);
+      setTimeout(()=>{
+        e.target.style.opacity='1';
+        e.target.style.transform='translateY(0)';
+      },idx*60);
+      bIo.unobserve(e.target);
+    }
+  });
+},{threshold:.1});
+bentoCards.forEach(c=>{
+  c.style.opacity='0';
+  c.style.transform='translateY(24px)';
+  c.style.transition='opacity .6s ease,transform .6s cubic-bezier(.34,1.1,.64,1)';
+  bIo.observe(c);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "vendza-agents": {
+      "source": {
+        "source": "directory",
+        "path": "./.claude/marketplaces/vendza-agents"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "agent-orchestration@vendza-agents": true,
+    "agent-teams@vendza-agents": true
+  }
+}

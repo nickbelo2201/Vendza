@@ -1,0 +1,80 @@
+# Ralph Progress Log — Vendza V1
+Started: 2026-04-02
+---
+
+## Codebase Patterns
+
+- **storeId nunca do body:** Resolver sempre por `STORE_SLUG` env (storefront) ou `partnerContext` (partner)
+- **Envelope HTTP:** Todas as respostas usam `ok(data, { stub: false })` de `lib/http.js`
+- **ESM imports locais:** Usar extensão `.js` mesmo em arquivos `.ts`
+- **Prisma client:** Importar de `@vendza/database` (não do package diretamente)
+- **OrderEvent:** append-only — nunca UPDATE ou DELETE
+- **Server Component → CSS hover:** Nunca passar event handlers via props de Server para Client Component. Usar CSS `:hover` classes.
+- **web-partner prefixo CSS:** `.wp-*`
+- **web-client prefixo CSS:** `.wc-*`
+- **Carrinho localStorage key:** `vendza_carrinho`
+- **Age gate localStorage key:** `vendza_age_verified`
+- **Typecheck:** `corepack pnpm typecheck` do diretório `app/`
+- **Socket rooms:** `store:{storeId}` para partner, `order:{publicId}` para cliente
+- **publicId format:** `PED-NNNN` (4 dígitos zero-padded, sequencial por store)
+
+---
+
+## 2026-04-02T00:00:00Z - S1-01: Storefront API config, categories e products com Prisma real
+- Criado `apps/api/src/modules/storefront/storefront-service.ts` com funções `getStorefrontConfig(storeSlug)`, `getCategories(storeId)`, `getProducts(storeId, filters)`
+- Atualizado `apps/api/src/modules/storefront/routes.ts`: 3 rotas (GET /storefront/config, GET /catalog/categories, GET /catalog/products) agora usam Prisma real com `stub: false`
+- storeId resolvido via `STORE_SLUG` env em `resolveStoreId()` helper local nas rotas
+- **Learnings:**
+  - Prisma v7 gerado no projeto NÃO exporta `Prisma.ProductWhereInput` pelo `@vendza/database` — tipos de where são do client gerado mas não re-exportados via namespace `Prisma`. Solução: usar spread de objetos condicionais direto no `findMany`.
+  - O tipo de retorno do `prisma.model.findMany()` é `any[]` porque `PrismaClient` está declarado como `any` no `.d.ts` gerado. Para usar `.map()` sem erro de implicit any, usar `type Row = (typeof results)[number]` e anotar o parâmetro.
+  - `reply.code(503).send(...)` com schema `response: { 200: ... }` causa erro TS em Fastify v5 (status 503 não é assignable to 200). Solução: usar `throw new Error(...)` para casos de configuração ausente.
+---
+
+## 2026-04-02T01:00:00Z - S4-01: Redis + BullMQ: setup e plugin Fastify
+- Todos os artefatos já estavam implementados de iteração anterior
+- `apps/api/src/plugins/redis.ts`: plugin Fastify com `getRedis()`, graceful skip se `REDIS_URL` ausente
+- `apps/api/src/jobs/queues.ts`: filas `order.placed` e `order.status_changed` com `initQueues()`
+- `apps/api/src/app.ts`: `redisPlugin_` registrado + `initQueues()` chamado no hook `onReady`
+- `bullmq` e `ioredis` presentes em `apps/api/package.json`
+- **Learnings:**
+  - `maxRetriesPerRequest: null` e `enableReadyCheck: false` são obrigatórios no ioredis para BullMQ funcionar corretamente
+  - Plugin exportado como `redisPlugin_` (com underscore) para não conflitar com nome reservado
+---
+
+## 2026-04-02T02:00:00Z - S4-02: Redis + BullMQ: workers e graceful shutdown
+- Criado `apps/api/src/jobs/workers.ts`: Worker para `order.placed` e `order.status_changed` com console.log + placeholder TODO WhatsApp
+- Atualizado `apps/api/src/server.ts`: `startWorkers()` após `app.listen()`, handlers `SIGTERM`/`SIGINT` que chamam `closeWorkers()` + fecham filas + `app.close()`
+- Adicionado enqueue em `storefront-service.ts`: `getOrderPlacedQueue()?.add(...)` após criar pedido
+- Adicionado enqueue em `orders-service.ts`: `getOrderStatusChangedQueue()?.add(...)` após mudar status
+- **Learnings:**
+  - `Queue?.add()` com optional chaining funciona sem Redis — retorna `undefined` sem erro
+  - Workers devem ser iniciados APÓS `app.listen()` (não em `onReady`) para ter o Redis já inicializado
+  - Graceful shutdown: ordem correta é fechar workers → fechar filas → fechar app Fastify
+---
+
+## 2026-04-02T03:00:00Z - S5-01: Build: typecheck em todos os apps
+- Validado: `corepack pnpm typecheck` passa com 0 erros em todos os workspaces (api, web-client, web-partner, database, types, ui, utils)
+- Nenhuma correção necessária — stack já estava em estado consistente
+- **Learnings:**
+  - Turbo usa cache baseado em hash de arquivos — usar `corepack pnpm typecheck` direto no package para forçar verificação sem cache
+---
+
+## 2026-04-02T02:00:00Z - S5-02: Build: pnpm build all + .env.example atualizado
+- `corepack pnpm build` passou com 0 erros em todos os workspaces (api, web-client, web-partner)
+- `.env.example` já continha todas as vars V1 corretamente marcadas como REQUIRED/OPTIONAL
+- Build output: web-client 5 rotas, web-partner 9 rotas (todos dynamic/static corretos)
+- **Learnings:**
+  - `corepack pnpm typecheck --force` pode retornar erros falso-positivos do cache Turbo em alguns casos — rodar novamente sem `--force` confirma estado real
+  - O `.env.example` já tinha todas as variáveis da spec S5-02 (DATABASE_URL, SUPABASE_*, STORE_SLUG, REDIS_URL, NEXT_PUBLIC_*)
+---
+
+## 2026-04-02T04:00:00Z - Sessão: Build fixes (OneDrive + Next.js route groups)
+- Corrigido erro `ENOENT: _not-found/page.js.nft.json` no web-partner via remoção de `webpack: {cache: false}` do ciclo de build
+- Corrigido erro `ENOENT: pages-manifest.json` no web-client (causado por modificação de arquivos durante a build)
+- Scripts de build simplificados para `next build` (sem cleanup manual do `.next` que causava problemas no OneDrive)
+- `corepack pnpm build` passa com 7/7 workspaces: api, web-client, web-partner, database, types, ui, utils
+- **Learnings:**
+  - Em ambiente OneDrive (cloud-sync), modificar `next.config.ts` enquanto o build roda causa `ENOENT` em arquivos de manifesto — builds falham quando linter/hook altera config mid-build
+  - `web-partner` com `outputFileTracingRoot` + `webpack: {cache: false}` simultâneos falha em `_not-found.nft.json`; resolve rodando a build SEM modificações concorrentes
+  - Builds devem ser executados sequencialmente (primeiro cada app isolado, depois Turbo usa cache) quando hooks automáticos estão ativos
+---

@@ -1,0 +1,35 @@
+{
+  "name": "vendza-app",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:api": "corepack pnpm --filter @vendza/api dev",
+    "dev:web-client": "corepack pnpm --filter @vendza/web-client dev",
+    "dev:web-partner": "corepack pnpm --filter @vendza/web-partner dev",
+    "build": "turbo run build --concurrency=1",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "corepack pnpm --filter @vendza/database db:generate",
+    "db:migrate": "corepack pnpm --filter @vendza/database db:migrate",
+    "db:push": "corepack pnpm --filter @vendza/database db:push",
+    "db:seed": "corepack pnpm --filter @vendza/database db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^6.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "sharp"
+    ]
+  }
+}
