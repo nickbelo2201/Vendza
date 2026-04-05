@@ -18,7 +18,29 @@
       "Bash(cp:*)",
       "Bash(cp -r \"/c/Users/USER/.agents\" \"/c/Users/USER/nicholas-ios-framework/framework-nicholas-ios/.agents\")",
       "Bash(cp -r \"/c/Users/USER/.agents-global\" \"/c/Users/USER/nicholas-ios-framework/framework-nicholas-ios/.agents-global\")",
-      "Bash(gh repo:*)"
+      "Bash(gh repo:*)",
+      "Bash(ls:*)",
+      "Skill(agent-browser)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001)",
+      "Bash(npm list:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"PID: $!\")",
+      "Bash(echo '[:*)",
+      "Bash(curl -s -X GET 'https://lpjjpvwlwvzlmjyedkfd.supabase.co/auth/v1/admin/users?page=1&per_page=5' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwampwdndsd3Z6bG1qeWVka2ZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3Njg2OSwiZXhwIjoyMDkwMDUyODY5fQ.eyafTYpqTbdmFVcTnYF0T5k1wMrIJpb4L6JeTzxozA0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwampwdndsd3Z6bG1qeWVka2ZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3Njg2OSwiZXhwIjoyMDkwMDUyODY5fQ.eyafTYpqTbdmFVcTnYF0T5k1wMrIJpb4L6JeTzxozA0')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(u.get\\('email','?'\\), '-', u.get\\('id','?'\\)[:8]\\) for u in d.get\\('users',[]\\)]\")",
+      "Bash(curl -s -X GET 'https://lpjjpvwlwvzlmjyedkfd.supabase.co/auth/v1/admin/users?page=1&per_page=10' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwampwdndsd3Z6bG1qeWVka2ZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3Njg2OSwiZXhwIjoyMDkwMDUyODY5fQ.eyafTYpqTbdmFVcTnYF0T5k1wMrIJpb4L6JeTzxozA0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwampwdndsd3Z6bG1qeWVka2ZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3Njg2OSwiZXhwIjoyMDkwMDUyODY5fQ.eyafTYpqTbdmFVcTnYF0T5k1wMrIJpb4L6JeTzxozA0')",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);\\(j.users||[]\\).forEach\\(u=>console.log\\(u.email,'|',u.id.slice\\(0,8\\)\\)\\)}\\)\")",
+      "Bash(curl:*)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);const snap=r.find\\(x=>x.command[0]==='snapshot'\\);if\\(snap\\)console.log\\(JSON.stringify\\(snap.result.refs\\)\\)}\\)\")",
+      "Bash(echo \"DONE:$?\")",
+      "Bash([ -s /c/Users/DELL/AppData/Local/Temp/snap-result.json ])",
+      "Bash(node -e \"const r=require\\('/c/Users/DELL/AppData/Local/Temp/snap-result.json'\\);r.forEach\\(x=>console.log\\(x.command[0],x.success?'OK':'ERR',JSON.stringify\\(x.error||''\\).slice\\(0,60\\)\\)\\)\")",
+      "Bash(node:*)",
+      "Bash([ -s \"C:/Users/DELL/AppData/Local/Temp/state-snap.json\" ])",
+      "Bash(break)",
+      "Bash([ -s \"C:/Users/DELL/AppData/Local/Temp/ann-result.json\" ])",
+      "Bash([ -s \"C:/Users/DELL/AppData/Local/Temp/modal-check.json\" ])",
+      "Bash(echo \"JSON written: $?\")"
     ]
   }
 }
