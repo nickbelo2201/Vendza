@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
+import { CATEGORIES } from "../data/categories";
 
 interface ProductImageProps {
   src?: string | null;
   fallbackSrc?: string | null;
   alt: string;
+  categorySlug?: string;
 }
 
-export function ProductImage({ src, fallbackSrc, alt }: ProductImageProps) {
+export function ProductImage({
+  src,
+  fallbackSrc,
+  alt,
+  categorySlug,
+}: ProductImageProps) {
   const [imgSrc, setImgSrc] = useState<string | null | undefined>(src);
   const [triedFallback, setTriedFallback] = useState(false);
 
@@ -23,12 +30,22 @@ export function ProductImage({ src, fallbackSrc, alt }: ProductImageProps) {
   };
 
   if (!imgSrc) {
+    const cat = CATEGORIES.find((c) => c.id === categorySlug);
+    const Icon = cat?.Icon ?? ImageOff;
     return (
-      <ImageOff
-        size={40}
-        strokeWidth={1}
-        style={{ color: "var(--color-text-muted)" }}
-      />
+      <div
+        style={{
+          width: "100%",
+          height: 140,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--color-text-muted)",
+          opacity: 0.45,
+        }}
+      >
+        <Icon size={44} strokeWidth={1.25} />
+      </div>
     );
   }
 

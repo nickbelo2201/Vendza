@@ -5,6 +5,7 @@ import { envelopeSchema, ok } from "../../lib/http.js";
 import {
   createInventoryMovement,
   createPartnerProduct,
+  deletePartnerProduct,
   getInventory,
   listPartnerProducts,
   updatePartnerProduct,
@@ -14,11 +15,13 @@ import { type PartnerContext } from "./context.js";
 import {
   getCustomerById,
   getDashboardSummary,
+  getPartnerReports,
   listCustomers,
   updateCustomer,
 } from "./crm-dashboard-service.js";
 import {
   createManualPartnerOrder,
+  exportPartnerOrdersCSV,
   getPartnerOrderById,
   listPartnerOrders,
   updatePartnerOrderStatus,
@@ -130,6 +133,20 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     ok(await getDashboardSummary(partnerContext(request))),
   );
 
+  app.get<{ Querystring: { from?: string; to?: string } }>(
+    "/partner/reports",
+    {
+      schema: {
+        querystring: Type.Object({
+          from: Type.Optional(Type.String()),
+          to: Type.Optional(Type.String()),
+        }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) => ok(await getPartnerReports(partnerContext(request), request.query)),
+  );
+
   app.get<{ Querystring: OrderFilters }>(
     "/partner/orders",
     {
@@ -190,6 +207,25 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  app.get<{ Querystring: { from?: string; to?: string; status?: string } }>(
+    "/partner/orders/export",
+    {
+      schema: {
+        querystring: Type.Object({
+          from: Type.Optional(Type.String()),
+          to: Type.Optional(Type.String()),
+          status: Type.Optional(Type.String()),
+        }),
+      },
+    },
+    async (request, reply) => {
+      const csv = await exportPartnerOrdersCSV(partnerContext(request), request.query);
+      reply.header("Content-Type", "text/csv");
+      reply.header("Content-Disposition", 'attachment; filename="pedidos.csv"');
+      return reply.send(csv);
+    },
+  );
+
   app.get("/partner/products", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async (request) =>
     ok(await listPartnerProducts(partnerContext(request))),
   );
@@ -241,6 +277,23 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         request.params.id,
         request.body.isAvailable,
       );
+      if (!product) {
+        return reply.code(404).send(ok({ message: "Produto nao encontrado." }));
+      }
+      return ok(product);
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    "/partner/products/:id",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const product = await deletePartnerProduct(partnerContext(request), request.params.id);
       if (!product) {
         return reply.code(404).send(ok({ message: "Produto nao encontrado." }));
       }
@@ -322,6 +375,12 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request) => ok(await updateStoreSettings(partnerContext(request), request.body)),
+  );
+
+  app.get(
+    "/partner/store/hours",
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await getStoreHours(partnerContext(request))),
   );
 
   app.patch(

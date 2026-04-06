@@ -4,6 +4,19 @@ import { formatCurrency } from "@vendza/utils";
 import { fetchStorefront, fetchStorefrontConfig } from "../../../lib/api";
 import { OrderTracker } from "../../../components/OrderTracker";
 
+export async function generateMetadata({ params }: { params: Promise<{ publicId: string }> }) {
+  const { publicId } = await params;
+  try {
+    const config = await fetchStorefrontConfig<{ branding: { name: string } }>("/storefront/config");
+    return {
+      title: `Pedido ${publicId} — ${config.branding.name}`,
+      description: `Acompanhe seu pedido ${publicId} em tempo real.`,
+    };
+  } catch {
+    return { title: `Pedido ${publicId}` };
+  }
+}
+
 type OrderEvent = {
   type: string;
   label: string;
@@ -187,7 +200,10 @@ export default async function OrderTrackingPage({
             className="wc-btn wc-btn-amber"
             style={{ textAlign: "center" }}
           >
-            💬 Falar no WhatsApp sobre este pedido
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Falar no WhatsApp sobre este pedido
           </a>
         )}
       </div>

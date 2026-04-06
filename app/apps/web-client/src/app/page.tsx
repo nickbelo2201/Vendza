@@ -28,16 +28,43 @@ type Product = {
   category: { id: string; name: string; slug: string } | null;
 };
 
-export default async function HomePage() {
+export async function generateMetadata() {
+  try {
+    const config = await fetchStorefrontConfig<{ branding: { name: string } }>("/storefront/config");
+    return {
+      title: `${config.branding.name} — Delivery`,
+      description: `Peça agora no ${config.branding.name}. Entrega rápida na sua região.`,
+      openGraph: {
+        title: `${config.branding.name} — Delivery`,
+        description: `Peça agora no ${config.branding.name}.`,
+      },
+    };
+  } catch {
+    return { title: "Vendza — Delivery" };
+  }
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ busca?: string }>;
+}) {
+  const { busca } = await searchParams;
+
+  // Monta a URL de produtos com o parâmetro de busca quando presente
+  const produtosUrl = busca
+    ? `/catalog/products?search=${encodeURIComponent(busca)}`
+    : "/catalog/products";
+
   const [config, categories, products] = await Promise.all([
     fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
     fetchStorefrontCatalog<Category[]>("/catalog/categories"),
-    fetchStorefrontCatalog<Product[]>("/catalog/products"),
+    fetchStorefrontCatalog<Product[]>(produtosUrl),
   ]);
 
-  // Usa produtos de demonstração quando o catálogo está vazio
+  // Usa produtos de demonstração quando o catálogo está vazio e não há busca ativa
   const produtosExibidos: Product[] =
-    products.length > 0 ? products : MOCK_PRODUCTS;
+    products.length > 0 ? products : busca ? [] : MOCK_PRODUCTS;
 
   return (
     <>

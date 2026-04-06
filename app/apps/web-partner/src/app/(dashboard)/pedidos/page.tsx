@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { formatCurrency } from "@vendza/utils";
 
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { StatusSelect } from "./StatusSelect";
+import { FiltroStatus } from "./FiltroStatus";
 
 type OrderItem = { productId: string; title: string; quantity: number; totalCents: number };
 type Order = {
@@ -21,13 +23,24 @@ const STATUS_LABEL: Record<string, string> = {
   delivered: "Entregue", cancelled: "Cancelado",
 };
 
-async function getPedidos(): Promise<Order[]> {
-  try { return await fetchAPI<Order[]>("/partner/orders"); }
-  catch (err) { if (err instanceof ApiError) return []; return []; }
+async function getPedidos(status?: string): Promise<Order[]> {
+  try {
+    const path = status ? `/partner/orders?status=${status}` : "/partner/orders";
+    return await fetchAPI<Order[]>(path);
+  } catch (err) {
+    if (err instanceof ApiError) return [];
+    return [];
+  }
 }
 
-export default async function OrdersPage() {
-  const pedidos = await getPedidos();
+type PageProps = {
+  searchParams: Promise<{ status?: string }>;
+};
+
+export default async function OrdersPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const statusFiltro = params.status ?? "";
+  const pedidos = await getPedidos(statusFiltro || undefined);
 
   return (
     <div className="wp-stack-lg">
@@ -43,12 +56,26 @@ export default async function OrdersPage() {
         </div>
       </div>
 
+      <div style={{ paddingBottom: 4 }}>
+        <Suspense fallback={null}>
+          <FiltroStatus statusAtivo={statusFiltro} />
+        </Suspense>
+      </div>
+
       <div className="wp-panel" style={{ padding: 0, overflow: "hidden" }}>
         {pedidos.length === 0 ? (
           <div className="wp-empty">
-            <span className="wp-empty-icon">📦</span>
-            <p className="wp-empty-title">Nenhum pedido ainda</p>
-            <p className="wp-empty-desc">Os pedidos aparecerão aqui assim que chegarem.</p>
+            <div className="wp-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              </svg>
+            </div>
+            <p className="wp-empty-title">Nenhum pedido encontrado</p>
+            <p className="wp-empty-desc">
+              {statusFiltro
+                ? `Nenhum pedido com status "${STATUS_LABEL[statusFiltro] ?? statusFiltro}".`
+                : "Os pedidos aparecerão aqui assim que chegarem."}
+            </p>
           </div>
         ) : (
           <table className="wp-table">

@@ -207,6 +207,27 @@ export async function getInventory(context: PartnerContext) {
   return inventory.map(mapInventoryItem);
 }
 
+export async function deletePartnerProduct(context: PartnerContext, productId: string) {
+  const existing = await findStoreProduct(context, productId);
+  if (!existing) {
+    return null;
+  }
+
+  // Soft-delete: marcar como indisponível para preservar InventoryMovement (append-only).
+  // Não deletar InventoryItem nem Product para manter integridade do histórico.
+  const product = await prisma.product.update({
+    where: { id: existing.id },
+    data: { isAvailable: false },
+    include: {
+      category: {
+        select: { slug: true },
+      },
+    },
+  });
+
+  return mapProduct(product);
+}
+
 export async function createInventoryMovement(context: PartnerContext, input: InventoryMovementInput) {
   const inventoryItem = await prisma.inventoryItem.findFirst({
     where: {

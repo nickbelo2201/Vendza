@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { CarrinhoProvider } from "../context/CarrinhoContext";
 import { Header } from "../components/Header";
@@ -42,7 +43,9 @@ export default async function RootLayout({
       <body>
         <CarrinhoProvider>
           <div className="wc-shell">
-            <Header nomeLoja={nomeLoja} />
+            <Suspense fallback={<header className="wc-header" />}>
+              <Header nomeLoja={nomeLoja} />
+            </Suspense>
             <div className="wc-content-area">
               <Sidebar />
               <main className="wc-main">{children}</main>

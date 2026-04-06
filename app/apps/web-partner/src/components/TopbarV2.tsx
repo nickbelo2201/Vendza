@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { createClient } from "../utils/supabase/client";
+import { useNewOrders } from "../hooks/useNewOrders";
 
 const ROUTE_META: Record<string, { secao: string; titulo: string }> = {
   "/": { secao: "Operação", titulo: "Visão Geral" },
@@ -18,8 +20,8 @@ const ROUTE_META: Record<string, { secao: string; titulo: string }> = {
 export function TopbarV2() {
   const pathname = usePathname();
   const router = useRouter();
-  const [lojaAberta, setLojaAberta] = useState(true);
   const [carregandoLogout, setCarregandoLogout] = useState(false);
+  const { count: novoPedidos, reset: resetNovoPedidos } = useNewOrders();
 
   const meta = ROUTE_META[pathname] || { secao: "Dashboard", titulo: "Página" };
 
@@ -48,22 +50,37 @@ export function TopbarV2() {
 
       {/* Direita: ações */}
       <div className="topbar-right">
+        {/* Link de Pedidos com badge de novos pedidos */}
+        <Link
+          href="/pedidos"
+          onClick={resetNovoPedidos}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            position: "relative", textDecoration: "none",
+          }}
+          className="topbar-btn"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          Pedidos
+          {novoPedidos > 0 && (
+            <span style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              minWidth: 18, height: 18, borderRadius: 9,
+              background: "#ef4444", color: "#fff",
+              fontSize: 10, fontWeight: 700,
+              padding: "0 5px",
+              lineHeight: 1,
+            }}>
+              {novoPedidos > 99 ? "99+" : novoPedidos}
+            </span>
+          )}
+        </Link>
+
         {/* Dúvidas */}
         <button className="topbar-btn" type="button">
           Dúvidas
-        </button>
-
-        {/* Toggle Loja Aberta */}
-        <button
-          className="topbar-toggle"
-          type="button"
-          onClick={() => setLojaAberta((v) => !v)}
-          aria-pressed={lojaAberta}
-        >
-          <span className="topbar-toggle-label">Loja Aberta</span>
-          <div className={`topbar-toggle-pill ${lojaAberta ? "on" : "off"}`}>
-            <div className="topbar-toggle-dot" />
-          </div>
         </button>
 
         {/* Minha Conta */}

@@ -1,9 +1,19 @@
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { FormConfiguracoes } from "./FormConfiguracoes";
+import { ZonasEntrega } from "./ZonasEntrega";
+import { HorariosForm } from "./HorariosForm";
 
 type StoreSettings = {
   id: string; name: string; slug: string;
   whatsappPhone: string; status: string; minimumOrderValueCents: number;
+};
+
+type Zona = {
+  id?: string;
+  label: string;
+  feeCents: number;
+  etaMinutes: number;
+  neighborhoods: string[];
 };
 
 async function getSettings(): Promise<StoreSettings | null> {
@@ -11,8 +21,18 @@ async function getSettings(): Promise<StoreSettings | null> {
   catch (err) { if (err instanceof ApiError) return null; return null; }
 }
 
+async function getZonas(): Promise<Zona[]> {
+  try { return await fetchAPI<Zona[]>("/partner/store/delivery-zones"); }
+  catch { return []; }
+}
+
+async function getHorarios(): Promise<unknown> {
+  try { return await fetchAPI<unknown>("/partner/store/hours"); }
+  catch { return {}; }
+}
+
 export default async function SettingsPage() {
-  const s = await getSettings();
+  const [s, zonas, horarios] = await Promise.all([getSettings(), getZonas(), getHorarios()]);
 
   return (
     <div className="wp-stack-lg">
@@ -51,13 +71,15 @@ export default async function SettingsPage() {
                 </div>
               </div>
             </div>
-
-            <div className="wp-note wp-note-info" style={{ fontSize: 13 }}>
-              Horários de funcionamento e zonas de entrega disponíveis na V2.
-            </div>
           </div>
         </div>
       )}
+
+      {/* Zonas de entrega */}
+      <ZonasEntrega zonas={zonas} />
+
+      {/* Horários de funcionamento */}
+      <HorariosForm horarios={horarios} />
     </div>
   );
 }

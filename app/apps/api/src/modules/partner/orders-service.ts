@@ -378,6 +378,91 @@ export async function updatePartnerOrderStatus(
   return record;
 }
 
+export type ExportOrderFilters = {
+  from?: string;
+  to?: string;
+  status?: string;
+};
+
+function escapeCsvField(value: string): string {
+  // Proteção contra CSV/formula injection — caracteres que Excel interpreta como fórmulas
+  const FORMULA_PREFIXES = ["=", "+", "-", "@", "\t", "\r"];
+  let sanitized = value;
+
+  if (FORMULA_PREFIXES.some((prefix) => sanitized.startsWith(prefix))) {
+    sanitized = `'${sanitized}`;
+  }
+
+  if (sanitized.includes(",") || sanitized.includes('"') || sanitized.includes("\n") || sanitized !== value) {
+    return `"${sanitized.replace(/"/g, '""')}"`;
+  }
+
+  return sanitized;
+}
+
+function formatCentsToCurrency(cents: number): string {
+  return (cents / 100).toFixed(2);
+}
+
+export async function exportPartnerOrdersCSV(context: PartnerContext, filters: ExportOrderFilters) {
+  const where: Record<string, unknown> = {
+    storeId: context.storeId,
+  };
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (filters.from || filters.to) {
+    const placedAt: { gte?: Date; lte?: Date } = {};
+    if (filters.from) placedAt.gte = new Date(filters.from);
+    if (filters.to) placedAt.lte = new Date(filters.to);
+    where.placedAt = placedAt;
+  }
+
+  const orders = await prisma.order.findMany({
+    where,
+    orderBy: { placedAt: "desc" },
+    include: {
+      items: true,
+    },
+  });
+
+  const header = "publicId,data,cliente,telefone,itens,subtotal,frete,total,pagamento,status";
+
+  const rows = orders.map((order: {
+    publicId: string;
+    placedAt: Date;
+    customerName: string;
+    customerPhone: string;
+    subtotalCents: number;
+    deliveryFeeCents: number;
+    totalCents: number;
+    paymentMethod: string;
+    status: string;
+    items: Array<{ productName: string; quantity: number }>;
+  }) => {
+    const itensResumo = order.items
+      .map((item: { productName: string; quantity: number }) => `${item.productName} x${item.quantity}`)
+      .join("; ");
+
+    return [
+      escapeCsvField(order.publicId),
+      escapeCsvField(order.placedAt.toISOString()),
+      escapeCsvField(order.customerName),
+      escapeCsvField(order.customerPhone),
+      escapeCsvField(itensResumo),
+      formatCentsToCurrency(order.subtotalCents),
+      formatCentsToCurrency(order.deliveryFeeCents),
+      formatCentsToCurrency(order.totalCents),
+      escapeCsvField(order.paymentMethod),
+      escapeCsvField(order.status),
+    ].join(",");
+  });
+
+  return [header, ...rows].join("\n");
+}
+
 export async function createManualPartnerOrder(context: PartnerContext, input: PartnerManualOrderInput) {
   const store = await prisma.store.findUnique({
     where: {

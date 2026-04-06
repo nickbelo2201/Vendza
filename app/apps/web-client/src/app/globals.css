@@ -197,8 +197,10 @@ select {
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 16px;
+  display: flex;
+  align-items: center;
   pointer-events: none;
+  line-height: 0;
 }
 
 .wc-search-input {

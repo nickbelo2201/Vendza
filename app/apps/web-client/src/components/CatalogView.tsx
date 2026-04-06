@@ -35,20 +35,88 @@ function BrandCard({ brand }: { brand: Brand }) {
   const [imgError, setImgError] = useState(false);
   const showLogo = brand.logoUrl && !imgError;
   return (
-    <div className="wc-brand-card" style={{ background: brand.bgColor }}>
-      {showLogo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={brand.logoUrl!}
-          alt={brand.name}
-          style={brand.logoWhite ? { filter: "brightness(0) invert(1)" } : undefined}
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <span style={{ color: brand.textColor, fontWeight: 700, fontSize: 20 }}>
-          {brand.name}
-        </span>
-      )}
+    <div
+      style={{
+        background: brand.bgColor,
+        borderRadius: 14,
+        height: 88,
+        minWidth: 210,
+        flexShrink: 0,
+        scrollSnapAlign: "start",
+        position: "relative",
+        overflow: "hidden",
+        cursor: "pointer",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-3px)";
+        e.currentTarget.style.boxShadow = `0 8px 24px ${brand.bgColor}55`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      {/* Brilho radial no canto superior esquerdo */}
+      <div style={{
+        position: "absolute",
+        top: -30,
+        left: -30,
+        width: 120,
+        height: 120,
+        background: "radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Linha de luz horizontal no topo */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Vinheta nas bordas */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.25) 100%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Conteúdo centralizado */}
+      <div style={{
+        position: "relative",
+        zIndex: 1,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 24px",
+      }}>
+        {showLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={brand.logoUrl!}
+            alt={brand.name}
+            style={{
+              maxHeight: 52,
+              maxWidth: 170,
+              objectFit: "contain",
+              ...(brand.logoWhite ? { filter: "brightness(0) invert(1)" } : {}),
+            }}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <span style={{ color: brand.textColor, fontWeight: 700, fontSize: 20 }}>
+            {brand.name}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -133,7 +201,11 @@ export function CatalogView({ categories, products }: Props) {
                 {product.isFeatured && (
                   <span className="wc-badge-new">Novo</span>
                 )}
-                <ProductImage src={product.imageUrl} alt={product.name} />
+                <ProductImage
+                  src={product.imageUrl}
+                  alt={product.name}
+                  categorySlug={product.category?.slug}
+                />
               </div>
 
               <div className="wc-product-info">
