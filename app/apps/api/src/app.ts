@@ -3,7 +3,7 @@ import sensible from "@fastify/sensible";
 import Fastify from "fastify";
 
 import { authRoutes } from "./modules/auth/routes.js";
-import { coverageRoutes } from "./modules/coverage/routes.js";
+import { coverageRoutes } from "./modules/cobertura/routes.js";
 import { partnerRoutes } from "./modules/partner/routes.js";
 import { storefrontRoutes } from "./modules/storefront/routes.js";
 import { supabasePlugin } from "./plugins/supabase.js";
