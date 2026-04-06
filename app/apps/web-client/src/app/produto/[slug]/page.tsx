@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
 
-import { fetchStorefront } from "../../../lib/api";
+import { fetchStorefrontCatalog } from "../../../lib/api";
 import { BotaoAdicionarAoCarrinho } from "../../../components/BotaoAdicionarAoCarrinho";
 
 type Produto = {
@@ -28,7 +28,7 @@ export default async function ProductPage({
 
   let produto: Produto;
   try {
-    produto = await fetchStorefront<Produto>(`/catalog/products/${slug}`);
+    produto = await fetchStorefrontCatalog<Produto>(`/catalog/products/${slug}`);
   } catch {
     notFound();
   }

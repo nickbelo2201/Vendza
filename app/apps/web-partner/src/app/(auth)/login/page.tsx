@@ -249,7 +249,7 @@ function LoginModal({
                 <input type="checkbox" id="m-rem" />
                 <span>Lembrar por 30 dias</span>
               </label>
-              <a href="#" className="lp-inp-forgot">
+              <a href="/esqueci-senha" className="lp-inp-forgot">
                 Esqueceu a senha?
               </a>
             </div>

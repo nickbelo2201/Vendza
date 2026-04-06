@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.100.0",
     "@vendza/ui": "workspace:*",
     "@vendza/utils": "workspace:*",
+    "lucide-react": "^1.7.0",
     "next": "15.5.14",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

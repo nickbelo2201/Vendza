@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
+import { ProductImage } from "./ProductImage";
 
 import { useCarrinho } from "../context/CarrinhoContext";
+import { CATEGORIES } from "../data/categories";
+import { BRANDS, type Brand } from "../data/brands";
 
 type Category = {
   id: string;
@@ -28,6 +31,28 @@ type Props = {
   products: Product[];
 };
 
+function BrandCard({ brand }: { brand: Brand }) {
+  const [imgError, setImgError] = useState(false);
+  const showLogo = brand.logoUrl && !imgError;
+  return (
+    <div className="wc-brand-card" style={{ background: brand.bgColor }}>
+      {showLogo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={brand.logoUrl!}
+          alt={brand.name}
+          style={brand.logoWhite ? { filter: "brightness(0) invert(1)" } : undefined}
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <span style={{ color: brand.textColor, fontWeight: 700, fontSize: 20 }}>
+          {brand.name}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function CatalogView({ categories, products }: Props) {
   const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
   const { adicionarItem } = useCarrinho();
@@ -36,19 +61,33 @@ export function CatalogView({ categories, products }: Props) {
     ? products.filter((p) => p.category?.slug === filtroCategoria)
     : products;
 
+  function toggleCategoria(slug: string) {
+    setFiltroCategoria((atual) => (atual === slug ? null : slug));
+  }
+
   return (
-    <section style={{ marginTop: 32 }}>
-      {/* Filtro de categorias */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          marginBottom: 24,
-        }}
-      >
+    <section>
+      {/* Grade de categorias — dados estáticos */}
+      <div className="wc-category-grid">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            className={`wc-category-card${filtroCategoria === cat.id ? " active" : ""}`}
+            onClick={() => toggleCategoria(cat.id)}
+            title={cat.label}
+          >
+            <div className="wc-category-icon">
+              <cat.Icon size={28} strokeWidth={1.5} />
+            </div>
+            <span className="wc-category-label">{cat.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Chips de subcategoria — dados da API */}
+      <div className="wc-subcategory-row">
         <button
-          className={`wc-btn ${filtroCategoria === null ? "wc-btn-primary" : "wc-btn-secondary"}`}
+          className={`wc-subcategory-chip${filtroCategoria === null ? " active" : ""}`}
           onClick={() => setFiltroCategoria(null)}
         >
           Todos
@@ -56,76 +95,89 @@ export function CatalogView({ categories, products }: Props) {
         {categories.map((cat) => (
           <button
             key={cat.id}
-            className={`wc-btn ${filtroCategoria === cat.slug ? "wc-btn-primary" : "wc-btn-secondary"}`}
-            onClick={() => setFiltroCategoria(cat.slug)}
+            className={`wc-subcategory-chip${filtroCategoria === cat.slug ? " active" : ""}`}
+            onClick={() => toggleCategoria(cat.slug)}
           >
             {cat.name}
           </button>
         ))}
       </div>
 
-      {/* Grid de produtos */}
+      {/* Marcas que Amamos */}
+      <p className="wc-section-title">Marcas que Amamos</p>
+      <div className="wc-brand-carousel">
+        {BRANDS.map((brand) => (
+          <BrandCard key={brand.id} brand={brand} />
+        ))}
+      </div>
+
+      {/* Recomendados para Você */}
+      <p className="wc-section-title-sm">Recomendados para Você</p>
+
       <div className="wc-product-grid">
         {produtosFiltrados.map((product) => {
           const preco = product.salePriceCents ?? product.listPriceCents;
+          const desconto =
+            product.offer && product.salePriceCents !== null
+              ? Math.round(
+                  (1 - product.salePriceCents / product.listPriceCents) * 100
+                )
+              : null;
+
           return (
             <div key={product.id} className="wc-product-card">
               <div className="wc-product-image">
-                {product.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--radius-sm)" }}
-                  />
-                ) : (
-                  <span>Sem imagem</span>
+                {desconto !== null && (
+                  <span className="wc-badge-discount">-{desconto}%</span>
                 )}
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {product.isFeatured && (
-                  <span className="wc-badge wc-badge-green">Destaque</span>
+                  <span className="wc-badge-new">Novo</span>
                 )}
-                {product.offer && (
-                  <span className="wc-badge wc-badge-amber">Oferta</span>
-                )}
+                <ProductImage src={product.imageUrl} alt={product.name} />
               </div>
-              <a
-                href={`/produto/${product.slug}`}
-                style={{ fontWeight: 600, color: "var(--carbon)", display: "block" }}
-              >
-                {product.name}
-              </a>
-              <div className="wc-price">
-                <span className="wc-price-now">{formatCurrency(preco)}</span>
-                {product.offer && product.salePriceCents !== null && (
-                  <span className="wc-price-old">
-                    {formatCurrency(product.listPriceCents)}
-                  </span>
-                )}
+
+              <div className="wc-product-info">
+                <a href={`/produto/${product.slug}`} className="wc-product-name">
+                  {product.name}
+                </a>
+
+                <div className="wc-price">
+                  <span className="wc-price-now">{formatCurrency(preco)}</span>
+                  {product.offer && product.salePriceCents !== null && (
+                    <span className="wc-price-old">
+                      {formatCurrency(product.listPriceCents)}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  className="wc-btn-cta"
+                  onClick={() =>
+                    adicionarItem({
+                      productId: product.id,
+                      name: product.name,
+                      slug: product.slug,
+                      imagemUrl: product.imageUrl,
+                      unitPriceCents: preco,
+                    })
+                  }
+                >
+                  Adicionar
+                </button>
               </div>
-              <button
-                className="wc-btn wc-btn-primary"
-                style={{ width: "100%", marginTop: "auto" }}
-                onClick={() =>
-                  adicionarItem({
-                    productId: product.id,
-                    name: product.name,
-                    slug: product.slug,
-                    imagemUrl: product.imageUrl,
-                    unitPriceCents: preco,
-                  })
-                }
-              >
-                Adicionar
-              </button>
             </div>
           );
         })}
       </div>
 
       {produtosFiltrados.length === 0 && (
-        <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "40px 0" }}>
+        <p
+          style={{
+            color: "var(--color-text-muted)",
+            textAlign: "center",
+            padding: "40px 0",
+          }}
+        >
           Nenhum produto encontrado nesta categoria.
         </p>
       )}

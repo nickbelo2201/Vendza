@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
 
-import { fetchStorefront } from "../../../lib/api";
+import { fetchStorefront, fetchStorefrontConfig } from "../../../lib/api";
 import { OrderTracker } from "../../../components/OrderTracker";
 
 type OrderEvent = {
@@ -74,7 +74,7 @@ export default async function OrderTrackingPage({
 
   let whatsappPhone = "";
   try {
-    const config = await fetchStorefront<StorefrontConfig>("/storefront/config");
+    const config = await fetchStorefrontConfig<StorefrontConfig>("/storefront/config");
     whatsappPhone = config.whatsappPhone;
   } catch {
     // silencia

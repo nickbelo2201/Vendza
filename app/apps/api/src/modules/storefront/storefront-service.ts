@@ -1,9 +1,38 @@
-import { prisma } from "@vendza/database";
+import { prisma, type Prisma } from "@vendza/database";
 
 import { getOrderPlacedQueue } from "../../jobs/queues.js";
 import { getIO } from "../../plugins/socketio.js";
+import { getRedis } from "../../plugins/redis.js";
+
+// Helper de cache Redis com fallback gracioso
+async function withCache<T>(key: string, ttlSeconds: number, fn: () => Promise<T>): Promise<T> {
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const cached = await redis.get(key);
+      if (cached !== null) return JSON.parse(cached) as T;
+    } catch { /* Redis indisponível — continua sem cache */ }
+  }
+  const result = await fn();
+  if (redis && result !== null) {
+    try {
+      await redis.set(key, JSON.stringify(result), "EX", ttlSeconds);
+    } catch { /* falha silenciosa */ }
+  }
+  return result;
+}
+
+// Derivar lock key bigint estável a partir do storeId (UUID)
+function storeIdToLockKey(storeId: string): bigint {
+  const hex = storeId.replace(/-/g, "").substring(0, 15);
+  return BigInt("0x" + hex);
+}
 
 export async function getStorefrontConfig(storeSlug: string) {
+  return withCache(`sf:config:${storeSlug}`, 300, () => _getStorefrontConfig(storeSlug));
+}
+
+async function _getStorefrontConfig(storeSlug: string) {
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug },
     select: {
@@ -46,17 +75,14 @@ export async function getStorefrontConfig(storeSlug: string) {
   };
 }
 
-export async function getCategories(storeId: string) {
-  return prisma.category.findMany({
-    where: { storeId, isActive: true },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      sortOrder: true,
-    },
-    orderBy: { sortOrder: "asc" },
-  });
+export function getCategories(storeId: string) {
+  return withCache(`sf:cat:${storeId}`, 60, () =>
+    prisma.category.findMany({
+      where: { storeId, isActive: true },
+      select: { id: true, name: true, slug: true, sortOrder: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  );
 }
 
 export async function getProducts(
@@ -67,6 +93,16 @@ export async function getProducts(
     featured?: boolean;
     offer?: boolean;
   },
+) {
+  // Queries com filtros dinâmicos (search/category) não são cacheadas
+  const hasFilter = filters && (filters.search || filters.category || filters.featured || filters.offer);
+  if (hasFilter) return _getProducts(storeId, filters);
+  return withCache(`sf:prod:${storeId}`, 60, () => _getProducts(storeId, filters));
+}
+
+async function _getProducts(
+  storeId: string,
+  filters?: { category?: string; search?: string; featured?: boolean; offer?: boolean },
 ) {
   const products = await prisma.product.findMany({
     where: {
@@ -251,19 +287,6 @@ export async function createOrderReal(
 
   const totalCents = subtotalCents + deliveryFeeCents;
 
-  // Upsert customer por phone+storeId
-  const customer = await prisma.customer.upsert({
-    where: { storeId_phone: { storeId, phone: input.customer.phone } },
-    create: { storeId, name: input.customer.name, phone: input.customer.phone, email: input.customer.email },
-    update: { name: input.customer.name, email: input.customer.email },
-    select: { id: true },
-  });
-
-  // Gerar publicId sequencial
-  const count = await prisma.order.count({ where: { storeId } });
-  const publicId = `PED-${String(count + 1).padStart(4, "0")}`;
-
-  // Método de pagamento mapeado
   const paymentMethodMap: Record<string, "pix" | "cash" | "card_on_delivery" | "card_online"> = {
     pix: "pix",
     cash: "cash",
@@ -272,44 +295,61 @@ export async function createOrderReal(
   };
   const paymentMethod = paymentMethodMap[input.payment.method] ?? "pix";
 
-  // Criar order com items e evento
-  const order = await prisma.order.create({
-    data: {
-      storeId,
-      customerId: customer.id,
-      publicId,
-      channel: "web",
-      status: "pending",
-      paymentMethod,
-      paymentStatus: "pending",
-      customerName: input.customer.name,
-      customerPhone: input.customer.phone,
-      customerEmail: input.customer.email,
-      deliveryStreet: input.address.line1,
-      deliveryNumber: input.address.number ?? "",
-      deliveryNeighborhood: input.address.neighborhood,
-      deliveryCity: input.address.city,
-      deliveryState: input.address.state,
-      deliveryPostalCode: "",
-      subtotalCents,
-      deliveryFeeCents,
-      discountCents: 0,
-      totalCents,
-      notes: input.note,
-      items: {
-        create: quotedItems.map((i) => ({
-          productId: i.productId,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPriceCents: i.unitPriceCents,
-          totalPriceCents: i.totalPriceCents,
-        })),
+  // Advisory lock por loja + upsert customer + publicId sequencial + criação do pedido
+  // tudo em uma única transação para garantir atomicidade e evitar race condition no publicId
+  const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // pg_advisory_xact_lock serializa escritas concorrentes para a mesma loja
+    const lockKey = storeIdToLockKey(storeId);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockKey})`;
+
+    const customer = await tx.customer.upsert({
+      where: { storeId_phone: { storeId, phone: input.customer.phone } },
+      create: { storeId, name: input.customer.name, phone: input.customer.phone, email: input.customer.email },
+      update: { name: input.customer.name, email: input.customer.email },
+      select: { id: true },
+    });
+
+    const count = await tx.order.count({ where: { storeId } });
+    const publicId = `PED-${String(count + 1).padStart(4, "0")}`;
+
+    return tx.order.create({
+      data: {
+        storeId,
+        customerId: customer.id,
+        publicId,
+        channel: "web",
+        status: "pending",
+        paymentMethod,
+        paymentStatus: "pending",
+        customerName: input.customer.name,
+        customerPhone: input.customer.phone,
+        customerEmail: input.customer.email,
+        deliveryStreet: input.address.line1,
+        deliveryNumber: input.address.number ?? "",
+        deliveryNeighborhood: input.address.neighborhood,
+        deliveryCity: input.address.city,
+        deliveryState: input.address.state,
+        deliveryPostalCode: "",
+        subtotalCents,
+        deliveryFeeCents,
+        discountCents: 0,
+        totalCents,
+        notes: input.note,
+        items: {
+          create: quotedItems.map((i) => ({
+            productId: i.productId,
+            productName: i.productName,
+            quantity: i.quantity,
+            unitPriceCents: i.unitPriceCents,
+            totalPriceCents: i.totalPriceCents,
+          })),
+        },
+        events: {
+          create: [{ type: "placed", payloadJson: { note: "Pedido recebido via web" } }],
+        },
       },
-      events: {
-        create: [{ type: "placed", payloadJson: { note: "Pedido recebido via web" } }],
-      },
-    },
-    select: { id: true, publicId: true, status: true, totalCents: true },
+      select: { id: true, publicId: true, status: true, totalCents: true },
+    });
   });
 
   // Emitir evento realtime para o painel parceiro

@@ -1,7 +1,6 @@
-/* ─────────────────────────────────────────────────────────
-   Dashboard V2 — Visão Geral
-   Dados: stub estático (meta.stub: true) até API conectar
-───────────────────────────────────────────────────────── */
+import { formatCurrency } from "@vendza/utils";
+
+import { ApiError, fetchAPI } from "../../lib/api";
 
 /* ── Sparkline SVG inline ── */
 function Sparkline({ points, color }: { points: string; color: string }) {
@@ -51,82 +50,103 @@ function IconStar() {
   );
 }
 
-/* ── Dados estáticos (stub) ── */
-const metricCards = [
-  {
-    label: "Pedidos hoje",
-    value: "150",
-    accent: "#0052CC",
-    sparklinePoints: "0,35 20,30 40,28 60,20 80,15 100,10 120,6",
-    delta: "+12% vs ontem",
-  },
-  {
-    label: "Faturamento",
-    value: "R$ 8.500",
-    accent: "#FF6B35",
-    sparklinePoints: "0,38 20,32 40,30 60,22 80,18 100,12 120,8",
-    delta: "+15% vs ontem",
-  },
-  {
-    label: "Ticket médio",
-    value: "R$ 56,70",
-    accent: "#2D5A3D",
-    sparklinePoints: "0,32 20,28 40,30 60,24 80,22 100,18 120,16",
-    delta: "+5% vs ontem",
-  },
-  {
-    label: "Clientes recorrentes",
-    value: "45%",
-    accent: "#9CA3AF",
-    sparklinePoints: "0,28 20,26 40,28 60,25 80,24 100,22 120,21",
-    delta: "+2% vs ontem",
-  },
-];
+type DashboardSummary = {
+  ordersToday: number;
+  revenueCents: number;
+  averageTicketCents: number;
+  recurringCustomers: number;
+  newCustomers: number;
+};
 
-const kanbanCols = [
-  {
-    label: "A Fazer",
-    items: [
-      { id: "PED-1024", cliente: "Maria S.", tempo: "10 min" },
-      { id: "PED-1025", cliente: "João P.",  tempo: "35 min" },
-      { id: "PED-1026", cliente: "Carlos M.", tempo: "25 min" },
-    ],
-  },
-  {
-    label: "Em Progresso",
-    items: [
-      { id: "PED-1027", cliente: "Ana L.",   tempo: "15 min" },
-      { id: "PED-1028", cliente: "Mara S.",  tempo: "20 min" },
-      { id: "PED-1029", cliente: "João S.",  tempo: "25 min" },
-    ],
-  },
-  {
-    label: "Concluído",
-    items: [
-      { id: "PED-1020", cliente: "João P.",  tempo: "30 min" },
-      { id: "PED-1021", cliente: "Rita S.",  tempo: "35 min" },
-    ],
-  },
-];
+type OrderItem = { productId: string; title: string; quantity: number; totalCents: number };
+type Order = {
+  id: string; publicId: string; status: string; channel: string;
+  customerName: string; customerPhone: string; paymentMethod: string;
+  totalCents: number; placedAt: string; items: OrderItem[];
+};
 
-const estoqueItens = [
-  {
-    nome: "Heineken 600ml",
-    qty: "3 un. restantes",
-    barColor: "#EF4444",
-    barWidth: "12%",
-    alertColor: "#EF4444",
-  },
-  {
-    nome: "Vinho Miolo Merlot",
-    qty: "8 un. restantes",
-    barColor: "#F59E0B",
-    barWidth: "32%",
-    alertColor: "#F59E0B",
-  },
-];
+async function getDashboardData() {
+  try {
+    const [summary, orders] = await Promise.all([
+      fetchAPI<DashboardSummary>("/partner/dashboard/summary"),
+      fetchAPI<Order[]>("/partner/orders"),
+    ]);
+    return { summary, orders };
+  } catch (err) {
+    if (err instanceof ApiError) return { summary: null, orders: [] };
+    return { summary: null, orders: [] };
+  }
+}
 
-export default function PartnerHomePage() {
+export default async function PartnerHomePage() {
+  const { summary, orders } = await getDashboardData();
+
+  const metricCards = summary
+    ? [
+        {
+          label: "Pedidos hoje",
+          value: summary.ordersToday.toString(),
+          accent: "#0052CC",
+          sparklinePoints: "0,35 20,30 40,28 60,20 80,15 100,10 120,6",
+        },
+        {
+          label: "Faturamento",
+          value: formatCurrency(summary.revenueCents),
+          accent: "#FF6B35",
+          sparklinePoints: "0,38 20,32 40,30 60,22 80,18 100,12 120,8",
+        },
+        {
+          label: "Ticket médio",
+          value: formatCurrency(summary.averageTicketCents),
+          accent: "#2D5A3D",
+          sparklinePoints: "0,32 20,28 40,30 60,24 80,22 100,18 120,16",
+        },
+        {
+          label: "Clientes recorrentes",
+          value: `${summary.recurringCustomers}`,
+          accent: "#9CA3AF",
+          sparklinePoints: "0,28 20,26 40,28 60,25 80,24 100,22 120,21",
+        },
+      ]
+    : [];
+
+  // Agrupar pedidos por status para o Kanban
+  const kanbanCols = [
+    {
+      label: "A Fazer",
+      items: orders
+        .filter((o) => ["pending", "confirmed"].includes(o.status))
+        .map((o) => ({
+          id: o.publicId,
+          cliente: o.customerName,
+          tempo: new Date(o.placedAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        })),
+    },
+    {
+      label: "Em Progresso",
+      items: orders
+        .filter((o) => ["preparing", "ready_for_delivery"].includes(o.status))
+        .map((o) => ({
+          id: o.publicId,
+          cliente: o.customerName,
+          tempo: new Date(o.placedAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        })),
+    },
+    {
+      label: "Concluído",
+      items: orders
+        .filter((o) => o.status === "delivered")
+        .map((o) => ({
+          id: o.publicId,
+          cliente: o.customerName,
+          tempo: new Date(o.placedAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        })),
+    },
+  ];
+
+  // Estado vazio ou stock alerts (stub)
+  const estoqueItens: Array<{ nome: string; qty: string; barColor: string; barWidth: string; alertColor: string }> = [];
+
   return (
     <div>
       {/* ── Metric Cards ── */}
@@ -137,7 +157,6 @@ export default function PartnerHomePage() {
             <span className="metric-label">{card.label}</span>
             <span className="metric-value">{card.value}</span>
             <Sparkline points={card.sparklinePoints} color={card.accent} />
-            <span className="metric-delta">{card.delta}</span>
           </div>
         ))}
       </div>
@@ -151,12 +170,18 @@ export default function PartnerHomePage() {
             {kanbanCols.map((col) => (
               <div key={col.label}>
                 <div className="kanban-col-label">{col.label}</div>
-                {col.items.map((item) => (
-                  <div key={item.id} className="kanban-item">
-                    <span className="kanban-item-id">{item.id}: {item.cliente}</span>
-                    <span className="kanban-item-sub">{item.tempo}</span>
+                {col.items.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "12px 0", textAlign: "center" }}>
+                    Vazio
                   </div>
-                ))}
+                ) : (
+                  col.items.map((item) => (
+                    <div key={item.id} className="kanban-item">
+                      <span className="kanban-item-id">{item.id}: {item.cliente}</span>
+                      <span className="kanban-item-sub">{item.tempo}</span>
+                    </div>
+                  ))
+                )}
               </div>
             ))}
           </div>
@@ -165,45 +190,45 @@ export default function PartnerHomePage() {
         {/* Side cards */}
         <div className="side-cards">
           {/* Estoque Crítico */}
-          <div className="side-card">
-            <div className="side-card-header">
-              <span className="side-card-title">Estoque Crítico</span>
-              <span className="side-card-tag">Alerta IA</span>
-            </div>
-            {estoqueItens.map((item) => (
-              <div key={item.nome} className="stock-item">
-                <div className="stock-item-row">
-                  <span className="stock-item-name">{item.nome}</span>
-                  <IconAlert color={item.alertColor} />
-                </div>
-                <span className="stock-item-qty">{item.qty}</span>
-                <div className="stock-bar-track">
-                  <div
-                    className="stock-bar-fill"
-                    style={{ width: item.barWidth, background: item.barColor }}
-                  />
-                </div>
+          {estoqueItens.length > 0 && (
+            <div className="side-card">
+              <div className="side-card-header">
+                <span className="side-card-title">Estoque Crítico</span>
+                <span className="side-card-tag">Alerta IA</span>
               </div>
-            ))}
-            <div className="stock-footer">
-              <a href="/catalogo" className="stock-footer-link">Ver estoque completo →</a>
+              {estoqueItens.map((item) => (
+                <div key={item.nome} className="stock-item">
+                  <div className="stock-item-row">
+                    <span className="stock-item-name">{item.nome}</span>
+                    <IconAlert color={item.alertColor} />
+                  </div>
+                  <span className="stock-item-qty">{item.qty}</span>
+                  <div className="stock-bar-track">
+                    <div
+                      className="stock-bar-fill"
+                      style={{ width: item.barWidth, background: item.barColor }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <div className="stock-footer">
+                <a href="/catalogo" className="stock-footer-link">Ver estoque completo →</a>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Próxima Ação Recomendada */}
           <div className="side-card">
             <div className="side-card-header">
-              <span className="side-card-title">Próxima Ação Recomendada</span>
-              <span className="side-card-tag">AI Action</span>
+              <span className="side-card-title">Status do Painel</span>
+              <span className="side-card-tag">Live</span>
             </div>
             <div className="action-card-body">
               <p className="action-card-text">
-                Repor Heineken 600ml antes do pico das 18h — fornecedor com entrega disponível hoje.
+                {orders.length === 0
+                  ? "Nenhum pedido em andamento no momento."
+                  : `${orders.length} pedido${orders.length > 1 ? "s" : ""} carregado${orders.length > 1 ? "s" : ""} da API em tempo real.`}
               </p>
-              <button className="action-btn" type="button">
-                <IconStar />
-                Executar Ação
-              </button>
             </div>
           </div>
         </div>

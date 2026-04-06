@@ -1,6 +1,7 @@
-import { fetchStorefront } from "../lib/api";
+import { fetchStorefrontCatalog, fetchStorefrontConfig } from "../lib/api";
 import { AgeGate } from "../components/AgeGate";
 import { CatalogView } from "../components/CatalogView";
+import { MOCK_PRODUCTS } from "../data/products";
 
 type StorefrontConfig = {
   id: string;
@@ -29,40 +30,26 @@ type Product = {
 
 export default async function HomePage() {
   const [config, categories, products] = await Promise.all([
-    fetchStorefront<StorefrontConfig>("/storefront/config"),
-    fetchStorefront<Category[]>("/catalog/categories"),
-    fetchStorefront<Product[]>("/catalog/products"),
+    fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
+    fetchStorefrontCatalog<Category[]>("/catalog/categories"),
+    fetchStorefrontCatalog<Product[]>("/catalog/products"),
   ]);
+
+  // Usa produtos de demonstração quando o catálogo está vazio
+  const produtosExibidos: Product[] =
+    products.length > 0 ? products : MOCK_PRODUCTS;
 
   return (
     <>
       <AgeGate />
 
-      {/* Hero */}
-      <section
-        style={{
-          background: "var(--blue)",
-          color: "#fff",
-          borderRadius: "var(--radius-lg)",
-          padding: "40px 32px",
-          marginBottom: 32,
-        }}
-      >
-        <h1 style={{ margin: "0 0 8px", fontSize: 32, fontWeight: 800 }}>
-          {config.branding.name}
-        </h1>
-        <p style={{ margin: "0 0 24px", opacity: 0.8 }}>
-          Bebidas e produtos selecionados com entrega rápida.
-        </p>
-        {config.status !== "open" && (
-          <div className="wc-note">
-            A loja está temporariamente fechada.
-          </div>
-        )}
-      </section>
+      {config.status !== "open" && (
+        <div className="wc-note" style={{ marginBottom: 24 }}>
+          A loja está temporariamente fechada.
+        </div>
+      )}
 
-      {/* Catálogo */}
-      <CatalogView categories={categories} products={products} />
+      <CatalogView categories={categories} products={produtosExibidos} />
     </>
   );
 }
