@@ -1,6 +1,9 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs_24"]
+
 [build.nixpacksPlan.phases.install]
 cmds = ["npm install -g pnpm@10.0.0 && pnpm install --frozen-lockfile"]
 
