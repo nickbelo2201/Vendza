@@ -149,12 +149,13 @@ select {
 .wc-main {
   flex: 1;
   min-width: 0;
-  margin-left: 220px;
   padding: 24px 32px 56px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .wc-footer {
-  margin-left: 220px;
   padding: 24px;
   text-align: center;
   color: var(--color-text-muted);
@@ -917,17 +918,8 @@ select {
 
 /* ===== RESPONSIVO ===== */
 @media (max-width: 768px) {
-  .wc-sidebar {
-    display: none;
-  }
-
   .wc-main {
-    margin-left: 0;
     padding: 16px 16px 40px;
-  }
-
-  .wc-footer {
-    margin-left: 0;
   }
 
   .wc-category-grid {

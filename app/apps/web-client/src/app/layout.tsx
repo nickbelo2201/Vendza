@@ -3,7 +3,6 @@ import { Suspense } from "react";
 
 import { CarrinhoProvider } from "../context/CarrinhoContext";
 import { Header } from "../components/Header";
-import { Sidebar } from "../components/Sidebar";
 import { fetchStorefrontConfig } from "../lib/api";
 
 import "./globals.css";
@@ -47,7 +46,6 @@ export default async function RootLayout({
               <Header nomeLoja={nomeLoja} />
             </Suspense>
             <div className="wc-content-area">
-              <Sidebar />
               <main className="wc-main">{children}</main>
             </div>
             <footer className="wc-footer">
