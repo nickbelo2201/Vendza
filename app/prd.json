@@ -1,7 +1,6 @@
 {
   "projectName": "Vendza",
-  "version": "2",
-  "branchName": "ralph/vendza-v2",
+  "version": "platform",
   "v1": {
     "status": "COMPLETE",
     "completedAt": "2026-04-06",
@@ -9,96 +8,189 @@
     "storiesTotal": 20,
     "storiesPassed": 20
   },
-  "userStories": [
-    {
-      "id": "V2-A1",
-      "title": "Painel de pedidos funcional (web-partner /pedidos)",
-      "priority": 1,
-      "passes": true,
-      "description": "Implementar a página /pedidos no web-partner com listagem real de pedidos da API. Filtros por status (todos, pendentes, em preparo, entregues). Card de cada pedido com publicId, cliente, total, status badge, tempo. Botão para mudar status do pedido (PATCH /partner/orders/:id/status). Timeline do pedido em modal ou drawer. Atualização em tempo real via Socket.io room store:{storeId} ouvindo order:created e order:status_changed."
-    },
-    {
-      "id": "V2-A2",
-      "title": "CRUD de produtos e categorias (web-partner /catalogo)",
-      "priority": 2,
-      "passes": true,
-      "description": "Implementar a página /catalogo com: (1) Lista de produtos com imagem, nome, preço, disponibilidade toggle. (2) Modal/drawer para criar e editar produto: nome, slug (auto-gerado), categoria, preço lista, preço venda, descrição, isAvailable, isFeatured. (3) Upload de imagem para Supabase Storage. (4) CRUD de categorias (criar, renomear, reordenar). Usar endpoints POST/PATCH/DELETE /partner/products e /partner/categories."
-    },
-    {
-      "id": "V2-A3",
-      "title": "CRM de clientes (web-partner /clientes)",
-      "priority": 3,
-      "passes": true,
-      "description": "Implementar a página /clientes com: (1) Tabela paginada de clientes com nome, telefone, total de pedidos, última compra. (2) Busca por nome ou telefone. (3) Drawer de detalhe do cliente: histórico de pedidos, valor total gasto, frequência. (4) Uso dos endpoints GET /partner/customers e GET /partner/customers/:id/orders."
-    },
-    {
-      "id": "V2-A4",
-      "title": "Configurações da loja (web-partner /configuracoes)",
-      "priority": 4,
-      "passes": true,
-      "description": "Implementar a página /configuracoes com seções: (1) Dados da loja: nome, slug, WhatsApp, status (aberta/fechada), minimumOrderValueCents. (2) Horário de funcionamento (campo JSON simples). (3) Zonas de entrega: listar, criar, editar (label, feeCents, etaMinutes, bairros). (4) Salvar via PATCH /partner/store e endpoints de deliveryZones. Preview do link da vitrine."
-    },
-    {
-      "id": "V2-B1",
-      "title": "Relatórios e analytics (web-partner /relatorios)",
-      "priority": 5,
-      "passes": true,
-      "description": "Implementar a página /relatorios com: (1) Seletor de período (hoje, 7d, 30d, custom). (2) Cards: faturamento total, ticket médio, total de pedidos, novos clientes. (3) Gráfico de barras de faturamento por dia (SVG inline ou recharts). (4) Tabela de produtos mais vendidos (nome, quantidade, receita). (5) Tabela de clientes mais frequentes. Usar endpoint GET /partner/reports?from=&to=."
-    },
-    {
-      "id": "V2-B2",
-      "title": "Notificações realtime de novos pedidos (web-partner badge)",
-      "priority": 6,
-      "passes": true,
-      "description": "Ativar o badge de notificações no TopbarV2: (1) Hook useSocket.ts conecta ao Socket.io com token da sessão, entra na room store:{storeId}. (2) Ouve order:created e incrementa contador de notificações não lidas. (3) Badge aparece no ícone de sino/pedidos. (4) Ao clicar em /pedidos, zera o contador. (5) Toast opcional mostrando 'Novo pedido de [nome]'."
-    },
-    {
-      "id": "V2-B3",
-      "title": "Exportação CSV de pedidos",
-      "priority": 7,
-      "passes": true,
-      "description": "Adicionar botão 'Exportar CSV' na página /pedidos e /relatorios: (1) Endpoint GET /partner/orders/export?from=&to=&status= retorna CSV com headers: publicId, data, cliente, telefone, itens, subtotal, frete, total, pagamento, status. (2) No frontend, fetch do endpoint e download via blob URL. (3) Nome do arquivo: pedidos_YYYY-MM-DD.csv."
-    },
-    {
-      "id": "V2-C1",
-      "title": "Busca de produtos no web-client",
-      "priority": 8,
-      "passes": true,
-      "description": "Adicionar campo de busca no Header do web-client: (1) Input de texto com debounce de 300ms. (2) Ao digitar, filtra produtos via GET /catalog/products?search=. (3) Resultados exibidos inline (dropdown) ou na própria CatalogView com query param. (4) Estado vazio com mensagem 'Nenhum produto encontrado para [termo]'."
-    },
-    {
-      "id": "V2-C2",
-      "title": "SEO e metatags dinâmicas por produto",
-      "priority": 9,
-      "passes": true,
-      "description": "Adicionar generateMetadata nas páginas do web-client: (1) /produto/[slug]: title = '{nome} — {loja}', description = '{descrição truncada}', og:image = {imageUrl}, og:price. (2) Home: title = '{loja} — Delivery', description com tagline da loja. (3) /pedidos/[publicId]: title = 'Pedido {publicId} — {loja}'. Usar fetchStorefrontConfig no generateMetadata."
-    },
-    {
-      "id": "V2-D1",
-      "title": "Build: typecheck e build CI após V2",
-      "priority": 10,
-      "passes": false,
-      "description": "Após todas as stories V2-A* e V2-B* completadas: (1) Rodar corepack pnpm typecheck em todos os workspaces — deve passar com 0 erros. (2) Rodar build isolado em cada app. (3) Documentar qualquer novo gotcha de build. (4) Atualizar .env.example com eventuais novas variáveis (ex: SUPABASE_STORAGE_BUCKET)."
-    }
-  ],
-  "v3_backlog": {
-    "note": "Itens planejados para V3, em ordem de prioridade",
-    "items": [
-      "Deploy automatizado (Vercel + Railway + GitHub Actions CI)",
-      "Testes e2e com Playwright (flows: checkout, login, tracking, mudança de status)",
-      "Mobile app (React Native / Expo) — vitrine + tracking",
-      "WhatsApp automação (Baileys / WAHA) — notificação de status para cliente",
-      "Multi-tenant / multi-loja (onboarding self-service)",
-      "IA generativa — descrição de produtos, copy de campanhas",
-      "Polygon-based delivery zones (PostGIS)",
-      "LAST FEAT: Mercado Pago — checkout online com PIX e cartão"
-    ]
-  },
   "v2": {
     "status": "COMPLETE",
     "completedAt": "2026-04-06",
     "commit": "ad8c35f",
     "storiesTotal": 10,
     "storiesPassed": 9
-  }
+  },
+  "roadmap": {
+    "plataforma": {
+      "objetivo": "Plataforma 100% funcional — mesmas features do Zé Delivery e Neemo. Nenhuma IA até este bloco estar validado e aprovado para apresentação.",
+      "blocos": ["P1", "P2", "P3", "P4", "P5"]
+    },
+    "ia_automacao": {
+      "objetivo": "Só iniciar após P5 aprovado e plataforma apresentada.",
+      "items": [
+        "IA-01: WhatsApp automação (Baileys/WAHA) — notificação de status ao cliente",
+        "IA-02: IA generativa — descrição de produtos, copy de campanhas",
+        "IA-03: Multi-tenant / onboarding self-service",
+        "IA-04: Mobile app (React Native / Expo)",
+        "LAST FEAT: Mercado Pago — checkout online com PIX e cartão"
+      ]
+    }
+  },
+  "userStories": [
+    {
+      "id": "P1-01",
+      "bloco": "P1",
+      "title": "Schemas TypeBox para PATCH /store/hours e /store/delivery-zones",
+      "priority": 1,
+      "passes": false,
+      "description": "Substituir Type.Array(Type.Any()) por schemas tipados em routes.ts. StoreHourSchema: { dayOfWeek: Integer(0-6), opensAt: String(HH:MM), closesAt: String(HH:MM), isClosed: Optional(Boolean) }. DeliveryZoneSchema: { id: Optional(String), label: String, feeCents: Integer>=0, etaMinutes: String, neighborhoods: Array<String>, radiusKm: Number>=0 }. Validar maxItems: 7 para horas e razoável para zonas."
+    },
+    {
+      "id": "P1-02",
+      "bloco": "P1",
+      "title": "Limites de registros em /reports e /orders/export",
+      "priority": 2,
+      "passes": false,
+      "description": "Em getPartnerReports: adicionar range máximo de 90 dias (rejeitar com 400 se ultrapassar), substituir findMany+map por queries SQL agregadas (SUM, GROUP BY) via prisma.$queryRaw para evitar carregar todos os pedidos em memória. Em exportPartnerOrdersCSV: adicionar take: 50000 como safety valve."
+    },
+    {
+      "id": "P1-03",
+      "bloco": "P1",
+      "title": "HorariosForm com UI visual (dias da semana, não JSON bruto)",
+      "priority": 3,
+      "passes": false,
+      "description": "Substituir o textarea de JSON bruto por formulário visual: 7 linhas (Dom a Sáb), cada uma com toggle 'Fechado' + inputs de horário abertura/fechamento (HH:MM). Ao salvar, converter para o array esperado pela API. O modelo de dados esperado pela API é Array<{ dayOfWeek: 0-6, opensAt: string, closesAt: string, isClosed?: boolean }>."
+    },
+    {
+      "id": "P1-04",
+      "bloco": "P1",
+      "title": "Toggle Loja Aberta/Fechada que persiste na API",
+      "priority": 4,
+      "passes": false,
+      "description": "Reintroduzir o toggle de status da loja no TopbarV2, desta vez com persistência real. Buscar status inicial via GET /partner/store/settings (campo status: 'open'|'closed'). Ao clicar, chamar PATCH /partner/store/settings com { status: 'open'|'closed' }. Usar Server Action para a mutação. O status inicial deve vir do Server Component pai (layout.tsx do dashboard) via props."
+    },
+    {
+      "id": "P1-05",
+      "bloco": "P1",
+      "title": "getDashboardSummary — substituir findMany de customers por count",
+      "priority": 5,
+      "passes": false,
+      "description": "Em crm-dashboard-service.ts, a função getDashboardSummary usa prisma.customer.findMany para depois filtrar e contar clientes criados hoje. Substituir por prisma.customer.count({ where: { storeId, createdAt: { gte: startOfToday } } }) para evitar carregar todos os clientes em memória."
+    },
+    {
+      "id": "P2-01",
+      "bloco": "P2",
+      "title": "CRUD de categorias no painel /catalogo",
+      "priority": 6,
+      "passes": false,
+      "description": "Adicionar seção de gerenciamento de categorias na página /catalogo do web-partner. (1) Listar categorias existentes com nome e slug. (2) Modal para criar categoria: nome (slug auto-gerado), isFeatured toggle. (3) Editar nome de categoria existente. (4) Deletar categoria (soft ou hard, verificar se há produtos vinculados). Usar endpoints POST/PATCH/DELETE /partner/categories (verificar se existem na API, criar se necessário)."
+    },
+    {
+      "id": "P2-02",
+      "bloco": "P2",
+      "title": "Upload real de imagem para produtos (Supabase Storage)",
+      "priority": 7,
+      "passes": false,
+      "description": "Substituir o campo 'imageUrl' (texto manual) no ProdutoModal por upload de arquivo real. (1) Input file no modal. (2) Server Action que faz upload para Supabase Storage bucket 'product-images' e retorna a URL pública. (3) URL salva no campo imageUrl do produto via PATCH. Configurar bucket público no Supabase. Validar: apenas imagens (jpg/png/webp), máximo 5MB."
+    },
+    {
+      "id": "P2-03",
+      "bloco": "P2",
+      "title": "Modal/drawer de detalhe do pedido em /pedidos",
+      "priority": 8,
+      "passes": false,
+      "description": "Ao clicar em uma linha da tabela de pedidos, abrir um drawer/modal com detalhes completos: (1) Informações do cliente (nome, telefone, endereço de entrega). (2) Lista de itens com quantidade, preço unitário e total. (3) Timeline de eventos (OrderEvents) em ordem cronológica. (4) Subtotal, frete, total, método de pagamento. (5) Botão de mudança de status integrado. Buscar via GET /partner/orders/:id."
+    },
+    {
+      "id": "P2-04",
+      "bloco": "P2",
+      "title": "Botão Exportar CSV no frontend (/pedidos e /relatorios)",
+      "priority": 9,
+      "passes": false,
+      "description": "Adicionar botão 'Exportar CSV' nas páginas /pedidos e /relatorios. O botão deve fazer fetch para GET /partner/orders/export (com os filtros ativos: status, from, to) e disparar download via blob URL. Nome do arquivo: pedidos_YYYY-MM-DD.csv. O endpoint já existe na API — é só a UI que falta."
+    },
+    {
+      "id": "P2-05",
+      "bloco": "P2",
+      "title": "Criação manual de pedido pelo parceiro",
+      "priority": 10,
+      "passes": false,
+      "description": "Botão 'Novo Pedido Manual' na página /pedidos. Abre modal com formulário: (1) Buscar/selecionar cliente por telefone (ou criar novo). (2) Adicionar produtos ao pedido com quantidade. (3) Selecionar endereço e método de pagamento. (4) Submit via POST /partner/orders/manual. Útil para pedidos recebidos por WhatsApp ou telefone. O endpoint já existe na API."
+    },
+    {
+      "id": "P2-06",
+      "bloco": "P2",
+      "title": "Drawer de detalhe do cliente com histórico de pedidos",
+      "priority": 11,
+      "passes": false,
+      "description": "Ao clicar em uma linha da tabela de clientes, abrir drawer com: (1) Dados do cliente (nome, telefone, email, status ativo/inativo). (2) Métricas: total gasto, total de pedidos, ticket médio, frequência. (3) Lista dos últimos 10 pedidos com publicId, data, total e status. Buscar via GET /partner/customers/:id. Botão de editar nome/status do cliente."
+    },
+    {
+      "id": "P2-07",
+      "bloco": "P2",
+      "title": "Storefront: página de categorias e estado vazio na busca",
+      "priority": 12,
+      "passes": false,
+      "description": "(1) Quando não há resultados na busca por ?busca=, exibir mensagem 'Nenhum produto encontrado para [termo]' com botão para limpar busca. (2) Filtro de categoria na home via URL (?categoria=slug) para que links diretos para categorias funcionem e sejam indexáveis. Atualizar CatalogView para ler ambos os searchParams."
+    },
+    {
+      "id": "P3-01",
+      "bloco": "P3",
+      "title": "Deploy: web-client e web-partner na Vercel",
+      "priority": 13,
+      "passes": false,
+      "description": "Configurar deploy automático na Vercel para web-client (domínio público) e web-partner (domínio parceiro). Configurar variáveis de ambiente de produção. Testar que builds de produção funcionam com as envs corretas."
+    },
+    {
+      "id": "P3-02",
+      "bloco": "P3",
+      "title": "Deploy: API na Railway",
+      "priority": 14,
+      "passes": false,
+      "description": "Configurar deploy da API Fastify na Railway com Dockerfile ou Nixpacks. Configurar DATABASE_URL, SUPABASE_*, STORE_SLUG, REDIS_URL de produção. Health check em GET /v1/health. Configurar domínio customizado para a API."
+    },
+    {
+      "id": "P3-03",
+      "bloco": "P3",
+      "title": "GitHub Actions CI: typecheck + build em todo PR",
+      "priority": 15,
+      "passes": false,
+      "description": "Criar .github/workflows/ci.yml que roda em push/PR para main: (1) corepack pnpm install. (2) corepack pnpm typecheck. (3) corepack pnpm build (com envs dummy para não quebrar). Bloquear merge se CI falhar."
+    },
+    {
+      "id": "P4-01",
+      "bloco": "P4",
+      "title": "QA: testes Playwright — fluxo do cliente",
+      "priority": 16,
+      "passes": false,
+      "description": "Testes e2e com Playwright cobrindo o fluxo completo do cliente: (1) Abrir storefront → age gate → navegar catálogo. (2) Filtrar por categoria. (3) Buscar produto. (4) Abrir página de produto → adicionar ao carrinho. (5) Abrir CartSheet → ir para checkout. (6) Preencher formulário → submeter pedido. (7) Ser redirecionado para tracking page com publicId correto. (8) Timeline exibindo status inicial."
+    },
+    {
+      "id": "P4-02",
+      "bloco": "P4",
+      "title": "QA: testes Playwright — fluxo do parceiro",
+      "priority": 17,
+      "passes": false,
+      "description": "Testes e2e cobrindo o fluxo do parceiro: (1) Login com credenciais válidas → redirect para dashboard. (2) Dashboard exibe métricas. (3) /pedidos: ver lista → abrir detalhe → mudar status. (4) /catalogo: criar produto → editar → toggle disponibilidade. (5) /clientes: ver lista → abrir detalhe. (6) /configuracoes: editar dados → salvar. (7) Logout → redirect para login."
+    },
+    {
+      "id": "P4-03",
+      "bloco": "P4",
+      "title": "QA: validação mobile e responsividade",
+      "priority": 18,
+      "passes": false,
+      "description": "Testar storefront (web-client) em viewport mobile (390px, 768px). Verificar: (1) Header e busca acessíveis. (2) Grid de produtos em 1-2 colunas. (3) CartSheet ocupa full height. (4) Checkout form usável em mobile. (5) Tracking page legível. O web-partner não precisa ser mobile-first, mas deve ser usável em tablet (1024px)."
+    },
+    {
+      "id": "P5-01",
+      "bloco": "P5",
+      "title": "Design: logo oficial no painel parceiro e storefront",
+      "priority": 19,
+      "passes": false,
+      "description": "Substituir logo placeholder/fake no web-partner pela logo oficial. Substituir logo no storefront (web-client Header). Atualizar favicon de ambos os apps. Garantir que a logo em SVG ou PNG de alta resolução esteja no repositório em /public/logo.*."
+    },
+    {
+      "id": "P5-02",
+      "bloco": "P5",
+      "title": "Design: revisão final de tipografia, espaçamentos e og:image",
+      "priority": 20,
+      "passes": false,
+      "description": "Passar por todas as páginas e corrigir inconsistências visuais identificadas durante os testes de P4. Adicionar og:image real (screenshot ou imagem de marca) nas metatags. Revisar: tamanhos de fonte, espaçamentos, cores de badges, estados de hover em botões e links. Garantir que favicon e og:image aparecem corretamente no WhatsApp/iMessage (preview de link)."
+    }
+  ]
 }
