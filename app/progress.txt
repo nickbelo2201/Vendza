@@ -123,9 +123,67 @@ Todas as 20 stories do prd.json marcadas como `passes: true`. Commit `f2c7c23` c
 ---
 
 # ════════════════════════════════════════
-# V2 — INÍCIO
-# Data: 2026-04-06
+# V2 — CONCLUÍDA ✅
+# Data início: 2026-04-06
+# Data conclusão: 2026-04-06
+# Commit: ad8c35f
 # ════════════════════════════════════════
+
+## 2026-04-06T12:00:00Z - V2 ENCERRADA ✅ — Run de orquestração multi-agente
+
+### Orquestração executada
+
+**Fase 1 — 3 agentes paralelos:**
+- `backend-architect` (Opus): 4 endpoints API adicionados
+- `frontend-developer` (Sonnet): 6 funcionalidades web-partner
+- `frontend-developer` (Sonnet): busca + SEO web-client
+
+**Fase 2 — 2 agentes paralelos:**
+- `code-reviewer` (Opus): 6 problemas críticos/altos corrigidos
+- `security-auditor` (Opus): 3 falhas críticas de segurança corrigidas
+
+### O que foi implementado na V2
+
+**API:**
+- GET /partner/store/hours (endpoint faltante)
+- DELETE /partner/products/:id — soft-delete, InventoryMovement preservado
+- GET /partner/reports?from=&to= — faturamento, pedidos, ticket médio, top produtos, revenueByDay
+- GET /partner/orders/export — CSV com proteção contra formula injection (Excel/Sheets)
+- partnerRoutes com TypeBox agora ativo (routes inline sem validação removidas do app.ts)
+- Socket.io: autenticação Bearer obrigatória + tenant isolation
+
+**web-partner:**
+- /pedidos: FiltroStatus (client component) filtra por status via searchParams
+- /catalogo: ProdutoModal (criar/editar) + BotaoDeletar + CatalogoClient — Server Actions com auth
+- /clientes: BuscaClientes filtra por nome/telefone client-side
+- /configuracoes: ZonasEntrega + HorariosForm — Server Actions com auth
+- /relatorios: SeletorPeriodo + BarChart SVG puro + 4 cards de métricas + tabela top produtos
+- TopbarV2: useNewOrders (Socket.io + Bearer token) → badge de novos pedidos
+
+**web-client:**
+- Header: busca com debounce 300ms + emojis → SVG Lucide
+- generateMetadata: home, produto/[slug], pedidos/[publicId]
+- Emoji WhatsApp → SVG
+
+**Segurança corrigida (auditoria automática):**
+- CRÍTICO: Socket.io sem autenticação → Bearer token obrigatório
+- CRÍTICO: routes.ts era código morto (partnerRoutes não registrado) → corrigido
+- CRÍTICO: deleteProduct violava append-only de InventoryMovement → soft-delete
+- ALTO: Client Components fazendo fetch() sem auth → Server Actions
+- ALTO: CSV formula injection → escapeCsvField protegido
+- ALTO: ZonasEntrega enviava payload incorreto → corrigido
+
+**Validação final:**
+- pnpm typecheck: 0 erros em 7 workspaces
+- pnpm build isolado: api ✅ | web-client (6 rotas) ✅ | web-partner (13 rotas) ✅
+
+**Learnings V2:**
+- `partnerRoutes` em `routes.ts` estava importado mas nunca registrado no `app.ts` — as rotas inline sem TypeBox validation eram as que estavam ativas. Corrigido para usar `v1.register(partnerRoutes)`.
+- Client Components em Next.js 15 não devem usar `fetch()` diretamente para APIs autenticadas — usar Server Actions que têm acesso à sessão servidor.
+- Socket.io middleware `io.use()` com validação Supabase é a forma correta de autenticar conexões WebSocket no monorepo.
+- `deleteMany` + `createMany` em Prisma é o padrão correto para upsert de arrays (zonas de entrega, horários).
+
+---
 
 ## Roadmap V2 (backlog priorizado)
 

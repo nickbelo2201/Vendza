@@ -14,63 +14,63 @@
       "id": "V2-A1",
       "title": "Painel de pedidos funcional (web-partner /pedidos)",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "description": "Implementar a página /pedidos no web-partner com listagem real de pedidos da API. Filtros por status (todos, pendentes, em preparo, entregues). Card de cada pedido com publicId, cliente, total, status badge, tempo. Botão para mudar status do pedido (PATCH /partner/orders/:id/status). Timeline do pedido em modal ou drawer. Atualização em tempo real via Socket.io room store:{storeId} ouvindo order:created e order:status_changed."
     },
     {
       "id": "V2-A2",
       "title": "CRUD de produtos e categorias (web-partner /catalogo)",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "description": "Implementar a página /catalogo com: (1) Lista de produtos com imagem, nome, preço, disponibilidade toggle. (2) Modal/drawer para criar e editar produto: nome, slug (auto-gerado), categoria, preço lista, preço venda, descrição, isAvailable, isFeatured. (3) Upload de imagem para Supabase Storage. (4) CRUD de categorias (criar, renomear, reordenar). Usar endpoints POST/PATCH/DELETE /partner/products e /partner/categories."
     },
     {
       "id": "V2-A3",
       "title": "CRM de clientes (web-partner /clientes)",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "description": "Implementar a página /clientes com: (1) Tabela paginada de clientes com nome, telefone, total de pedidos, última compra. (2) Busca por nome ou telefone. (3) Drawer de detalhe do cliente: histórico de pedidos, valor total gasto, frequência. (4) Uso dos endpoints GET /partner/customers e GET /partner/customers/:id/orders."
     },
     {
       "id": "V2-A4",
       "title": "Configurações da loja (web-partner /configuracoes)",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "description": "Implementar a página /configuracoes com seções: (1) Dados da loja: nome, slug, WhatsApp, status (aberta/fechada), minimumOrderValueCents. (2) Horário de funcionamento (campo JSON simples). (3) Zonas de entrega: listar, criar, editar (label, feeCents, etaMinutes, bairros). (4) Salvar via PATCH /partner/store e endpoints de deliveryZones. Preview do link da vitrine."
     },
     {
       "id": "V2-B1",
       "title": "Relatórios e analytics (web-partner /relatorios)",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "description": "Implementar a página /relatorios com: (1) Seletor de período (hoje, 7d, 30d, custom). (2) Cards: faturamento total, ticket médio, total de pedidos, novos clientes. (3) Gráfico de barras de faturamento por dia (SVG inline ou recharts). (4) Tabela de produtos mais vendidos (nome, quantidade, receita). (5) Tabela de clientes mais frequentes. Usar endpoint GET /partner/reports?from=&to=."
     },
     {
       "id": "V2-B2",
       "title": "Notificações realtime de novos pedidos (web-partner badge)",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "description": "Ativar o badge de notificações no TopbarV2: (1) Hook useSocket.ts conecta ao Socket.io com token da sessão, entra na room store:{storeId}. (2) Ouve order:created e incrementa contador de notificações não lidas. (3) Badge aparece no ícone de sino/pedidos. (4) Ao clicar em /pedidos, zera o contador. (5) Toast opcional mostrando 'Novo pedido de [nome]'."
     },
     {
       "id": "V2-B3",
       "title": "Exportação CSV de pedidos",
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "description": "Adicionar botão 'Exportar CSV' na página /pedidos e /relatorios: (1) Endpoint GET /partner/orders/export?from=&to=&status= retorna CSV com headers: publicId, data, cliente, telefone, itens, subtotal, frete, total, pagamento, status. (2) No frontend, fetch do endpoint e download via blob URL. (3) Nome do arquivo: pedidos_YYYY-MM-DD.csv."
     },
     {
       "id": "V2-C1",
       "title": "Busca de produtos no web-client",
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "description": "Adicionar campo de busca no Header do web-client: (1) Input de texto com debounce de 300ms. (2) Ao digitar, filtra produtos via GET /catalog/products?search=. (3) Resultados exibidos inline (dropdown) ou na própria CatalogView com query param. (4) Estado vazio com mensagem 'Nenhum produto encontrado para [termo]'."
     },
     {
       "id": "V2-C2",
       "title": "SEO e metatags dinâmicas por produto",
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "description": "Adicionar generateMetadata nas páginas do web-client: (1) /produto/[slug]: title = '{nome} — {loja}', description = '{descrição truncada}', og:image = {imageUrl}, og:price. (2) Home: title = '{loja} — Delivery', description com tagline da loja. (3) /pedidos/[publicId]: title = 'Pedido {publicId} — {loja}'. Usar fetchStorefrontConfig no generateMetadata."
     },
     {
@@ -93,5 +93,12 @@
       "Polygon-based delivery zones (PostGIS)",
       "LAST FEAT: Mercado Pago — checkout online com PIX e cartão"
     ]
+  },
+  "v2": {
+    "status": "COMPLETE",
+    "completedAt": "2026-04-06",
+    "commit": "ad8c35f",
+    "storiesTotal": 10,
+    "storiesPassed": 9
   }
 }
