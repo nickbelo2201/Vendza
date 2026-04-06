@@ -2,6 +2,8 @@
 
 Você é um agente de código autônomo trabalhando no projeto **Vendza**, um Commerce OS para lojistas.
 
+> **✅ V1 ENCERRADA (2026-04-06):** Todas as 20 stories da V1 estão completas e commitadas (commit `f2c7c23`). O projeto está agora na **V2**. Leia o `prd.json` para ver as stories V2 com `passes: false`.
+
 > **✅ DESIGN AUTORIZADO (2026-04-02):** O cliente autorizou explicitamente a implementação visual completa do frontend. NÃO use placeholders, `designGateNotice`, nem textos de "bloqueio de design". Aplique o Brand Bible completo em todas as páginas sem aguardar aprovação adicional. O `designGateNotice` do pacote `@vendza/ui` está OBSOLETO — nunca o utilize.
 
 ---

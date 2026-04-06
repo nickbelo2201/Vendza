@@ -78,3 +78,84 @@ Started: 2026-04-02
   - `web-partner` com `outputFileTracingRoot` + `webpack: {cache: false}` simultâneos falha em `_not-found.nft.json`; resolve rodando a build SEM modificações concorrentes
   - Builds devem ser executados sequencialmente (primeiro cada app isolado, depois Turbo usa cache) quando hooks automáticos estão ativos
 ---
+
+## 2026-04-06T00:00:00Z - V1 ENCERRADA ✅ — Commit final e encerramento de ciclo
+
+### Resumo da V1
+Todas as 20 stories do prd.json marcadas como `passes: true`. Commit `f2c7c23` consolida o trabalho completo:
+
+**web-client (vitrine do cliente):**
+- Design system completo: tokens Brand Bible (--cream, --green, --amber, --blue), Inter + Space Grotesk via Google Fonts
+- Home page: catálogo real da API, filtro por categoria (tabs), age gate modal com localStorage
+- Produto detail: preço lista riscado + venda em destaque, botão adicionar ao carrinho
+- CarrinhoContext (localStorage `vendza_carrinho`) + CartSheet drawer lateral
+- Header com badge de quantidade, CartSheet integrado
+- Checkout page: form completo (nome, tel, endereço, pagamento), POST /v1/orders, redirect para tracking
+- Order tracking `/pedidos/[publicId]`: timeline visual, status em destaque, botão WhatsApp
+- OrderTracker client component com Socket.io (room `order:{publicId}`)
+- API route `/api/image-proxy` para proxy de imagens externas (evitar CORS)
+- Componentes: ProductImage, Sidebar, CatalogView, BotaoAdicionarAoCarrinho, AgeGate
+- Mock data (products, categories, brands) para demo sem banco populado
+- useTheme hook
+
+**web-partner (painel do lojista):**
+- Login com Supabase Auth integrado (email + senha)
+- Fluxo completo: esqueci-senha → redefinir-senha
+- Auth callback route para OAuth e magic link
+- Dashboard: métricas reais da API (pedidos hoje, faturamento, ticket médio, clientes recorrentes), sparklines SVG inline
+- Kanban de pedidos (A Fazer / Em Progresso / Concluído) alimentado pela API
+- TopbarV2 com navegação e estado de sessão
+- Relatórios page (scaffold para V2)
+- Middleware Supabase SSR corrigido para rotas protegidas
+
+**api:**
+- storefront-service.ts com emit Socket.io (`order:created`) após criar pedido
+
+**Validação final:**
+- `pnpm typecheck`: 0 erros em 7 workspaces
+- `pnpm build` isolado: api ✅ | web-client (6 rotas) ✅ | web-partner (13 rotas) ✅
+- Nota: `pnpm build` via Turbo com concurrency pode falhar no OneDrive por race condition de filesystem — rodar builds isolados por app é a abordagem correta
+
+**Learnings V1 finais:**
+  - Turbo `--concurrency=1` ainda causa race condition no OneDrive quando web-client e web-partner constroem arquivos `.next` em paralelo — a solução é build isolado por app
+  - `[publicId]` em nomes de diretório no Windows/OneDrive funciona corretamente com Next.js 15 (o erro `Cannot find module for page` era artefato da build concorrente, não do nome)
+
+---
+
+# ════════════════════════════════════════
+# V2 — INÍCIO
+# Data: 2026-04-06
+# ════════════════════════════════════════
+
+## Roadmap V2 (backlog priorizado)
+
+### Bloco A — Operacional Completo (alta prioridade)
+- **V2-A1:** Painel de pedidos funcional (web-partner /pedidos) — listar, filtrar por status, mudar status com PATCH, timeline visual em tempo real via Socket.io
+- **V2-A2:** Catálogo de produtos (web-partner /catalogo) — CRUD completo de produtos e categorias, upload de imagem
+- **V2-A3:** Clientes (web-partner /clientes) — lista de clientes com histórico de pedidos, busca, tags
+- **V2-A4:** Configurações da loja (web-partner /configuracoes) — editar nome, logo, WhatsApp, horário de funcionamento, zonas de entrega
+
+### Bloco B — CRM e Inteligência (média prioridade)
+- **V2-B1:** Relatórios (web-partner /relatorios) — faturamento por período, produtos mais vendidos, clientes mais frequentes, gráficos
+- **V2-B2:** Notificações realtime no painel (badge de novos pedidos via Socket.io, já scaffoldado em S3-03)
+- **V2-B3:** Exportação CSV de pedidos e clientes
+
+### Bloco C — Experiência do Cliente (média prioridade)
+- **V2-C1:** Busca de produtos no web-client (input search → GET /catalog/products?search=)
+- **V2-C2:** Página de categorias dedicada com breadcrumb
+- **V2-C3:** SEO e metatags dinâmicas por produto (generateMetadata no Next.js)
+
+### Bloco D — Infra e Qualidade (baixa prioridade)
+- **V2-D1:** Testes e2e com Playwright nas flows críticas (checkout, login, tracking)
+- **V2-D2:** Deploy setup (Vercel/Railway + GitHub Actions CI)
+- **V2-D3:** Seed de dados demo rico para apresentações
+
+## Itens NÃO incluídos na V2 (movidos para V3)
+- Mercado Pago / integração de pagamento online → **última feature da V3**
+- Mobile app (React Native / Expo)
+- WhatsApp automação (Baileys / WAHA)
+- Multi-tenant / multi-loja
+- Polygon-based delivery zones
+- IA generativa para produtos e copy
+
+---

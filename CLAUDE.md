@@ -133,23 +133,30 @@ corepack pnpm lint             # Linting
 - Web-partner routing structure (layout, pages)
 - Web-client storefront structure
 
-**In Progress:**
-- Web-partner UI visual implementation (blocked pending design approval)
-- Login/session flow integration (web-partner ↔ API)
-- Real API consumption replacing mock/stub responses
-- Production build validation
+**V1 Status: COMPLETE ✅ (2026-04-06, commit f2c7c23)**
 
-**Backlog V1 (not started):**
-- Mercado Pago checkout
-- Customer order tracking UI
-- Redis job queues
-- Realtime order board (Socket.io)
+All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 
-**Out of V1 scope:**
-- Mobile app
-- Multi-store / full multi-tenant
-- Autonomous WhatsApp agents
-- Polygon-based delivery zones (uses bairro + radius)
+**V2 In Progress (see app/prd.json for full details):**
+- V2-A1: Painel de pedidos funcional (listar, filtrar, mudar status, realtime)
+- V2-A2: CRUD de produtos e categorias com upload de imagem
+- V2-A3: CRM de clientes com histórico
+- V2-A4: Configurações da loja (dados, horário, zonas de entrega)
+- V2-B1: Relatórios e analytics por período
+- V2-B2: Notificações realtime de novos pedidos (badge)
+- V2-B3: Exportação CSV de pedidos
+- V2-C1: Busca de produtos no web-client
+- V2-C2: SEO e metatags dinâmicas por produto
+
+**V3 Backlog (não iniciar até V2 completa):**
+- Deploy automatizado (Vercel + Railway + GitHub Actions)
+- Testes e2e Playwright
+- Mobile app, WhatsApp automação, multi-tenant
+- **ÚLTIMA FEAT V3: Mercado Pago (checkout online)**
+
+**Out of scope (todos os versions):**
+- Polygon-based delivery zones (usa bairro + radius)
+- IA generativa (V3+)
 
 ---
 
