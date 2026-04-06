@@ -16,6 +16,13 @@ type Zona = {
   neighborhoods: string[];
 };
 
+type HorarioDia = {
+  dayOfWeek: number;
+  opensAt: string;
+  closesAt: string;
+  isClosed: boolean;
+};
+
 async function getSettings(): Promise<StoreSettings | null> {
   try { return await fetchAPI<StoreSettings>("/partner/store/settings"); }
   catch (err) { if (err instanceof ApiError) return null; return null; }
@@ -26,9 +33,9 @@ async function getZonas(): Promise<Zona[]> {
   catch { return []; }
 }
 
-async function getHorarios(): Promise<unknown> {
-  try { return await fetchAPI<unknown>("/partner/store/hours"); }
-  catch { return {}; }
+async function getHorarios(): Promise<HorarioDia[]> {
+  try { return await fetchAPI<HorarioDia[]>("/partner/store/hours"); }
+  catch { return []; }
 }
 
 export default async function SettingsPage() {
@@ -79,7 +86,7 @@ export default async function SettingsPage() {
       <ZonasEntrega zonas={zonas} />
 
       {/* Horários de funcionamento */}
-      <HorariosForm horarios={horarios} />
+      <HorariosForm initialHours={horarios.length > 0 ? horarios : null} />
     </div>
   );
 }

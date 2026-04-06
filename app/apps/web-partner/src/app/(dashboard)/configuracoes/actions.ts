@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 
 import { fetchAPI } from "../../../lib/api";
 
+type HorarioDia = {
+  dayOfWeek: number;
+  opensAt: string;
+  closesAt: string;
+  isClosed: boolean;
+};
+
 export async function salvarConfiguracoes(dados: {
   name?: string;
   whatsappPhone?: string;
@@ -30,10 +37,19 @@ export async function salvarZonasEntrega(zonas: Array<{
   revalidatePath("/configuracoes");
 }
 
-export async function salvarHorarios(horarios: unknown) {
+export async function salvarHorarios(horarios: HorarioDia[]) {
   await fetchAPI("/partner/store/hours", {
     method: "PATCH",
     body: horarios,
   });
+  revalidatePath("/configuracoes");
+}
+
+export async function toggleStatusLoja(status: "open" | "closed") {
+  await fetchAPI("/partner/store/settings", {
+    method: "PATCH",
+    body: { status },
+  });
+  revalidatePath("/");
   revalidatePath("/configuracoes");
 }

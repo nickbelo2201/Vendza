@@ -9,20 +9,19 @@ type StoreSettingsInput = {
 };
 
 type StoreHourInput = {
-  dayOfWeek?: number;
-  weekday?: number;
-  opensAt?: string;
-  closesAt?: string;
+  dayOfWeek: number;
+  opensAt: string;
+  closesAt: string;
   isClosed?: boolean;
 };
 
 type DeliveryZoneInput = {
   id?: string;
   label: string;
-  feeCents?: number;
-  etaMinutes?: string;
-  neighborhoods?: string[];
-  radiusKm?: number;
+  feeCents: number;
+  etaMinutes: string;
+  neighborhoods: string[];
+  radiusKm: number;
 };
 
 function mapStoreSettings(store: {
@@ -135,24 +134,24 @@ export async function getStoreHours(context: PartnerContext) {
 
 export async function updateStoreHours(context: PartnerContext, input: StoreHourInput[]) {
   await prisma.$transaction(
-    input.map((item: StoreHourInput, index: number) =>
+    input.map((item: StoreHourInput) =>
       prisma.storeHour.upsert({
         where: {
           storeId_weekday: {
             storeId: context.storeId,
-            weekday: item.dayOfWeek ?? item.weekday ?? index,
+            weekday: item.dayOfWeek,
           },
         },
         update: {
-          opensAt: item.opensAt ?? "18:00",
-          closesAt: item.closesAt ?? "03:00",
+          opensAt: item.opensAt,
+          closesAt: item.closesAt,
           isClosed: item.isClosed ?? false,
         },
         create: {
           storeId: context.storeId,
-          weekday: item.dayOfWeek ?? item.weekday ?? index,
-          opensAt: item.opensAt ?? "18:00",
-          closesAt: item.closesAt ?? "03:00",
+          weekday: item.dayOfWeek,
+          opensAt: item.opensAt,
+          closesAt: item.closesAt,
           isClosed: item.isClosed ?? false,
         },
       }),
@@ -186,9 +185,9 @@ export async function updateDeliveryZones(context: PartnerContext, input: Delive
         ...(zone.id ? { id: zone.id } : {}),
         storeId: context.storeId,
         label: zone.label,
-        neighborhoodsJson: zone.neighborhoods ?? [],
-        radiusMeters: zone.radiusKm ? Math.round(zone.radiusKm * 1000) : 0,
-        deliveryFeeCents: zone.feeCents ?? 0,
+        neighborhoodsJson: zone.neighborhoods,
+        radiusMeters: Math.round(zone.radiusKm * 1000),
+        deliveryFeeCents: zone.feeCents,
         minimumOrderValueCents: 0,
         estimatedDeliveryMinutes: parseEtaMinutes(zone.etaMinutes),
         isActive: true,

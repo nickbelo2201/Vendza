@@ -423,6 +423,7 @@ export async function exportPartnerOrdersCSV(context: PartnerContext, filters: E
   const orders = await prisma.order.findMany({
     where,
     orderBy: { placedAt: "desc" },
+    take: 50000,
     include: {
       items: true,
     },

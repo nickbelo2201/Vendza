@@ -17,7 +17,11 @@ const ROUTE_META: Record<string, { secao: string; titulo: string }> = {
   "/configuracoes": { secao: "Configuração", titulo: "Configurações" },
 };
 
-export function TopbarV2() {
+type Props = {
+  toggleLoja?: React.ReactNode;
+};
+
+export function TopbarV2({ toggleLoja }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const [carregandoLogout, setCarregandoLogout] = useState(false);
@@ -50,6 +54,9 @@ export function TopbarV2() {
 
       {/* Direita: ações */}
       <div className="topbar-right">
+        {/* Toggle status da loja */}
+        {toggleLoja}
+
         {/* Link de Pedidos com badge de novos pedidos */}
         <Link
           href="/pedidos"

@@ -109,6 +109,24 @@ const StoreSettingsSchema = Type.Object({
   minimumOrderValueCents: Type.Optional(Type.Integer({ minimum: 0 })),
 });
 
+const StoreHourSchema = Type.Object({
+  dayOfWeek: Type.Integer({ minimum: 0, maximum: 6 }),
+  opensAt: Type.String({ pattern: "^\\d{2}:\\d{2}$" }),
+  closesAt: Type.String({ pattern: "^\\d{2}:\\d{2}$" }),
+  isClosed: Type.Optional(Type.Boolean()),
+});
+const StoreHoursBodySchema = Type.Array(StoreHourSchema, { maxItems: 7 });
+
+const DeliveryZoneInputSchema = Type.Object({
+  id: Type.Optional(Type.String()),
+  label: Type.String({ minLength: 1, maxLength: 200 }),
+  feeCents: Type.Integer({ minimum: 0 }),
+  etaMinutes: Type.String(),
+  neighborhoods: Type.Array(Type.String()),
+  radiusKm: Type.Number({ minimum: 0 }),
+});
+const DeliveryZonesBodySchema = Type.Array(DeliveryZoneInputSchema);
+
 type OrderFilters = Static<typeof OrderFiltersSchema>;
 type StatusUpdateBody = Static<typeof StatusUpdateSchema>;
 type ManualOrderBody = Static<typeof ManualOrderSchema>;
@@ -117,6 +135,8 @@ type AvailabilityBody = Static<typeof AvailabilitySchema>;
 type InventoryMovementBody = Static<typeof InventoryMovementSchema>;
 type CustomerUpdateBody = Static<typeof CustomerUpdateSchema>;
 type StoreSettingsBody = Static<typeof StoreSettingsSchema>;
+type StoreHourBody = Static<typeof StoreHourSchema>;
+type DeliveryZoneInputBody = Static<typeof DeliveryZoneInputSchema>;
 
 function partnerContext(request: FastifyRequest) {
   if (!request.partnerContext) {
@@ -144,7 +164,16 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         response: { 200: envelopeSchema(Type.Any()) },
       },
     },
-    async (request) => ok(await getPartnerReports(partnerContext(request), request.query)),
+    async (request, reply) => {
+      try {
+        return ok(await getPartnerReports(partnerContext(request), request.query));
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("90 dias")) {
+          return reply.code(400).send({ error: err.message });
+        }
+        throw err;
+      }
+    },
   );
 
   app.get<{ Querystring: OrderFilters }>(
@@ -383,10 +412,10 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request) => ok(await getStoreHours(partnerContext(request))),
   );
 
-  app.patch(
+  app.patch<{ Body: StoreHourBody[] }>(
     "/partner/store/hours",
-    { schema: { body: Type.Array(Type.Any()), response: { 200: envelopeSchema(Type.Any()) } } },
-    async (request) => ok(await updateStoreHours(partnerContext(request), request.body as Array<Record<string, unknown>>)),
+    { schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await updateStoreHours(partnerContext(request), request.body)),
   );
 
   app.get(
@@ -395,11 +424,11 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request) => ok(await getDeliveryZones(partnerContext(request))),
   );
 
-  app.patch<{ Body: Array<{ id?: string; label: string; feeCents: number; etaMinutes: string; neighborhoods: string[]; radiusKm: number }> }>(
+  app.patch<{ Body: DeliveryZoneInputBody[] }>(
     "/partner/store/delivery-zones",
     {
       schema: {
-        body: Type.Array(Type.Any()),
+        body: DeliveryZonesBodySchema,
         response: { 200: envelopeSchema(Type.Array(Type.Any())) },
       },
     },

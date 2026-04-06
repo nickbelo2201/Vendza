@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { ApiError, fetchAPI } from "../../lib/api";
 import { SidebarV2 } from "../../components/SidebarV2";
-import { TopbarV2 } from "../../components/TopbarV2";
+import { TopbarWrapper } from "../../components/TopbarWrapper";
 import { OrderNotification } from "../../components/OrderNotification";
 
 type StoreSettings = { id: string; name: string };
@@ -40,7 +40,7 @@ export default async function DashboardLayout({
     <div className="v2-shell">
       <SidebarV2 />
       <div className="v2-body">
-        <TopbarV2 />
+        <TopbarWrapper />
         <main className="v2-main">
           {children}
         </main>

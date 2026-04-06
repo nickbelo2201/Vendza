@@ -81,66 +81,76 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
   const toDate = filters.to ? new Date(filters.to) : now;
   const fromDate = filters.from ? new Date(filters.from) : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const orders = await prisma.order.findMany({
-    where: {
-      storeId: context.storeId,
-      placedAt: {
-        gte: fromDate,
-        lte: toDate,
-      },
-    },
-    include: {
-      items: true,
-    },
-  });
-
-  const totalRevenueCents = orders.reduce((sum: number, o: { totalCents: number }) => sum + o.totalCents, 0);
-  const totalOrders = orders.length;
-  const averageTicketCents = totalOrders > 0 ? Math.round(totalRevenueCents / totalOrders) : 0;
-
-  // Novos clientes no período
-  const newCustomers = await prisma.customer.count({
-    where: {
-      storeId: context.storeId,
-      createdAt: {
-        gte: fromDate,
-        lte: toDate,
-      },
-    },
-  });
-
-  // Top produtos por quantidade vendida
-  const productMap = new Map<string, { name: string; quantity: number; revenueCents: number }>();
-  for (const order of orders) {
-    for (const item of order.items) {
-      const existing = productMap.get(item.productId);
-      if (existing) {
-        existing.quantity += item.quantity;
-        existing.revenueCents += item.totalPriceCents;
-      } else {
-        productMap.set(item.productId, {
-          name: item.productName,
-          quantity: item.quantity,
-          revenueCents: item.totalPriceCents,
-        });
-      }
-    }
+  // Validação de range máximo de 90 dias
+  const diffMs = toDate.getTime() - fromDate.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays > 90) {
+    throw new Error("Período máximo para relatórios é 90 dias.");
   }
 
-  const topProducts = Array.from(productMap.values())
-    .sort((a, b) => b.quantity - a.quantity)
-    .slice(0, 10);
+  type SummaryRow = { count: bigint; sum: bigint | null; avg: bigint | null };
+  type TopProductRow = { name: string; quantity: bigint; revenue_cents: bigint };
+  type RevenueByDayRow = { date: Date | string; revenue_cents: bigint };
+  type CountRow = { count: bigint };
 
-  // Receita por dia
-  const revenueByDayMap = new Map<string, number>();
-  for (const order of orders) {
-    const dayKey = order.placedAt.toISOString().slice(0, 10);
-    revenueByDayMap.set(dayKey, (revenueByDayMap.get(dayKey) ?? 0) + order.totalCents);
-  }
+  // Total de pedidos + faturamento + ticket médio (SQL agregado)
+  const summaryRows = (await prisma.$queryRaw`
+    SELECT COUNT(*) as count, SUM(total_cents) as sum, AVG(total_cents) as avg
+    FROM orders
+    WHERE store_id = ${context.storeId}::uuid
+      AND placed_at BETWEEN ${fromDate} AND ${toDate}
+      AND status != 'cancelled'
+  `) as SummaryRow[];
 
-  const revenueByDay = Array.from(revenueByDayMap.entries())
-    .map(([date, revenueCents]) => ({ date, revenueCents }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const summary = summaryRows[0];
+  const totalOrders = Number(summary?.count ?? 0);
+  const totalRevenueCents = Number(summary?.sum ?? 0);
+  const averageTicketCents = totalOrders > 0 ? Math.round(Number(summary?.avg ?? 0)) : 0;
+
+  // Top produtos (SQL agregado)
+  const topProductRows = (await prisma.$queryRaw`
+    SELECT oi.product_name as name, SUM(oi.quantity) as quantity, SUM(oi.total_price_cents) as revenue_cents
+    FROM order_items oi
+    JOIN orders o ON oi.order_id = o.id
+    WHERE o.store_id = ${context.storeId}::uuid
+      AND o.placed_at BETWEEN ${fromDate} AND ${toDate}
+      AND o.status != 'cancelled'
+    GROUP BY oi.product_name
+    ORDER BY SUM(oi.quantity) DESC
+    LIMIT 10
+  `) as TopProductRow[];
+
+  const topProducts = topProductRows.map((row: TopProductRow) => ({
+    name: row.name,
+    quantity: Number(row.quantity),
+    revenueCents: Number(row.revenue_cents),
+  }));
+
+  // Receita por dia (SQL agregado)
+  const revenueByDayRows = (await prisma.$queryRaw`
+    SELECT DATE(placed_at) as date, SUM(total_cents) as revenue_cents
+    FROM orders
+    WHERE store_id = ${context.storeId}::uuid
+      AND placed_at BETWEEN ${fromDate} AND ${toDate}
+      AND status != 'cancelled'
+    GROUP BY DATE(placed_at)
+    ORDER BY date ASC
+  `) as RevenueByDayRow[];
+
+  const revenueByDay = revenueByDayRows.map((row: RevenueByDayRow) => ({
+    date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date),
+    revenueCents: Number(row.revenue_cents),
+  }));
+
+  // Novos clientes no período (SQL agregado)
+  const newCustomerRows = (await prisma.$queryRaw`
+    SELECT COUNT(*) as count
+    FROM customers
+    WHERE store_id = ${context.storeId}::uuid
+      AND created_at BETWEEN ${fromDate} AND ${toDate}
+  `) as CountRow[];
+
+  const newCustomers = Number(newCustomerRows[0]?.count ?? 0);
 
   return {
     period: {
@@ -160,7 +170,7 @@ export async function getDashboardSummary(context: PartnerContext) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [todayOrders, customers, totalCustomers] = await Promise.all([
+  const [todayOrders, newCustomers] = await Promise.all([
     prisma.order.findMany({
       where: {
         storeId: context.storeId,
@@ -173,28 +183,20 @@ export async function getDashboardSummary(context: PartnerContext) {
         customerId: true,
       },
     }),
-    prisma.customer.findMany({
-      where: { storeId: context.storeId },
-      select: {
-        id: true,
-        createdAt: true,
-      },
-    }),
     prisma.customer.count({
-      where: { storeId: context.storeId },
+      where: { storeId: context.storeId, createdAt: { gte: startOfToday } },
     }),
   ]);
 
   const revenueCents = todayOrders.reduce((sum: number, order: { totalCents: number }) => sum + order.totalCents, 0);
   const averageTicketCents = todayOrders.length > 0 ? Math.round(revenueCents / todayOrders.length) : 0;
   const recurringCustomerIds = new Set(todayOrders.map((order: { customerId: string }) => order.customerId));
-  const newCustomers = customers.filter((customer: { createdAt: Date }) => customer.createdAt >= startOfToday).length;
 
   return {
     ordersToday: todayOrders.length,
     revenueCents,
     averageTicketCents,
     recurringCustomers: recurringCustomerIds.size,
-    newCustomers: Math.min(newCustomers, totalCustomers),
+    newCustomers,
   };
 }
