@@ -217,3 +217,74 @@ Todas as 20 stories do prd.json marcadas como `passes: true`. Commit `f2c7c23` c
 - IA generativa para produtos e copy
 
 ---
+
+## 2026-04-06T00:00:00Z - P1: Bloco 1 da Plataforma (5 stories)
+
+### P1-01: Schemas TypeBox para PATCH /store/hours e /store/delivery-zones
+- StoreHourSchema com dayOfWeek Integer(0-6), opensAt/closesAt String(HH:MM), isClosed Optional Boolean
+- DeliveryZoneSchema com label, feeCents, etaMinutes, neighborhoods, radiusKm
+- maxItems: 7 para horas
+
+### P1-02: Limites de registros em /reports e /orders/export
+- getPartnerReports usa 4x $queryRaw com SUM/GROUP BY ao invés de findMany+map
+- Range máximo 90 dias (rejeita com 400)
+- exportPartnerOrdersCSV com take: 50000 safety valve
+
+### P1-03: HorariosForm com UI visual (7 linhas Dom-Sáb)
+- Formulário visual com toggle "Fechado" + inputs HH:MM por dia
+- Conversão para array da API no submit
+- Localizado em apps/web-partner/src/app/(dashboard)/configuracoes/HorariosForm.tsx
+
+### P1-04: Toggle Loja Aberta/Fechada com persistência na API
+- TopbarWrapper (Server Component) busca status inicial via GET /partner/store/settings
+- ToggleLojaAberta (Client Component) faz PATCH via Server Action
+- TopbarV2 recebe toggleLoja?: React.ReactNode como slot
+
+### P1-05: getDashboardSummary — substituir findMany de customers por count
+- prisma.customer.count({ where: { storeId, createdAt: { gte: startOfToday } } })
+
+**Learnings:**
+- Server/Client boundary: passar ReactNode como slot evita prop drilling e mantém regras do RSC
+- Append-only: deleteProduct deve fazer soft-delete (isAvailable: false) para preservar InventoryMovement
+---
+
+## 2026-04-06T01:00:00Z - P2: Bloco 2 da Plataforma (7 stories)
+
+### P2-01: Category CRUD API (routes + service)
+- listPartnerCategories, createPartnerCategory, updatePartnerCategory, deletePartnerCategory
+- deletePartnerCategory retorna { error: string } se há produtos vinculados
+- Slug validado com regex ^[a-z0-9-]+$
+
+### P2-02: Upload real de imagem — ProdutoModal com Supabase Storage
+- Input file com validação jpg/png/webp, max 5MB
+- Upload para bucket product-images via Server Action
+- URL pública salva no campo imageUrl via PATCH
+
+### P2-03: Drawer de detalhe do pedido em /pedidos
+- PedidoDetalhe: cliente, itens, timeline de OrderEvents, totais, botão de mudança de status
+- PedidosClient: Client Component que gerencia selectedOrderId e abre drawer
+
+### P2-04: Botão Exportar CSV em /pedidos e /relatorios
+- Route handler /api/exportar-pedidos com Supabase auth
+- Proxy para GET /v1/partner/orders/export com Bearer token
+- Content-Disposition: attachment; filename=pedidos_YYYY-MM-DD.csv
+
+### P2-05: Criação manual de pedido pelo parceiro
+- PedidoManualModal: 3 abas (buscar cliente, adicionar itens, entrega+pagamento)
+- POST /partner/orders/manual
+
+### P2-06: Drawer de detalhe do cliente com histórico
+- ClienteDetalhe: métricas (total gasto, pedidos, ticket médio), últimos 10 pedidos
+- BuscaClientes: abre ClienteDetalhe ao clicar na linha
+
+### P2-07: Storefront — categorias por URL e estado vazio na busca
+- CatalogView aceita categoriaInicial e termoBusca como props
+- Empty state: "Nenhum produto encontrado para [termo]" com link limpar busca
+- Filtro por ?categoria=slug persistido na URL (indexável)
+
+**Commit:** c4a025f
+
+**Learnings:**
+- Import path errado em route handlers: contar subdiretórios com cuidado (app/api/foo/route.ts precisa de ../../../utils, não ../../utils)
+- prd.json usa chave "userStories" não "stories" — verificar estrutura antes de manipular
+---

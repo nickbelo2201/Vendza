@@ -18,7 +18,13 @@
   "roadmap": {
     "plataforma": {
       "objetivo": "Plataforma 100% funcional — mesmas features do Zé Delivery e Neemo. Nenhuma IA até este bloco estar validado e aprovado para apresentação.",
-      "blocos": ["P1", "P2", "P3", "P4", "P5"]
+      "blocos": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5"
+      ]
     },
     "ia_automacao": {
       "objetivo": "Só iniciar após P5 aprovado e plataforma apresentada.",
@@ -37,7 +43,7 @@
       "bloco": "P1",
       "title": "Schemas TypeBox para PATCH /store/hours e /store/delivery-zones",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "description": "Substituir Type.Array(Type.Any()) por schemas tipados em routes.ts. StoreHourSchema: { dayOfWeek: Integer(0-6), opensAt: String(HH:MM), closesAt: String(HH:MM), isClosed: Optional(Boolean) }. DeliveryZoneSchema: { id: Optional(String), label: String, feeCents: Integer>=0, etaMinutes: String, neighborhoods: Array<String>, radiusKm: Number>=0 }. Validar maxItems: 7 para horas e razoável para zonas."
     },
     {
@@ -45,7 +51,7 @@
       "bloco": "P1",
       "title": "Limites de registros em /reports e /orders/export",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "description": "Em getPartnerReports: adicionar range máximo de 90 dias (rejeitar com 400 se ultrapassar), substituir findMany+map por queries SQL agregadas (SUM, GROUP BY) via prisma.$queryRaw para evitar carregar todos os pedidos em memória. Em exportPartnerOrdersCSV: adicionar take: 50000 como safety valve."
     },
     {
@@ -53,7 +59,7 @@
       "bloco": "P1",
       "title": "HorariosForm com UI visual (dias da semana, não JSON bruto)",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "description": "Substituir o textarea de JSON bruto por formulário visual: 7 linhas (Dom a Sáb), cada uma com toggle 'Fechado' + inputs de horário abertura/fechamento (HH:MM). Ao salvar, converter para o array esperado pela API. O modelo de dados esperado pela API é Array<{ dayOfWeek: 0-6, opensAt: string, closesAt: string, isClosed?: boolean }>."
     },
     {
@@ -61,7 +67,7 @@
       "bloco": "P1",
       "title": "Toggle Loja Aberta/Fechada que persiste na API",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "description": "Reintroduzir o toggle de status da loja no TopbarV2, desta vez com persistência real. Buscar status inicial via GET /partner/store/settings (campo status: 'open'|'closed'). Ao clicar, chamar PATCH /partner/store/settings com { status: 'open'|'closed' }. Usar Server Action para a mutação. O status inicial deve vir do Server Component pai (layout.tsx do dashboard) via props."
     },
     {
@@ -69,7 +75,7 @@
       "bloco": "P1",
       "title": "getDashboardSummary — substituir findMany de customers por count",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "description": "Em crm-dashboard-service.ts, a função getDashboardSummary usa prisma.customer.findMany para depois filtrar e contar clientes criados hoje. Substituir por prisma.customer.count({ where: { storeId, createdAt: { gte: startOfToday } } }) para evitar carregar todos os clientes em memória."
     },
     {
@@ -77,7 +83,7 @@
       "bloco": "P2",
       "title": "CRUD de categorias no painel /catalogo",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "description": "Adicionar seção de gerenciamento de categorias na página /catalogo do web-partner. (1) Listar categorias existentes com nome e slug. (2) Modal para criar categoria: nome (slug auto-gerado), isFeatured toggle. (3) Editar nome de categoria existente. (4) Deletar categoria (soft ou hard, verificar se há produtos vinculados). Usar endpoints POST/PATCH/DELETE /partner/categories (verificar se existem na API, criar se necessário)."
     },
     {
@@ -85,7 +91,7 @@
       "bloco": "P2",
       "title": "Upload real de imagem para produtos (Supabase Storage)",
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "description": "Substituir o campo 'imageUrl' (texto manual) no ProdutoModal por upload de arquivo real. (1) Input file no modal. (2) Server Action que faz upload para Supabase Storage bucket 'product-images' e retorna a URL pública. (3) URL salva no campo imageUrl do produto via PATCH. Configurar bucket público no Supabase. Validar: apenas imagens (jpg/png/webp), máximo 5MB."
     },
     {
@@ -93,7 +99,7 @@
       "bloco": "P2",
       "title": "Modal/drawer de detalhe do pedido em /pedidos",
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "description": "Ao clicar em uma linha da tabela de pedidos, abrir um drawer/modal com detalhes completos: (1) Informações do cliente (nome, telefone, endereço de entrega). (2) Lista de itens com quantidade, preço unitário e total. (3) Timeline de eventos (OrderEvents) em ordem cronológica. (4) Subtotal, frete, total, método de pagamento. (5) Botão de mudança de status integrado. Buscar via GET /partner/orders/:id."
     },
     {
@@ -101,7 +107,7 @@
       "bloco": "P2",
       "title": "Botão Exportar CSV no frontend (/pedidos e /relatorios)",
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "description": "Adicionar botão 'Exportar CSV' nas páginas /pedidos e /relatorios. O botão deve fazer fetch para GET /partner/orders/export (com os filtros ativos: status, from, to) e disparar download via blob URL. Nome do arquivo: pedidos_YYYY-MM-DD.csv. O endpoint já existe na API — é só a UI que falta."
     },
     {
@@ -109,7 +115,7 @@
       "bloco": "P2",
       "title": "Criação manual de pedido pelo parceiro",
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "description": "Botão 'Novo Pedido Manual' na página /pedidos. Abre modal com formulário: (1) Buscar/selecionar cliente por telefone (ou criar novo). (2) Adicionar produtos ao pedido com quantidade. (3) Selecionar endereço e método de pagamento. (4) Submit via POST /partner/orders/manual. Útil para pedidos recebidos por WhatsApp ou telefone. O endpoint já existe na API."
     },
     {
@@ -117,7 +123,7 @@
       "bloco": "P2",
       "title": "Drawer de detalhe do cliente com histórico de pedidos",
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "description": "Ao clicar em uma linha da tabela de clientes, abrir drawer com: (1) Dados do cliente (nome, telefone, email, status ativo/inativo). (2) Métricas: total gasto, total de pedidos, ticket médio, frequência. (3) Lista dos últimos 10 pedidos com publicId, data, total e status. Buscar via GET /partner/customers/:id. Botão de editar nome/status do cliente."
     },
     {
@@ -125,7 +131,7 @@
       "bloco": "P2",
       "title": "Storefront: página de categorias e estado vazio na busca",
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "description": "(1) Quando não há resultados na busca por ?busca=, exibir mensagem 'Nenhum produto encontrado para [termo]' com botão para limpar busca. (2) Filtro de categoria na home via URL (?categoria=slug) para que links diretos para categorias funcionem e sejam indexáveis. Atualizar CatalogView para ler ambos os searchParams."
     },
     {
