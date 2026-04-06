@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+import { createClient } from "../../../utils/supabase/client";
 
 import { criarProduto, editarProduto } from "./actions";
 
@@ -49,7 +51,9 @@ function reaisParaCentavos(valor: string): number {
 export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   const router = useRouter();
   const [salvando, setSalvando] = useState(false);
+  const [uploadando, setUploadando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
@@ -91,6 +95,40 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
     setNome(v);
     if (!slugManual) {
       setSlug(gerarSlug(v));
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setErro(null);
+    setUploadando(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const identificador = produto?.id ?? `temp_${Date.now()}`;
+      const path = `${identificador}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(path);
+
+      setImageUrl(publicUrl);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao enviar imagem.");
+    } finally {
+      setUploadando(false);
+      // Limpar o input para permitir reenvio do mesmo arquivo
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -231,14 +269,66 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
             </div>
 
             <div className="wp-form-group">
-              <label className="wp-label">URL da imagem</label>
-              <input
-                className="wp-input"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-                type="url"
-              />
+              <label className="wp-label">Imagem do produto</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* Upload de arquivo */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    type="button"
+                    className="wp-btn wp-btn-secondary"
+                    style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
+                    disabled={uploadando || salvando}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    {uploadando ? "Enviando..." : "Selecionar arquivo"}
+                  </button>
+                  {imageUrl && !uploadando && (
+                    <span style={{ fontSize: 12, color: "var(--g)" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ verticalAlign: "middle", marginRight: 4 }}>
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Imagem carregada
+                    </span>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    style={{ display: "none" }}
+                    onChange={handleFileUpload}
+                  />
+                </div>
+                {/* Preview da imagem */}
+                {imageUrl && (
+                  <div style={{
+                    width: 72, height: 72, borderRadius: 8,
+                    border: "1px solid var(--s6)", overflow: "hidden",
+                    background: "var(--s7)",
+                  }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                )}
+                {/* Fallback: URL manual */}
+                <div>
+                  <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>
+                    Ou colar URL diretamente
+                  </label>
+                  <input
+                    className="wp-input"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    type="url"
+                    style={{ fontSize: 12 }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 24 }}>
@@ -274,8 +364,8 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
               <button type="button" className="wp-btn wp-btn-secondary" onClick={onFechar} disabled={salvando}>
                 Cancelar
               </button>
-              <button type="submit" className="wp-btn wp-btn-primary" disabled={salvando}>
-                {salvando ? "Salvando..." : (produto?.id ? "Salvar alterações" : "Criar produto")}
+              <button type="submit" className="wp-btn wp-btn-primary" disabled={salvando || uploadando}>
+                {salvando ? "Salvando..." : uploadando ? "Aguardando upload..." : (produto?.id ? "Salvar alterações" : "Criar produto")}
               </button>
             </div>
           </div>

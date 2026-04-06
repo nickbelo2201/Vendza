@@ -47,14 +47,14 @@ export async function generateMetadata() {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ busca?: string }>;
+  searchParams: Promise<{ busca?: string; categoria?: string }>;
 }) {
-  const { busca } = await searchParams;
+  const { busca, categoria } = await searchParams;
 
-  // Monta a URL de produtos com o parâmetro de busca quando presente
-  const produtosUrl = busca
-    ? `/catalog/products?search=${encodeURIComponent(busca)}`
-    : "/catalog/products";
+  const produtosParams = new URLSearchParams();
+  if (busca) produtosParams.set("search", busca);
+  if (categoria) produtosParams.set("category", categoria);
+  const produtosUrl = `/catalog/products${produtosParams.toString() ? `?${produtosParams.toString()}` : ""}`;
 
   const [config, categories, products] = await Promise.all([
     fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
@@ -62,9 +62,10 @@ export default async function HomePage({
     fetchStorefrontCatalog<Product[]>(produtosUrl),
   ]);
 
-  // Usa produtos de demonstração quando o catálogo está vazio e não há busca ativa
+  // Usa mock só quando catálogo vazio e sem filtros ativos
+  const temFiltroAtivo = !!(busca || categoria);
   const produtosExibidos: Product[] =
-    products.length > 0 ? products : busca ? [] : MOCK_PRODUCTS;
+    products.length > 0 ? products : temFiltroAtivo ? [] : MOCK_PRODUCTS;
 
   return (
     <>
@@ -76,7 +77,12 @@ export default async function HomePage({
         </div>
       )}
 
-      <CatalogView categories={categories} products={produtosExibidos} />
+      <CatalogView
+        categories={categories}
+        products={produtosExibidos}
+        categoriaInicial={categoria ?? null}
+        termoBusca={busca ?? ""}
+      />
     </>
   );
 }

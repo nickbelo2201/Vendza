@@ -2,6 +2,110 @@ import { InventoryMovementType, prisma } from "@vendza/database";
 
 import type { PartnerContext } from "./context.js";
 
+// ─── Tipos de categoria ───────────────────────────────────────────────────────
+
+type CategoryCreateInput = {
+  name: string;
+  slug: string;
+  isActive?: boolean;
+};
+
+type CategoryPatchInput = Partial<{
+  name: string;
+  slug: string;
+  isActive: boolean;
+}>;
+
+function mapCategory(category: {
+  id: string;
+  storeId: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return {
+    id: category.id,
+    storeId: category.storeId,
+    name: category.name,
+    slug: category.slug,
+    sortOrder: category.sortOrder,
+    isActive: category.isActive,
+    createdAt: category.createdAt.toISOString(),
+    updatedAt: category.updatedAt.toISOString(),
+  };
+}
+
+export async function listPartnerCategories(context: PartnerContext) {
+  const categories = await prisma.category.findMany({
+    where: { storeId: context.storeId },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+
+  return categories.map(mapCategory);
+}
+
+export async function createPartnerCategory(context: PartnerContext, input: CategoryCreateInput) {
+  const category = await prisma.category.create({
+    data: {
+      storeId: context.storeId,
+      name: input.name,
+      slug: input.slug,
+      isActive: input.isActive ?? true,
+      sortOrder: 0,
+    },
+  });
+
+  return mapCategory(category);
+}
+
+export async function updatePartnerCategory(context: PartnerContext, id: string, input: CategoryPatchInput) {
+  const existing = await prisma.category.findFirst({
+    where: { id, storeId: context.storeId },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const category = await prisma.category.update({
+    where: { id: existing.id },
+    data: {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.slug !== undefined ? { slug: input.slug } : {}),
+      ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+    },
+  });
+
+  return mapCategory(category);
+}
+
+export async function deletePartnerCategory(
+  context: PartnerContext,
+  id: string,
+): Promise<{ deleted: true } | { error: string }> {
+  const existing = await prisma.category.findFirst({
+    where: { id, storeId: context.storeId },
+    include: { _count: { select: { products: true } } },
+  });
+
+  if (!existing) {
+    return { error: "Categoria nao encontrada." };
+  }
+
+  if (existing._count.products > 0) {
+    return {
+      error: `Nao e possivel excluir a categoria "${existing.name}" pois ela possui ${existing._count.products} produto(s) vinculado(s). Mova ou exclua os produtos antes de remover a categoria.`,
+    };
+  }
+
+  await prisma.category.delete({ where: { id: existing.id } });
+
+  return { deleted: true };
+}
+
 type ProductUpsertInput = {
   name: string;
   slug: string;

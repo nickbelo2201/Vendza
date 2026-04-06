@@ -4,10 +4,14 @@ import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { envelopeSchema, ok } from "../../lib/http.js";
 import {
   createInventoryMovement,
+  createPartnerCategory,
   createPartnerProduct,
+  deletePartnerCategory,
   deletePartnerProduct,
   getInventory,
+  listPartnerCategories,
   listPartnerProducts,
+  updatePartnerCategory,
   updatePartnerProduct,
   updateProductAvailability,
 } from "./catalog-service.js";
@@ -98,6 +102,18 @@ const InventoryMovementSchema = Type.Object({
   reason: Type.String(),
 });
 
+const CategoryCreateSchema = Type.Object({
+  name: Type.String({ minLength: 1 }),
+  slug: Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" }),
+  isActive: Type.Optional(Type.Boolean()),
+});
+
+const CategoryPatchSchema = Type.Object({
+  name: Type.Optional(Type.String({ minLength: 1 })),
+  slug: Type.Optional(Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" })),
+  isActive: Type.Optional(Type.Boolean()),
+});
+
 const CustomerUpdateSchema = Type.Object({
   name: Type.Optional(Type.String()),
   isInactive: Type.Optional(Type.Boolean()),
@@ -133,6 +149,8 @@ type ManualOrderBody = Static<typeof ManualOrderSchema>;
 type ProductUpsertBody = Static<typeof ProductUpsertSchema>;
 type AvailabilityBody = Static<typeof AvailabilitySchema>;
 type InventoryMovementBody = Static<typeof InventoryMovementSchema>;
+type CategoryCreateBody = Static<typeof CategoryCreateSchema>;
+type CategoryPatchBody = Static<typeof CategoryPatchSchema>;
 type CustomerUpdateBody = Static<typeof CustomerUpdateSchema>;
 type StoreSettingsBody = Static<typeof StoreSettingsSchema>;
 type StoreHourBody = Static<typeof StoreHourSchema>;
@@ -148,6 +166,65 @@ function partnerContext(request: FastifyRequest) {
 
 export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("onRequest", app.authenticate);
+
+  // ─── Categorias ─────────────────────────────────────────────────────────────
+
+  app.get(
+    "/partner/categories",
+    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    async (request) => ok(await listPartnerCategories(partnerContext(request))),
+  );
+
+  app.post<{ Body: CategoryCreateBody }>(
+    "/partner/categories",
+    {
+      schema: {
+        body: CategoryCreateSchema,
+        response: { 201: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      reply.code(201);
+      return ok(await createPartnerCategory(partnerContext(request), request.body));
+    },
+  );
+
+  app.patch<{ Params: { id: string }; Body: CategoryPatchBody }>(
+    "/partner/categories/:id",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        body: CategoryPatchSchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const category = await updatePartnerCategory(partnerContext(request), request.params.id, request.body);
+      if (!category) {
+        return reply.code(404).send(ok({ message: "Categoria nao encontrada." }));
+      }
+      return ok(category);
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    "/partner/categories/:id",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const result = await deletePartnerCategory(partnerContext(request), request.params.id);
+      if ("error" in result) {
+        return reply.code(400).send(ok({ message: result.error }));
+      }
+      return ok(result);
+    },
+  );
+
+  // ─── Dashboard ───────────────────────────────────────────────────────────────
 
   app.get("/partner/dashboard/summary", { schema: { response: { 200: envelopeSchema(Type.Any()) } } }, async (request) =>
     ok(await getDashboardSummary(partnerContext(request))),

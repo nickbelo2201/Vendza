@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
 
+import { ClienteDetalhe } from "./ClienteDetalhe";
+
 type Cliente = {
   id: string; name: string; phone: string; email: string | null;
   totalSpentCents: number; isInactive: boolean; lastOrderAt: string | null;
@@ -14,6 +16,7 @@ function getInitials(name: string) {
 
 export function BuscaClientes({ clientes }: { clientes: Cliente[] }) {
   const [busca, setBusca] = useState("");
+  const [clienteSelecionadoId, setClienteSelecionadoId] = useState<string | null>(null);
 
   const resultado = busca.trim()
     ? clientes.filter((c) => {
@@ -26,6 +29,7 @@ export function BuscaClientes({ clientes }: { clientes: Cliente[] }) {
     : clientes;
 
   return (
+    <>
     <div className="wp-stack">
       {/* Campo de busca */}
       <div style={{ position: "relative", maxWidth: 360 }}>
@@ -80,7 +84,7 @@ export function BuscaClientes({ clientes }: { clientes: Cliente[] }) {
             </thead>
             <tbody>
               {resultado.map((c) => (
-                <tr key={c.id}>
+                <tr key={c.id} style={{ cursor: "pointer" }} onClick={() => setClienteSelecionadoId(c.id)}>
                   <td>
                     <div className="wp-row" style={{ gap: 10 }}>
                       <div className="wp-avatar">{getInitials(c.name)}</div>
@@ -111,5 +115,11 @@ export function BuscaClientes({ clientes }: { clientes: Cliente[] }) {
         )}
       </div>
     </div>
+
+    <ClienteDetalhe
+      clienteId={clienteSelecionadoId}
+      onClose={() => setClienteSelecionadoId(null)}
+    />
+    </>
   );
 }

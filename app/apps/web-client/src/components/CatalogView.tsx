@@ -5,7 +5,7 @@ import { formatCurrency } from "@vendza/utils";
 import { ProductImage } from "./ProductImage";
 
 import { useCarrinho } from "../context/CarrinhoContext";
-import { CATEGORIES } from "../data/categories";
+import { CATEGORIES, type Category as StaticCategory } from "../data/categories";
 import { BRANDS, type Brand } from "../data/brands";
 
 type Category = {
@@ -29,7 +29,78 @@ type Product = {
 type Props = {
   categories: Category[];
   products: Product[];
+  categoriaInicial?: string | null;
+  termoBusca?: string;
 };
+
+function CategoryCard({
+  category,
+  isActive,
+  onClick,
+}: {
+  category: StaticCategory;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+        padding: "12px 8px",
+        borderRadius: 12,
+        cursor: "pointer",
+        border: isActive
+          ? "2px solid var(--green)"
+          : "1px solid var(--color-border)",
+        background: isActive
+          ? "rgba(45, 106, 79, 0.08)"
+          : "var(--color-surface-subtle)",
+        transition: "all 0.15s ease",
+      }}
+    >
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 10,
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--color-surface)",
+        }}
+      >
+        {category.imageUrl && !imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={category.imageUrl}
+            alt={category.label}
+            onError={() => setImgError(true)}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <span style={{ fontSize: 30 }}>{category.emoji}</span>
+        )}
+      </div>
+      <span
+        style={{
+          fontSize: 11,
+          textAlign: "center",
+          lineHeight: 1.2,
+          color: isActive ? "var(--green)" : "var(--color-text-secondary)",
+          fontWeight: isActive ? 600 : 400,
+        }}
+      >
+        {category.label}
+      </span>
+    </div>
+  );
+}
 
 function BrandCard({ brand }: { brand: Brand }) {
   const [imgError, setImgError] = useState(false);
@@ -121,8 +192,8 @@ function BrandCard({ brand }: { brand: Brand }) {
   );
 }
 
-export function CatalogView({ categories, products }: Props) {
-  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
+export function CatalogView({ categories, products, categoriaInicial = null, termoBusca = "" }: Props) {
+  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(categoriaInicial);
   const { adicionarItem } = useCarrinho();
 
   const produtosFiltrados = filtroCategoria
@@ -135,20 +206,15 @@ export function CatalogView({ categories, products }: Props) {
 
   return (
     <section>
-      {/* Grade de categorias — dados estáticos */}
+      {/* Grade de categorias — dados estáticos com imagens */}
       <div className="wc-category-grid">
         {CATEGORIES.map((cat) => (
-          <button
+          <CategoryCard
             key={cat.id}
-            className={`wc-category-card${filtroCategoria === cat.id ? " active" : ""}`}
+            category={cat}
+            isActive={filtroCategoria === cat.id}
             onClick={() => toggleCategoria(cat.id)}
-            title={cat.label}
-          >
-            <div className="wc-category-icon">
-              <cat.Icon size={28} strokeWidth={1.5} />
-            </div>
-            <span className="wc-category-label">{cat.label}</span>
-          </button>
+          />
         ))}
       </div>
 
@@ -181,6 +247,24 @@ export function CatalogView({ categories, products }: Props) {
 
       {/* Recomendados para Você */}
       <p className="wc-section-title-sm">Recomendados para Você</p>
+
+      {produtosFiltrados.length === 0 && (
+        <div style={{ textAlign: "center", padding: "48px 24px", color: "var(--text-muted)" }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12, opacity: 0.4 }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <p style={{ fontWeight: 600, marginBottom: 6 }}>
+            {termoBusca
+              ? `Nenhum produto encontrado para "${termoBusca}"`
+              : "Nenhum produto nesta categoria"}
+          </p>
+          {termoBusca && (
+            <a href="/" style={{ color: "var(--green)", fontSize: 14 }}>
+              Limpar busca
+            </a>
+          )}
+        </div>
+      )}
 
       <div className="wc-product-grid">
         {produtosFiltrados.map((product) => {
