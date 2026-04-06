@@ -197,6 +197,22 @@
       "priority": 20,
       "passes": false,
       "description": "Passar por todas as páginas e corrigir inconsistências visuais identificadas durante os testes de P4. Adicionar og:image real (screenshot ou imagem de marca) nas metatags. Revisar: tamanhos de fonte, espaçamentos, cores de badges, estados de hover em botões e links. Garantir que favicon e og:image aparecem corretamente no WhatsApp/iMessage (preview de link)."
+    },
+    {
+      "id": "P2-08",
+      "bloco": "P2",
+      "title": "Storefront: perfil do cliente — salvar dados pessoais em localStorage",
+      "priority": 21,
+      "passes": false,
+      "description": "Ícone de perfil no Header abre uma página ou sheet lateral /perfil. Cliente pode preencher nome, telefone e email. Dados salvos em localStorage (chave vendza-perfil). No checkout, os campos são pré-preenchidos automaticamente com os dados salvos. Sem login — é apenas conveniência de auto-fill local."
+    },
+    {
+      "id": "P2-09",
+      "bloco": "P2",
+      "title": "Storefront: endereços salvos — cliente salva endereços favoritos para checkout rápido",
+      "priority": 22,
+      "passes": false,
+      "description": "Cliente pode salvar até 3 endereços no localStorage (chave vendza-enderecos). No checkout, exibir lista de endereços salvos com botão de seleção rápida. Endereço selecionado pré-preenche os campos de entrega. Opção de salvar endereço atual após pedido confirmado."
     }
   ]
 }
