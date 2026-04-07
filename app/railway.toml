@@ -5,7 +5,7 @@ builder = "nixpacks"
 cmds = ["npm install -g pnpm@10.0.0 && pnpm install --frozen-lockfile"]
 
 [build.nixpacksPlan.phases.build]
-cmds = ["NODE_OPTIONS=--experimental-require-module pnpm db:generate && pnpm --filter @vendza/database build && pnpm --filter api build"]
+cmds = ["NODE_OPTIONS=--experimental-require-module pnpm db:generate && pnpm --filter @vendza/database build && mkdir -p packages/database/dist/generated/client && printf '{\"type\":\"module\"}' > packages/database/dist/generated/client/package.json && pnpm --filter api build"]
 
 [deploy]
 startCommand = "node apps/api/dist/server.js"
