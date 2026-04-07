@@ -14,7 +14,7 @@
     "dev": "prisma generate --watch --config ./prisma.config.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "db:generate": "prisma generate --config ./prisma.config.ts",
+    "db:generate": "prisma generate --config ./prisma.config.ts && node ./scripts/fix-generated-imports.mjs",
     "db:migrate": "prisma migrate dev --config ./prisma.config.ts",
     "db:push": "prisma db push --config ./prisma.config.ts",
     "db:seed": "tsx prisma/seed.ts",
