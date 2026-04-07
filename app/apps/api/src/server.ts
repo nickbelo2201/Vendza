@@ -3,7 +3,7 @@ import { getOrderPlacedQueue, getOrderStatusChangedQueue } from "./jobs/queues.j
 import { closeWorkers, startWorkers } from "./jobs/workers.js";
 
 const port = Number(process.env.API_PORT ?? process.env.PORT ?? 3333);
-const host = process.env.API_HOST ?? process.env.HOST ?? "0.0.0.0";
+const host = process.env.API_HOST ?? "0.0.0.0";
 
 const app = buildApp();
 
