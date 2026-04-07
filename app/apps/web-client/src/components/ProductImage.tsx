@@ -31,7 +31,24 @@ export function ProductImage({
 
   if (!imgSrc) {
     const cat = CATEGORIES.find((c) => c.id === categorySlug);
-    const Icon = cat?.Icon ?? ImageOff;
+    if (cat?.emoji) {
+      return (
+        <div
+          style={{
+            width: "100%",
+            height: 140,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 52,
+            opacity: 0.55,
+            userSelect: "none",
+          }}
+        >
+          {cat.emoji}
+        </div>
+      );
+    }
     return (
       <div
         style={{
@@ -44,7 +61,7 @@ export function ProductImage({
           opacity: 0.45,
         }}
       >
-        <Icon size={44} strokeWidth={1.25} />
+        <ImageOff size={44} strokeWidth={1.25} />
       </div>
     );
   }

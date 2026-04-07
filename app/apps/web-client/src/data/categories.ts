@@ -1,44 +1,105 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Beer,
-  Wine,
-  GlassWater,
-  Droplets,
-  Wind,
-  Coffee,
-  Cookie,
-  UtensilsCrossed,
-  ShoppingCart,
-  Gift,
-  Flame,
-  Leaf,
-  Package,
-  Wheat,
-  Sparkles,
-  Smile,
-} from "lucide-react";
-
-export interface StaticCategory {
+export interface Category {
   id: string;
   label: string;
-  Icon: LucideIcon;
+  emoji: string;
+  imageUrl: string | null;
 }
 
-export const CATEGORIES: StaticCategory[] = [
-  { id: "cervejas", label: "Cervejas", Icon: Beer },
-  { id: "vinhos", label: "Vinhos", Icon: Wine },
-  { id: "destilados", label: "Destilados", Icon: GlassWater },
-  { id: "sem-alcool", label: "Sem Álcool", Icon: Droplets },
-  { id: "agua-gelo", label: "Água e Gelo", Icon: Wind },
-  { id: "bebidas-quentes", label: "Bebidas Quentes", Icon: Coffee },
-  { id: "snacks", label: "Snacks", Icon: Cookie },
-  { id: "petiscos", label: "Petiscos", Icon: UtensilsCrossed },
-  { id: "mercearia", label: "Mercearia", Icon: ShoppingCart },
-  { id: "presentes", label: "Presentes", Icon: Gift },
-  { id: "churrasco", label: "Churrasco", Icon: Flame },
-  { id: "hortifruti", label: "Hortifruti", Icon: Leaf },
-  { id: "laticinios", label: "Laticínios", Icon: Package },
-  { id: "padaria", label: "Padaria", Icon: Wheat },
-  { id: "limpeza", label: "Limpeza", Icon: Sparkles },
-  { id: "higiene", label: "Higiene", Icon: Smile },
+export const CATEGORIES: Category[] = [
+  {
+    id: "cervejas",
+    label: "Cervejas",
+    emoji: "🍺",
+    imageUrl: "/images/categories/cervejas.png",
+  },
+  {
+    id: "vinhos",
+    label: "Vinhos",
+    emoji: "🍷",
+    imageUrl: "/images/categories/vinhos.png",
+  },
+  {
+    id: "destilados",
+    label: "Destilados",
+    emoji: "🥃",
+    imageUrl: "/images/categories/destilados.png",
+  },
+  {
+    id: "sem-alcool",
+    label: "Sem Álcool",
+    emoji: "🧃",
+    imageUrl: "/images/categories/sem-alcool.png",
+  },
+  {
+    id: "agua-gelo",
+    label: "Água e Gelo",
+    emoji: "💧",
+    imageUrl: "/images/categories/agua-gelo.png",
+  },
+  {
+    id: "bebidas-quentes",
+    label: "Bebidas Quentes",
+    emoji: "☕",
+    imageUrl: "/images/categories/bebidas-quentes.png",
+  },
+  {
+    id: "snacks",
+    label: "Snacks",
+    emoji: "🍟",
+    imageUrl: "/images/categories/snacks.png",
+  },
+  {
+    id: "petiscos",
+    label: "Petiscos",
+    emoji: "🥜",
+    imageUrl: "/images/categories/petiscos.png",
+  },
+  {
+    id: "mercearia",
+    label: "Mercearia",
+    emoji: "🛒",
+    imageUrl: "/images/categories/mercearia.png",
+  },
+  {
+    id: "presentes",
+    label: "Presentes",
+    emoji: "🎁",
+    imageUrl: "/images/categories/presentes.png",
+  },
+  {
+    id: "churrasco",
+    label: "Churrasco",
+    emoji: "🥩",
+    imageUrl: "/images/categories/churrasco.png",
+  },
+  {
+    id: "hortifruti",
+    label: "Hortifruti",
+    emoji: "🥬",
+    imageUrl: "/images/categories/hortifruti.png",
+  },
+  {
+    id: "laticinios",
+    label: "Laticínios",
+    emoji: "🧀",
+    imageUrl: "/images/categories/laticinios.png",
+  },
+  {
+    id: "padaria",
+    label: "Padaria",
+    emoji: "🍞",
+    imageUrl: "/images/categories/padaria.png",
+  },
+  {
+    id: "limpeza",
+    label: "Limpeza",
+    emoji: "🧹",
+    imageUrl: "/images/categories/limpeza.png",
+  },
+  {
+    id: "higiene",
+    label: "Higiene",
+    emoji: "🧴",
+    imageUrl: "/images/categories/higiene.png",
+  },
 ];

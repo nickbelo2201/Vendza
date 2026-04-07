@@ -46,58 +46,21 @@ function CategoryCard({
   return (
     <div
       onClick={onClick}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 8,
-        padding: "12px 8px",
-        borderRadius: 12,
-        cursor: "pointer",
-        border: isActive
-          ? "2px solid var(--green)"
-          : "1px solid var(--color-border)",
-        background: isActive
-          ? "rgba(45, 106, 79, 0.08)"
-          : "var(--color-surface-subtle)",
-        transition: "all 0.15s ease",
-      }}
+      className={`wc-category-card${isActive ? " active" : ""}`}
     >
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: 10,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "var(--color-surface)",
-        }}
-      >
+      <div className="wc-category-icon">
         {category.imageUrl && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={category.imageUrl}
             alt={category.label}
             onError={() => setImgError(true)}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <span style={{ fontSize: 30 }}>{category.emoji}</span>
+          <span style={{ fontSize: 34 }}>{category.emoji}</span>
         )}
       </div>
-      <span
-        style={{
-          fontSize: 11,
-          textAlign: "center",
-          lineHeight: 1.2,
-          color: isActive ? "var(--green)" : "var(--color-text-secondary)",
-          fontWeight: isActive ? 600 : 400,
-        }}
-      >
-        {category.label}
-      </span>
+      <span className="wc-category-label">{category.label}</span>
     </div>
   );
 }
