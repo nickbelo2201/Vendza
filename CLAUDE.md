@@ -149,7 +149,6 @@ All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 - V2-C2: SEO e metatags dinâmicas por produto
 
 **V3 Backlog (não iniciar até V2 completa):**
-- Deploy automatizado (Vercel + Railway + GitHub Actions)
 - Testes e2e Playwright
 - Mobile app, WhatsApp automação, multi-tenant
 - **ÚLTIMA FEAT V3: Mercado Pago (checkout online)**
@@ -178,6 +177,30 @@ All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 
 ---
 
+## Produção — Ambientes e Deploy
+
+| Serviço | URL | Branch | Plataforma |
+|---|---|---|---|
+| API | `https://vendza-production.up.railway.app` | `master` | Railway |
+| web-partner | `https://web-partner-three.vercel.app` | `main` | Vercel |
+
+**Workflow de push:**
+```bash
+git push origin master          # Railway (API) — automático
+git push origin master:main     # Vercel (frontends) — quando pronto para publicar
+```
+
+**Nunca trabalhe diretamente no `main`.** O `main` é somente destino de push do `master`.
+
+**Antes de fazer push para `main`:**
+1. `corepack pnpm typecheck` — deve passar com 0 erros
+2. Todos os arquivos modificados devem estar commitados
+3. Variáveis de ambiente novas devem estar no Vercel/Railway
+
+Ver `app/docs/18-deploy-e-producao.md` para documentação completa de infraestrutura.
+
+---
+
 ## Important Rules
 
 1. **Language:** All code comments, variable names, and user-facing strings should stay in Portuguese (BR) to match the existing codebase.
@@ -186,3 +209,5 @@ All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 4. **Stub tracking:** When creating stub/mock responses, always set `meta.stub: true` in the response envelope so they can be easily found and replaced.
 5. **Package manager:** Always use `pnpm` (via corepack), never `npm` or `yarn`.
 6. **Node version:** Must be >=22.0.0.
+7. **next.config.ts:** Nunca adicionar `outputFileTracingRoot` sem `output: 'standalone'` — quebra o runtime do Vercel.
+8. **Commits atômicos:** Sempre commitar TODOS os arquivos relacionados à mudança juntos. Arquivos uncommitted não são deployados.
