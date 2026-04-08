@@ -11,10 +11,13 @@ type Order = {
   totalCents: number; placedAt: string; items: OrderItem[];
 };
 
+type OrdersResponse = { orders: Order[]; total: number; page: number; pageSize: number };
+
 async function getPedidos(status?: string): Promise<Order[]> {
   try {
     const path = status ? `/partner/orders?status=${status}` : "/partner/orders";
-    return await fetchAPI<Order[]>(path);
+    const resp = await fetchAPI<OrdersResponse>(path);
+    return resp?.orders ?? [];
   } catch (err) {
     if (err instanceof ApiError) return [];
     return [];

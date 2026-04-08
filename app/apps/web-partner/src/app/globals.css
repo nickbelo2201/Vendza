@@ -62,6 +62,16 @@
   --shadow-md: 0 4px 16px rgba(15,23,42,.08), 0 2px 6px rgba(15,23,42,.04);
   --shadow-lg: 0 12px 40px rgba(15,23,42,.12), 0 4px 12px rgba(15,23,42,.06);
   --shadow-xl: 0 24px 64px rgba(15,23,42,.16), 0 8px 20px rgba(15,23,42,.08);
+
+  /* Dark Mode Tokens */
+  --dark-bg-page:       #0F172A;
+  --dark-surface:       rgba(30, 41, 59, 0.5);
+  --dark-surface-solid: #1e293b;
+  --dark-border:        rgba(255, 255, 255, 0.08);
+  --dark-text-prim:     #F1F5F9;
+  --dark-text-sec:      #94A3B8;
+  --dark-text-muted:    #64748B;
+  --dark-sidebar:       rgba(15, 23, 42, 0.95);
 }
 
 * {
@@ -1328,6 +1338,22 @@ select {
   font-size: 11px;
   font-weight: 500;
   color: var(--v2-green);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.metric-delta--neg {
+  color: var(--v2-text-muted);
+}
+
+[data-theme="dark"] .metric-delta {
+  color: #4ADE80;
+}
+
+[data-theme="dark"] .metric-delta--neg {
+  color: #64748B;
 }
 
 /* ─────────────────────────────────────────
@@ -1519,4 +1545,451 @@ select {
 
 .action-btn:hover {
   background: #24492f;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — [data-theme="dark"]
+═══════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  /* Remap V2 tokens */
+  --v2-bg-page:    #0F172A;
+  --v2-surface:    rgba(30, 41, 59, 0.5);
+  --v2-border:     rgba(255, 255, 255, 0.08);
+  --v2-text-prim:  #F1F5F9;
+  --v2-text-sec:   #94A3B8;
+  --v2-text-muted: #64748B;
+  --v2-green-soft: rgba(45, 90, 61, 0.2);
+
+  /* Legacy compat */
+  --carbon: #F1F5F9;
+  --text-muted: #64748B;
+  --surface: rgba(30, 41, 59, 0.5);
+  --border: rgba(255, 255, 255, 0.08);
+  --s6: rgba(255, 255, 255, 0.08);
+  --s7: rgba(255, 255, 255, 0.05);
+  --s8: rgba(255, 255, 255, 0.03);
+  --night: #F1F5F9;
+}
+
+[data-theme="dark"] html,
+[data-theme="dark"] body,
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: #0F172A;
+  color: #F1F5F9;
+}
+
+/* Shell */
+[data-theme="dark"] .v2-shell {
+  background: #0F172A;
+}
+
+[data-theme="dark"] .v2-main {
+  background: #0F172A;
+}
+
+/* Sidebar */
+[data-theme="dark"] .sidebar-v2 {
+  background: rgba(15, 23, 42, 0.95);
+  border-right-color: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .sidebar-v2:hover {
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .sidebar-v2-divider {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .sidebar-v2-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .sidebar-v2-link.active {
+  background: rgba(45, 90, 61, 0.25);
+  color: #4ADE80;
+}
+
+[data-theme="dark"] .sidebar-v2-link.active .sidebar-v2-icon {
+  stroke: #4ADE80;
+}
+
+[data-theme="dark"] .sidebar-v2-logo-text {
+  color: #F1F5F9;
+}
+
+/* Topbar */
+[data-theme="dark"] .topbar-v2 {
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .topbar-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .topbar-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .topbar-title {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .topbar-breadcrumb {
+  color: #64748B;
+}
+
+[data-theme="dark"] .topbar-badge-ia {
+  background: rgba(45, 90, 61, 0.2);
+  border-color: rgba(74, 222, 128, 0.2);
+}
+
+[data-theme="dark"] .topbar-badge-ia-text {
+  color: #4ADE80;
+}
+
+/* Metric Cards — Glassmorphism */
+[data-theme="dark"] .metric-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+              0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-label {
+  color: #64748B;
+}
+
+[data-theme="dark"] .metric-value {
+  color: #F1F5F9;
+}
+
+/* Kanban */
+[data-theme="dark"] .kanban-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04),
+              0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .kanban-header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .kanban-col-label {
+  color: #64748B;
+}
+
+[data-theme="dark"] .kanban-item {
+  background: rgba(51, 65, 85, 0.5);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #CBD5E1;
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="dark"] .kanban-item-id {
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .kanban-item-sub {
+  color: #64748B;
+}
+
+/* Side Cards */
+[data-theme="dark"] .side-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .side-card-title {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .side-card-tag {
+  color: #64748B;
+}
+
+[data-theme="dark"] .side-card-header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .action-card-text {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .stock-item + .stock-item {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .stock-item-name {
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .stock-bar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .stock-footer {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Tables & Inputs */
+[data-theme="dark"] .wp-table th {
+  color: #64748B;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .wp-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .wp-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .wp-panel,
+[data-theme="dark"] .wp-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="dark"] .wp-card-title {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .wp-input {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .wp-input:focus {
+  border-color: rgba(74, 222, 128, 0.4);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.08);
+}
+
+[data-theme="dark"] .wp-label {
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .wp-badge {
+  background: rgba(26, 122, 94, 0.2);
+  color: #4ADE80;
+}
+
+[data-theme="dark"] .wp-badge-amber {
+  background: rgba(232, 144, 42, 0.15);
+  color: #FBA94C;
+}
+
+[data-theme="dark"] .wp-badge-blue {
+  background: rgba(51, 65, 85, 0.6);
+  color: #93C5FD;
+}
+
+[data-theme="dark"] .wp-page-title {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .wp-page-subtitle {
+  color: #64748B;
+}
+
+[data-theme="dark"] .wp-kpi {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .wp-kpi-value {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .wp-kpi-label {
+  color: #64748B;
+}
+
+[data-theme="dark"] .wp-empty-title {
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .wp-button-secondary {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .wp-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─────────────────────────────────────────
+   THEME TOGGLE (Dark/Light Switch)
+───────────────────────────────────────── */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--v2-border);
+  background: var(--v2-surface);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: #F4F5F7;
+  border-color: var(--v2-green);
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.theme-toggle-track {
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: #D1D5DB;
+  position: relative;
+  transition: background 300ms ease;
+  flex-shrink: 0;
+}
+
+.theme-toggle-track.dark {
+  background: var(--v2-green);
+}
+
+[data-theme="dark"] .theme-toggle-track {
+  background: var(--v2-green);
+}
+
+[data-theme="dark"] .theme-toggle-track:not(.dark) {
+  background: #334155;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 300ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-thumb.dark {
+  transform: translateX(14px);
+}
+
+[data-theme="dark"] .theme-toggle-thumb {
+  transform: translateX(14px);
+}
+
+.theme-toggle-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--v2-text-muted);
+  flex-shrink: 0;
+  transition: color 150ms;
+}
+
+[data-theme="dark"] .theme-toggle-icon {
+  color: #94A3B8;
+}
+
+/* ─────────────────────────────────────────
+   KANBAN — Drag-and-Drop States
+───────────────────────────────────────── */
+.kanban-col {
+  min-height: 120px;
+  border-radius: 8px;
+  padding: 4px;
+  margin: -4px;
+  transition: background 200ms ease, border 200ms ease;
+}
+
+.kanban-col--over {
+  background: rgba(45, 90, 61, 0.08);
+  outline: 1.5px dashed var(--v2-green);
+  outline-offset: -1px;
+}
+
+[data-theme="dark"] .kanban-col--over {
+  background: rgba(74, 222, 128, 0.06);
+  outline-color: rgba(74, 222, 128, 0.3);
+}
+
+.kanban-item {
+  cursor: grab;
+  user-select: none;
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+.kanban-item:active {
+  cursor: grabbing;
+}
+
+.kanban-item--dragging {
+  opacity: 0.5;
+  transform: scale(0.97);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .kanban-item--dragging {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.kanban-item--ghost {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Phantom card enquanto arrastando */
+.kanban-item-drag-preview {
+  transform: rotate(-2deg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  opacity: 0.95;
+}
+
+[data-theme="dark"] .kanban-item-drag-preview {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Coluna recebendo com destaque animado */
+@keyframes col-pulse {
+  0%, 100% { outline-opacity: 1; }
+  50% { outline-opacity: 0.4; }
+}
+
+.kanban-col--over {
+  animation: col-pulse 1.2s ease infinite;
 }
