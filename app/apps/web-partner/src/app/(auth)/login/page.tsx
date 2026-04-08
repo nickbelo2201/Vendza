@@ -1811,7 +1811,7 @@ export default function LoginPage() {
               <span className="lp-h-badge-sub">Gestão + IA para comércio local brasileiro</span>
             </div>
 
-            <div className="lp-headline">
+            <h1 className="lp-headline">
               <div className="lp-hl-front">
                 <span className="lp-hl-green">Gestão operacional</span>
                 <br />
@@ -1821,7 +1821,7 @@ export default function LoginPage() {
                 <br />
                 <span>comércio local</span>
               </div>
-            </div>
+            </h1>
 
             <p className="lp-h-sub">
               Canal de venda próprio, board de pedidos, CRM e automação com IA.
