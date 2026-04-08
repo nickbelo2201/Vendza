@@ -30,6 +30,7 @@ import {
   listPartnerOrders,
   updatePartnerOrderStatus,
 } from "./orders-service.js";
+import { getPromocoes } from "./promocoes-service.js";
 import {
   getDeliveryZones,
   getStoreHours,
@@ -521,5 +522,13 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request) => ok(await updateDeliveryZones(partnerContext(request), request.body)),
+  );
+
+  // ─── Central de Promoções ────────────────────────────────────────────────────
+
+  app.get(
+    "/partner/promocoes",
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await getPromocoes(partnerContext(request).storeId)),
   );
 };
