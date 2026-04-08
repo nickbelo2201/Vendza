@@ -1,76 +1,122 @@
 # Roadmap, Backlog e KPIs
 
-## Roadmap oficial
+> Atualizado em 2026-04-07. Alinhado ao modelo de negócio premium consultivo (ver `17-modelo-de-negocio.md`).
 
-### Onda 1: V1 operacional
+---
 
-- vitrine
-- catalogo
-- checkout
-- board de pedidos
-- configuracao da loja
-- CRM basico
-- dashboard basico
+## Status Atual
 
-### Onda 2: V1.1
+| Versão | Status | Data |
+|--------|--------|------|
+| V1 (plataforma base) | ✅ Completa | 2026-04-06 |
+| V2 (CRUD, CRM, relatórios, deploy) | ✅ Completa | 2026-04-06 |
+| Plataforma P3-P5 (deploy, QA, polish) | 🔄 Em progresso | — |
 
-- cupons
-- agendamento
-- impressao
-- dashboard comercial melhor
-- geolocalizacao assistida
-- variantes
+---
 
-### Onda 3: V2
+## Roadmap de Produto
 
-- WhatsApp oficial
-- CRM acionavel
-- fidelidade
-- segmentos
-- campanhas por evento
-- exportacoes
+### Onda 1 — Plataforma Completa (P3–P5) ← estamos aqui
+Objetivo: produto pronto para apresentar ao primeiro cliente.
 
-### Onda 4: V3
+- Deploy automático (Vercel + Railway + GitHub Actions CI)
+- Testes Playwright (fluxo cliente + parceiro)
+- QA de segurança e performance
+- Onboarding self-service (wizard de setup da loja)
+- Mercado Pago — Pix + cartão online ← **P0 CRÍTICO** (antecipar do backlog IA)
 
-- multi-loja
-- app de entregador
-- IA por agentes de dominio
-- roteirizacao e tracking mais profundo
+### Onda 2 — Automação WhatsApp (ticket R$ 1.500/mês)
+Objetivo: habilitar o tier Plataforma + Automação — principal gerador de MRR.
 
-## Backlog P0 para iniciar producao
+- WhatsApp oficial (Baileys/WAHA)
+  - Confirmação automática de pedido ao cliente
+  - Notificação de status em tempo real
+  - Atendimento automatizado 24h
+  - Fluxos personalizados por evento
+- Multi-tenant / onboarding self-service completo
+- CRM acionável com campanhas por evento
+- Segmentação RFM
+- Fidelidade e cupons
 
-1. Definir schema inicial
-2. Subir monorepo
-3. Implementar auth e tenant base
-4. Implementar loja, horarios e entrega
-5. Implementar catalogo e estoque
-6. Implementar pedidos e timeline
-7. Implementar web-client
-8. Implementar web-partner
-9. Fechar dashboard e CRM basico
+### Onda 3 — IA e Escala (ticket R$ 2.500–3.000/mês)
+Objetivo: habilitar o tier Premium — máximo de valor por cliente.
 
-## KPIs de produto
+- IA generativa: descrição de produtos, copy de campanhas
+- IA no atendimento: sugestões por perfil de compra
+- Insights automáticos de estoque e giro
+- Relatórios preditivos
+- Mobile app (React Native / Expo)
+- Multi-loja
 
-- taxa de conversao da vitrine para checkout
-- taxa de pedido concluido
-- tempo medio de confirmacao
-- cancelamento por ruptura
-- ticket medio
-- recorrencia
-- clientes inativos reativados
+---
 
-## KPIs de operacao
+## Prioridade Crítica: Mercado Pago
 
-- pedidos por faixa horaria
-- SLA entre status
-- erros de pagamento
-- falhas de cobertura
-- itens indisponiveis mais recorrentes
+**O Mercado Pago deve ser implementado antes de qualquer cliente piloto.**
 
-## KPI de sucesso competitivo
+Motivo: sem Pix automático integrado, o lojista ainda cobra manualmente — isso dilui o momento "aha" do produto e é o principal motivo de churn nos primeiros 30 dias.
 
-O sistema estara realmente melhor que os concorrentes quando entregar:
+Escopo mínimo:
+- Geração de QR Code Pix
+- Webhook de confirmação de pagamento
+- Atualização automática do status do pedido após pagamento confirmado
+- Tela de confirmação para o cliente
 
-- UX de compra comparavel ao Ze
-- operacao sem regressao frente a Neemo
+---
+
+## Backlog Comercial (paralelo ao produto)
+
+1. Landing page institucional (vendza.com.br ou similar)
+2. Deck de proposta com cálculo de ROI personalizado
+3. Contratos jurídicos (SaaS + LGPD + Termos de Uso)
+4. Processo documentado de onboarding de adega
+5. Script de call de qualificação e demo
+
+---
+
+## KPIs de Produto
+
+| KPI | Meta para piloto | Meta para escala |
+|-----|-----------------|-----------------|
+| Taxa de conversão vitrine → checkout | > 8% | > 12% |
+| Taxa de pedido concluído | > 90% | > 95% |
+| Tempo médio de confirmação | < 2 min | < 1 min |
+| Cancelamento por ruptura | < 5% | < 2% |
+| Ticket médio do pedido | > R$ 80 | > R$ 100 |
+| Recorrência (% clientes que pedem 2x+) | > 40% | > 60% |
+| Clientes inativos reativados/mês | > 10% | > 20% |
+
+---
+
+## KPIs de Operação
+
+- pedidos por faixa horária (pico identificado?)
+- SLA entre status (tempo de confirmação, preparo, entrega)
+- erros de pagamento (< 1%)
+- falhas de cobertura (cliente sem zona de entrega)
+- itens indisponíveis mais recorrentes
+
+---
+
+## KPIs de Negócio (Vendza)
+
+| KPI | Meta Q3-2026 | Meta Q1-2027 |
+|-----|-------------|-------------|
+| MRR | R$ 0 (piloto gratuito) | R$ 5.000 |
+| Clientes pagantes | 0 | 4 |
+| Ticket médio por cliente | — | R$ 1.500 |
+| Churn mensal | — | < 5% |
+| NPS dos lojistas | > 40 (piloto) | > 60 |
+| CAC médio | — | < R$ 500 |
+| LTV:CAC | — | > 18x |
+
+---
+
+## KPI de Sucesso Competitivo
+
+O sistema estará realmente melhor que os concorrentes quando entregar:
+
+- UX de compra comparável ao Zé
+- operação sem regressão frente à Neemo
 - CRM e WhatsApp acima dos dois
+- ROI comprovável em menos de 30 dias para o lojista

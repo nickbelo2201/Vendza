@@ -21,7 +21,13 @@ export default function CadastroPage() {
     setCarregando(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signUp({ email, password: senha });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        },
+      });
       if (error) {
         setErro(error.message.includes("already registered") ? "Este email já está cadastrado." : error.message);
         return;
@@ -37,7 +43,24 @@ export default function CadastroPage() {
   if (sucesso) {
     return (
       <div className="wp-auth-card" style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
+        <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 16,
+              background: "var(--green-soft)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m2 7 10 6 10-6" />
+            </svg>
+          </div>
+        </div>
         <h2 className="wp-auth-title">Verifique seu email</h2>
         <p className="wp-auth-subtitle">
           Enviamos um link de confirmação para <strong>{email}</strong>.

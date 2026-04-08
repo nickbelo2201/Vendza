@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
 
-import { fetchStorefront, fetchStorefrontCatalog, fetchStorefrontConfig } from "../../../lib/api";
+import { fetchStorefrontCatalog, fetchStorefrontConfig } from "../../../lib/api";
 import { BotaoAdicionarAoCarrinho } from "../../../components/BotaoAdicionarAoCarrinho";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   try {
     const [product, config] = await Promise.all([
-      fetchStorefront<{ name: string; imageUrl: string | null; category: { name: string } | null }>(
+      fetchStorefrontCatalog<{ name: string; imageUrl: string | null; category: { name: string } | null }>(
         `/catalog/products/${slug}`
       ),
       fetchStorefrontConfig<{ branding: { name: string } }>("/storefront/config"),

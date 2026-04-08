@@ -5,6 +5,7 @@ import Fastify from "fastify";
 import { authRoutes } from "./modules/auth/routes.js";
 import { coverageRoutes } from "./modules/cobertura/routes.js";
 import { partnerRoutes } from "./modules/partner/routes.js";
+import { onboardingRoutes } from "./modules/onboarding/routes.js";
 import { storefrontRoutes } from "./modules/storefront/routes.js";
 import { supabasePlugin } from "./plugins/supabase.js";
 import { socketPlugin } from "./plugins/socketio.js";
@@ -49,6 +50,7 @@ export function buildApp() {
       v1.register(coverageRoutes);
       v1.register(storefrontRoutes);
       v1.register(authRoutes);
+      v1.register(onboardingRoutes);
 
       // Rotas partner com schemas TypeBox de validação (routes.ts)
       // O hook authenticate já está declarado dentro de partnerRoutes

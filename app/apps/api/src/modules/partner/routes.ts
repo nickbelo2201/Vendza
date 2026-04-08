@@ -42,6 +42,8 @@ import {
 const OrderFiltersSchema = Type.Object({
   status: Type.Optional(Type.String()),
   search: Type.Optional(Type.String()),
+  page: Type.Optional(Type.Integer({ minimum: 1 })),
+  pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
 });
 
 const StatusUpdateSchema = Type.Object({
@@ -258,7 +260,16 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         querystring: OrderFiltersSchema,
-        response: { 200: envelopeSchema(Type.Array(Type.Any())) },
+        response: {
+          200: envelopeSchema(
+            Type.Object({
+              orders: Type.Array(Type.Any()),
+              total: Type.Integer(),
+              page: Type.Integer(),
+              pageSize: Type.Integer(),
+            }),
+          ),
+        },
       },
     },
     async (request) => ok(await listPartnerOrders(partnerContext(request), request.query)),

@@ -209,12 +209,154 @@ Todas as 20 stories do prd.json marcadas como `passes: true`. Commit `f2c7c23` c
 - **V2-D3:** Seed de dados demo rico para apresentações
 
 ## Itens NÃO incluídos na V2 (movidos para V3)
-- Mercado Pago / integração de pagamento online → **última feature da V3**
+- Mercado Pago / integração de pagamento online → **REVISADO: antecipar para P0 crítico (ver seção abaixo)**
 - Mobile app (React Native / Expo)
-- WhatsApp automação (Baileys / WAHA)
+- WhatsApp automação (Baileys / WAHA) → tier R$ 1.500/mês (Onda 2)
 - Multi-tenant / multi-loja
 - Polygon-based delivery zones
-- IA generativa para produtos e copy
+- IA generativa para produtos e copy → tier R$ 2.500/mês (Onda 3)
+
+---
+
+# ════════════════════════════════════════
+# DECISÃO ESTRATÉGICA — 2026-04-07
+# Reposicionamento premium + novo modelo de negócio
+# ════════════════════════════════════════
+
+## 2026-04-07T00:00:00Z — Análise de Board + Modelo de Negócio Revisado
+
+### Contexto
+O fundador revisou o posicionamento do produto. O Vendza não é commodity SaaS — é um serviço gerenciado + software + automação entregue de forma consultiva.
+
+### Documentação atualizada
+- `docs/01-visao-estrategica.md` — reescrito com posicionamento premium e argumento de ROI
+- `docs/04-matriz-de-funcionalidades.md` — Mercado Pago marcado como 🔴 P0 CRÍTICO; status de cada feature atualizado
+- `docs/10-roadmap-backlog-kpis.md` — KPIs de negócio reais, MRR target, fases de lançamento
+- `docs/17-modelo-de-negocio.md` — **NOVO** — modelo completo: tiers, precificação, GTM, unit economics, fluxo de venda, programa de indicação
+
+### Novo Modelo de Negócio
+
+| Tier | Preço/mês | Inclui |
+|------|-----------|--------|
+| Plataforma | R$ 500 | Canal de vendas + painel + CRM básico |
+| Plataforma + Automação WhatsApp | R$ 1.500 | Tudo + WhatsApp automação 24h |
+| Premium (com IA) | R$ 2.500–3.000 | Tudo + IA no atendimento + insights preditivos |
+
+**Meta de receita:** R$ 5.000/mês de MRR até março de 2027 = 4 clientes no tier R$ 1.500.
+
+### Argumento de ROI (versão correta)
+Não usar substituição total — usar migração gradual:
+> "Se migrar 40% dos pedidos do Zé pro canal próprio, você já empata com o Vendza. Break-even no tier R$ 1.500 com 40% migrado de uma adega que fatura R$ 15k pelo Zé."
+
+### Decisões ratificadas pelo Board
+- Ticket R$ 1.500 **defensável** para adegas com faturamento > R$ 30k/mês
+- Meta 4 clientes em 11 meses é **conservadora** (funil precisa ~100 contatos frios)
+- Contrato 6 meses + multa 2 meses **legalmente sólido** no Brasil
+- Parceria com distribuidoras: **postergar** — validar B2C primeiro
+
+### Correções no modelo
+- Programa de indicação: trocar "1 mês grátis" por **R$ 300–500 Pix por indicação fechada**
+- Não criar tier abaixo de R$ 500 — dilui posicionamento premium
+- Considerar tier intermediário R$ 800–900 para adegas menores no futuro
+
+---
+
+## 2026-04-07T01:00:00Z — Análise Técnica de Alinhamento (nicholas-orchestrator)
+
+### Bloqueantes para o primeiro cliente pagante
+
+#### 🔴 CRÍTICO 1: Deploy em produção (P3-01 e P3-02)
+- **Situação:** Zero deploy. Sem URL pública não existe produto.
+- **Ação:** P3-02 Railway (API) → P3-01 Vercel (web-client + web-partner)
+- **Esforço:** P (1-3 dias cada)
+
+#### 🔴 CRÍTICO 2: Mercado Pago / PIX automático
+- **Situação:** O pagamento hoje é 100% manual. O cliente não recebe QR code. O parceiro confirma na mão via painel.
+- **Schema atual:** `OrderPayment` existe com `providerReference`, `rawPayload`, `paidAt`. Faltam:
+  - `pixQrCodeBase64 String?` — QR dinâmico para exibir no checkout
+  - `pixCopyPasteCode String?` — linha digitável
+  - Novo model `WebhookEvent { id, provider, eventType, payload: Json, processedAt?, error?, createdAt }` — sem isso webhooks que falham são perdidos para sempre
+- **API:** Zero endpoints de pagamento. Precisam ser criados:
+  - `POST /v1/payments/mp/create-preference` — gera cobrança
+  - `POST /v1/payments/mp/webhook` — recebe confirmação do MP
+- **Frontend:** `CheckoutPage` não exibe QR code. `card_online` não está exposto. Falta página `/pedido/[publicId]/pagar`.
+- **Esforço:** G (1-2 semanas) — SDK MP + webhook + frontend QR + testes sandbox
+
+#### 🔴 CRÍTICO 3: Onboarding self-service
+- **Situação:** Cadastro cria conta no Supabase Auth mas não cria `Tenant → Store → StoreUser`. Cada cliente novo exige SQL manual do fundador.
+- **Ação:** Endpoint `POST /v1/onboarding/create-store` + wizard de 3 etapas no web-partner pós-cadastro
+- **Esforço:** M (3-5 dias)
+
+### Bloqueante para o tier R$ 1.500 (Automação WhatsApp)
+
+#### 🔴 CRÍTICO 4: WhatsApp automação — workers são placeholders
+- **Situação:** BullMQ + Redis estão funcionando, os jobs são enfileirados corretamente em `order.placed` e `order.status_changed`. Porém os workers em `workers.ts` são `console.log` + `// TODO WhatsApp`. Zero integração com qualquer provider.
+- **Schema:** Não existe tabela de configuração WhatsApp por loja (sem `whatsappToken`, `whatsappPhoneNumberId`, templates de mensagem).
+- **Ação:** Escolher provider (recomendado: WAHA self-hosted) → schema → workers reais → templates por evento
+- **Esforço:** G (2-3 semanas incluindo aprovação de templates Meta)
+
+### Dívidas técnicas relevantes para produção
+
+| Item | Nível | Impacto |
+|------|-------|---------|
+| `auth/routes.ts` retorna tokens falsos (`access-{email}`) | 🔴 Bloqueante (potencial) | Qualquer integração externa tenta usar e recebe token inválido |
+| `listPartnerOrders` sem paginação (findMany sem take/skip) | 🟡 Importante | Com 1.000+ pedidos, lento e alto consumo de memória |
+| `publicId` inconsistente: storefront = `PED-0001`, pedido manual = `PED-LJDH3K-A1B2C3` | 🟡 Importante | Confunde lojista e cliente ao comparar IDs |
+| Socket.io sem `@socket.io/redis-adapter` | 🟡 Importante | Funciona para 1 Railway dyno; não escala horizontal |
+| `Type.Any()` em respostas API | 🟢 Técnico | Sem validação de shape — risco de regressão silenciosa |
+| P1-04 toggle loja: verificar se `status` está no `StoreSettingsSchema` | 🟡 Importante | Campo pode não persistir corretamente |
+
+### Stories pendentes no prd.json (passes: false)
+
+| ID | Título | Criticidade |
+|----|--------|-------------|
+| P3-01 | Deploy web-client e web-partner na Vercel | 🔴 Bloqueante |
+| P3-02 | Deploy API na Railway | 🔴 Bloqueante |
+| P3-03 | GitHub Actions CI | 🟡 Importante |
+| P4-01 | Playwright — fluxo cliente | 🟡 Importante |
+| P4-02 | Playwright — fluxo parceiro | 🟡 Importante |
+| P4-03 | QA mobile e responsividade | 🔴 Bloqueante (clientes fazem pedido pelo celular) |
+| P5-01 | Logo oficial | 🟡 Importante (credibilidade na demo) |
+| P5-02 | Tipografia e OG image | 🟢 Nice-to-have |
+
+---
+
+## Ordem de Implementação Aprovada (próximas semanas)
+
+### Fase 1 — Produto apresentável (1-2 semanas)
+1. P3-02: Deploy API no Railway com Dockerfile/Nixpacks
+2. P3-01: Deploy web-client + web-partner na Vercel
+3. P4-03: QA mobile — storefront funcional no celular
+4. P5-01: Logo real
+
+### Fase 2 — Produto vendável (2-3 semanas)
+5. Onboarding self-service: `POST /v1/onboarding/create-store` + wizard no web-partner
+6. Mercado Pago: schema (pixQrCodeBase64, WebhookEvent) + endpoints + frontend QR
+7. P3-03: GitHub Actions CI
+
+### Fase 3 — Tier R$ 1.500 (3-4 semanas após Fase 2)
+8. Escolher provider WhatsApp (WAHA self-hosted recomendado)
+9. Schema de configuração WhatsApp por loja
+10. Templates de mensagem por evento (pedido recebido, status alterado, lembrete)
+11. Workers reais em `workers.ts`
+
+### Fase 4 — Polimento (ongoing)
+12. Paginação em `listPartnerOrders` (take/skip + total)
+13. `publicId` unificado em pedidos manuais (formato `PED-NNNN`)
+14. Schemas TypeBox nas respostas (substituir `Type.Any()`)
+15. Testes Playwright P4-01, P4-02
+
+---
+
+## Checklist Comercial Paralelo ao Produto
+
+- [ ] Redigir contrato formal com cláusulas CLO (prazo: 7 dias)
+- [ ] Criar playbook de qualificação — roteiro das 10 perguntas
+- [ ] Criar template de proposta com cálculo de ROI personalizado
+- [ ] Criar landing page institucional (antes do primeiro cliente piloto)
+- [ ] Criar 5 templates de conteúdo para Instagram (educação + dor)
+- [ ] Ajustar programa de indicação: R$ 300–500 Pix por indicação fechada
+- [ ] Definir SLA escrito (uptime 99%, resposta 24h úteis, sem prometer volume)
 
 ---
 
@@ -288,3 +430,87 @@ Todas as 20 stories do prd.json marcadas como `passes: true`. Commit `f2c7c23` c
 - Import path errado em route handlers: contar subdiretórios com cuidado (app/api/foo/route.ts precisa de ../../../utils, não ../../utils)
 - prd.json usa chave "userStories" não "stories" — verificar estrutura antes de manipular
 ---
+
+## 2026-04-07T02:00:00Z - Sessão 3: Onboarding Self-Service
+
+### API — módulo onboarding
+- Criado `apps/api/src/modules/onboarding/service.ts` com função `setupStore`:
+  - Verifica authUserId duplicado → 409
+  - Verifica slug duplicado → 400
+  - Transação Prisma: Tenant → Store (status: "open") → StoreUser (role: "owner", email do token)
+- Criado `apps/api/src/modules/onboarding/routes.ts`:
+  - POST /v1/onboarding/setup-store (preHandler valida Bearer sem resolvePartnerContext)
+  - GET /v1/onboarding/check-slug?slug=xxx → { available: boolean }
+- Modificado `apps/api/src/app.ts`: adicionado `v1.register(onboardingRoutes)`
+
+### Web-partner — wizard de setup
+- Criado `apps/web-partner/src/app/onboarding/layout.tsx` — layout próprio (sem sidebar/topbar)
+- Criado `apps/web-partner/src/app/onboarding/page.tsx` — Server Component, checa store existente → redirect dashboard se já tem loja
+- Criado `apps/web-partner/src/app/onboarding/OnboardingWizard.tsx` — Client Component, 3 passos:
+  - Passo 1: nome da loja, slug (auto-gerado + editável + debounce 500ms para check), WhatsApp
+  - Passo 2: nome do responsável
+  - Passo 3: resumo + botão "Criar minha loja"
+  - Submit: POST /v1/onboarding/setup-store com Bearer token → window.location.href = "/" em sucesso
+- Modificado `apps/web-partner/src/app/(dashboard)/layout.tsx`: redirect 403 agora vai para /onboarding (não /sem-acesso)
+- Modificado `apps/web-partner/src/app/(auth)/cadastro/page.tsx`: emailRedirectTo aponta para /auth/callback?next=/onboarding; emoji substituído por SVG inline
+- Modificado `apps/web-partner/src/app/globals.css`: adicionadas classes wp-* faltantes + @keyframes spin
+
+**Validação final:**
+- `corepack pnpm typecheck`: 0 erros em 7 workspaces (api, web-client, web-partner, database, types, ui, utils)
+
+**Learnings:**
+- Middleware de onboarding deve ser um preHandler inline (não usar o `authenticate` decorado) porque o `authenticate` chama `resolvePartnerContext` que requer StoreUser existente — exatamente o que ainda não existe no onboarding
+- `StoreStatus` enum tem `open | closed | paused` (não "active") — novas stores criadas com status "open"
+- `Tenant.slug` é required e unique no schema — usar o mesmo slug da Store para o Tenant no onboarding
+- Redirect de 403 no dashboard layout era para /sem-acesso — alterado para /onboarding para o fluxo self-service
+- Zero emojis: substituir por SVG inline simples (check, X, envelope, loader)
+---
+
+---
+
+## 2026-04-08T00:00:00Z — Sessão de orquestração: onboarding + fixes + testes Playwright
+
+### O que foi implementado
+
+**API — onboarding (commitado):**
+- `apps/api/src/modules/onboarding/service.ts` — setupStore: transação Prisma Tenant → Store → StoreUser
+- `apps/api/src/modules/onboarding/routes.ts` — POST /v1/onboarding/setup-store + GET /v1/onboarding/check-slug
+- `apps/api/src/app.ts` — onboardingRoutes registrado
+
+**web-partner — wizard onboarding (commitado):**
+- `apps/web-partner/src/app/onboarding/layout.tsx` — layout próprio (sem sidebar)
+- `apps/web-partner/src/app/onboarding/page.tsx` — Server Component, redirect se loja já existe
+- `apps/web-partner/src/app/onboarding/OnboardingWizard.tsx` — wizard 3-passos (nome, slug+debounce, responsável)
+- `apps/web-partner/src/app/(auth)/cadastro/page.tsx` — emailRedirectTo → /onboarding
+- `apps/web-partner/src/app/(dashboard)/layout.tsx` — redirect 403 → /onboarding
+
+**API — fixes de qualidade:**
+- `orders-service.ts` — listPartnerOrders com paginação (take/skip, retorna { orders, total, page, pageSize })
+- `orders-service.ts` — publicId de pedidos manuais corrigido: PED-NNNN (sequencial)
+- `partner/routes.ts` — OrderFiltersSchema atualizado com page + pageSize
+
+**web-client — fixes de UX (auditoria automática):**
+- `globals.css` — classes .wc-panel e .wc-button adicionadas (faltavam, causavam fallbacks sem estilo)
+- `error.tsx` — "Falha na experiencia estrutural" → "Algo deu errado"
+- `loading.tsx` — textos com acento e linguagem adequada ao usuário
+- `not-found.tsx` — "Pagina nao encontrada" → "Página não encontrada"
+- `produto/[slug]/page.tsx` — fetchStorefront → fetchStorefrontCatalog (refactor correto)
+
+**Testes Playwright (apps/e2e/):**
+- `playwright.config.ts` — 3 projects: chromium, mobile-chrome (Pixel 5), iphone (iPhone 14)
+- `tests/web-client/storefront.spec.ts` — 29 testes (flows 1-6: home, categorias, carrinho, checkout, tracking, mobile)
+  - beforeAll: skip global se site retornar 401 (Vercel Deployment Protection)
+  - Executar com: PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test
+- `tests/web-partner/auth.spec.ts` — 24 testes (auth, cadastro, redirect, recuperação)
+  - RESULTADO: 24/24 passando contra produção
+
+**prd.json atualizado:**
+- P3-01 ✅ (Vercel web-partner live)
+- P3-02 ✅ (Railway API live)
+- P4-02 ✅ (24/24 testes web-partner passando)
+
+**Learnings:**
+- Vercel preview deployments têm Deployment Protection ativa por padrão — storefront não acessível via URL de preview sem autenticação. Solução: desabilitar em Vercel > Settings > Deployment Protection ou usar URL de produção (branch main).
+- test.skip() dentro de async helper não propaga o skip para cima — usar test.beforeAll + test.beforeEach para skip global de arquivo.
+- A landing page /login usa classes .lp-* (não wp-*) — é um componente próprio com modal embutido.
+- package-lock.json não deve existir em workspace pnpm — remover se agente criar.

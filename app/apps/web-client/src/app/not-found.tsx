@@ -1,8 +1,8 @@
 export default function NotFound() {
   return (
     <div className="wc-panel">
-      <h1>Pagina nao encontrada</h1>
-      <p>Esta rota faz parte da estrutura V1, mas o recurso solicitado nao existe.</p>
+      <h1>Página não encontrada</h1>
+      <p>O recurso solicitado não existe.</p>
       <a className="wc-button" href="/">
         Voltar para a home
       </a>

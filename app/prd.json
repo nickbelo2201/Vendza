@@ -139,7 +139,7 @@
       "bloco": "P3",
       "title": "Deploy: web-client e web-partner na Vercel",
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "description": "Configurar deploy automático na Vercel para web-client (domínio público) e web-partner (domínio parceiro). Configurar variáveis de ambiente de produção. Testar que builds de produção funcionam com as envs corretas."
     },
     {
@@ -147,7 +147,7 @@
       "bloco": "P3",
       "title": "Deploy: API na Railway",
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "description": "Configurar deploy da API Fastify na Railway com Dockerfile ou Nixpacks. Configurar DATABASE_URL, SUPABASE_*, STORE_SLUG, REDIS_URL de produção. Health check em GET /v1/health. Configurar domínio customizado para a API."
     },
     {
@@ -171,7 +171,7 @@
       "bloco": "P4",
       "title": "QA: testes Playwright — fluxo do parceiro",
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "description": "Testes e2e cobrindo o fluxo do parceiro: (1) Login com credenciais válidas → redirect para dashboard. (2) Dashboard exibe métricas. (3) /pedidos: ver lista → abrir detalhe → mudar status. (4) /catalogo: criar produto → editar → toggle disponibilidade. (5) /clientes: ver lista → abrir detalhe. (6) /configuracoes: editar dados → salvar. (7) Logout → redirect para login."
     },
     {

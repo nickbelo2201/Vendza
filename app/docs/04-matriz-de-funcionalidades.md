@@ -1,115 +1,149 @@
 # Matriz de Funcionalidades
 
+> Atualizado em 2026-04-07. Mercado Pago promovido para P0 crítico, alinhado ao modelo de negócio premium.
+
 ## Legenda
 
-- `V1`: obrigatorio para go-live
-- `V1.1`: entra logo depois do core
-- `V2`: automacao, CRM avancado e crescimento
-- `V3`: escala, IA e expansao
+- `V1` / `V2`: completo (ver prd.json)
+- `P3–P5`: deploy, QA, polish — em progresso
+- `Onda2`: WhatsApp automação (tier R$ 1.500/mês)
+- `Onda3`: IA e escala (tier R$ 2.500–3.000/mês)
 
-## Cliente e descoberta
+---
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Cliente | Gate de maioridade | V1 | Segmento de bebida exige isso |
-| Cliente | Endereco manual e validacao de cobertura | V1 | Sem isso nao existe checkout confiavel |
-| Cliente | Geolocalizacao assistida | V1.1 | Melhora onboarding do cliente |
-| Cliente | Home com categorias e destaques | V1 | Base de conversao |
-| Cliente | Busca simples | V1 | Descoberta rapida |
-| Cliente | Oferta por ocasiao | V1.1 | Adega vende contexto |
-| Cliente | Repetir pedido | V1 | Recorrencia facil |
-| Cliente | Favoritos | V2 | Conveniencia |
+## Cliente e Descoberta
 
-## Catalogo e merchandising
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| Cliente | Gate de maioridade | V1 | ✅ | Segmento de bebida exige isso |
+| Cliente | Endereço manual e validação de cobertura | V1 | ✅ | Sem isso não existe checkout confiável |
+| Cliente | Geolocalização assistida | V1.1 | ✅ | Melhora onboarding do cliente |
+| Cliente | Home com categorias e destaques | V1 | ✅ | Base de conversão |
+| Cliente | Busca simples | V1 | ✅ | Descoberta rápida |
+| Cliente | Repetir pedido | V1 | ✅ | Recorrência fácil |
+| Cliente | Favoritos | Onda2 | — | Conveniência |
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Catalogo | CRUD de produtos | V1 | Basico operacional |
-| Catalogo | Categorias | V1 | Organizacao comercial |
-| Catalogo | Fotos e descricoes | V1 | Conversao |
-| Catalogo | Preco promocional | V1 | Giro e oferta |
-| Catalogo | Destaque de produto | V1 | Impulso visual |
-| Catalogo | Combos e kits | V1 | Muito relevante para adega |
-| Catalogo | Variantes | V1.1 | Tamanho, pack, litragem |
-| Catalogo | Relacionados | V2 | Cross-sell |
+---
 
-## Carrinho e checkout
+## Catálogo e Merchandising
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Checkout | Carrinho editavel | V1 | Fluxo central |
-| Checkout | Taxa e total claros | V1 | Evita abandono |
-| Checkout | Observacao do pedido | V1 | Operacao pratica |
-| Checkout | Pix | V1 | Meio dominante no segmento |
-| Checkout | Dinheiro | V1 | Necessario para loja local |
-| Checkout | Cartao na entrega | V1 | Cobertura de operacao |
-| Checkout | Cartao online em um gateway | V1 | Nao perder venda |
-| Checkout | Cupom | V1.1 | Growth simples |
-| Checkout | Agendamento | V1.1 | Pedido para mais tarde |
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| Catálogo | CRUD de produtos | V1 | ✅ | Básico operacional |
+| Catálogo | Categorias | V2 | ✅ | Organização comercial |
+| Catálogo | Fotos e descrições | V2 | ✅ | Conversão |
+| Catálogo | Upload de imagem (Supabase Storage) | V2 | ✅ | Catálogo visual |
+| Catálogo | Preço promocional | V1 | ✅ | Giro e oferta |
+| Catálogo | Destaque de produto | V1 | ✅ | Impulso visual |
+| Catálogo | Variantes | Onda2 | — | Tamanho, pack, litragem |
+| Catálogo | Relacionados / cross-sell | Onda3 | — | IA-assisted |
 
-## Tracking e atendimento
+---
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Tracking | Timeline de status | V1 | Transparencia para cliente |
-| Tracking | Atualizacao em tempo real | V1 | Diferencial de UX |
-| Atendimento | Link WhatsApp contextual | V1 | Canal nativo do negocio |
-| Atendimento | Pedido assistido via operador | V1 | Canal real de adega |
-| Atendimento | Chat automatizado | V3 | Complexidade alta |
+## Carrinho e Checkout
 
-## Cockpit operacional
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| Checkout | Carrinho editável | V1 | ✅ | Fluxo central |
+| Checkout | Taxa e total claros | V1 | ✅ | Evita abandono |
+| Checkout | Observação do pedido | V1 | ✅ | Operação prática |
+| Checkout | Dinheiro | V1 | ✅ | Necessário para loja local |
+| Checkout | Cartão na entrega | V1 | ✅ | Cobertura de operação |
+| **Checkout** | **Pix automático via Mercado Pago** | **P0** | **🔴 CRÍTICO** | **Core de receita — deve ir antes do piloto** |
+| **Checkout** | **Cartão online via Mercado Pago** | **P0** | **🔴 CRÍTICO** | **Não perder venda** |
+| Checkout | Webhook de pagamento confirmado | P0 | 🔴 CRÍTICO | Fecha o loop automaticamente |
+| Checkout | Cupom | Onda2 | — | Growth simples |
+| Checkout | Agendamento | Onda2 | — | Pedido para mais tarde |
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Pedidos | Board em tempo real | V1 | Melhor que lista pesada da Neemo |
-| Pedidos | Filtros e busca | V1 | Velocidade de operacao |
-| Pedidos | Detalhe completo do pedido | V1 | Sem regressao frente ao mercado |
-| Pedidos | Mudanca de status | V1 | Operacao central |
-| Pedidos | Pedidos agendados | V1 | Fluxo real |
-| Pedidos | Notificacao sonora | V1 | Operacao responsiva |
-| Pedidos | Impressao | V1.1 | Pode entrar rapido depois do core |
+---
 
-## Loja, entrega e governanca
+## Tracking e Atendimento
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Loja | Branding basico | V1 | White-label de verdade |
-| Loja | Horarios por dia e turno | V1 | Operacao de madrugada |
-| Loja | Retirada | V1 | Canal recorrente |
-| Entrega | Area por bairro | V1 | Implementacao simples e util |
-| Entrega | Area por raio | V1 | Cobertura melhor |
-| Entrega | Poligono | V2 | Maior precisao depois |
-| Entrega | Pedido minimo | V1 | Regra comercial basica |
-| Entrega | Frete gratis por valor | V1 | Conversao |
-| Loja | Usuarios e papeis basicos | V1 | Dono e operador coexistem |
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| Tracking | Timeline de status | V1 | ✅ | Transparência para cliente |
+| Tracking | Atualização em tempo real (Socket.io) | V2 | ✅ | Diferencial de UX |
+| Atendimento | Link WhatsApp contextual | V1 | ✅ | Canal nativo do negócio |
+| Atendimento | Pedido assistido via operador | V2 | ✅ | Canal real de adega |
+| Atendimento | WhatsApp automação de status | Onda2 | — | Tier R$ 1.500/mês |
+| Atendimento | Chat automatizado com IA | Onda3 | — | Tier R$ 2.500/mês |
 
-## CRM, growth e analytics
+---
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| CRM | Perfil do cliente | V1 | Base de memoria de compra |
-| CRM | Historico de pedidos | V1 | Valor imediato |
-| CRM | Total gasto | V1 | Prioridade comercial |
-| CRM | Ultima compra | V1 | Reativacao |
-| CRM | Flag de inatividade | V1 | Diferencial real |
-| CRM | Tags e notas | V1 | Operacao humana |
-| CRM | Segmentacao RFM | V2 | Inteligencia acionavel |
-| CRM | Campanha sugerida | V2 | Vencer a Neemo |
-| Growth | Cupons simples | V1.1 | Rapido retorno |
-| Growth | Fidelidade | V2 | Recorrencia |
-| Analytics | Dashboard operacional | V1 | Gestao diaria |
-| Analytics | Dashboard comercial | V1.1 | Leitura de negocio |
-| Analytics | Exportacoes | V2 | Backoffice |
+## Cockpit Operacional
 
-## Integracoes e plataforma
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| Pedidos | Board em tempo real | V2 | ✅ | Melhor que lista pesada da Neemo |
+| Pedidos | Filtros e busca | V2 | ✅ | Velocidade de operação |
+| Pedidos | Detalhe completo do pedido | V2 | ✅ | Sem regressão frente ao mercado |
+| Pedidos | Mudança de status | V2 | ✅ | Operação central |
+| Pedidos | Notificação sonora | V2 | ✅ | Operação responsiva |
+| Pedidos | Criação manual pelo parceiro | V2 | ✅ | Pedidos via WhatsApp/telefone |
+| Pedidos | Exportação CSV | V2 | ✅ | Backoffice |
+| Pedidos | Impressão | Onda2 | — | Pode entrar rápido |
 
-| Dominio | Funcionalidade | Versao | Motivo |
-|---|---|---|---|
-| Integracao | Google Maps | V1 | Endereco, distancia e ETA |
-| Integracao | Gateway unico de pagamento | V1 | Core de receita |
-| Integracao | Storage de imagens | V1 | Catalogo e banners |
-| Integracao | Redis + jobs | V1 | Realtime e filas |
-| Integracao | WhatsApp oficial | V2 | Automacao real |
-| Integracao | NFe | V2 | Maturidade operacional |
-| Plataforma | Multi-loja | V3 | Escala, nao piloto |
-| Plataforma | IA por agentes de dominio | V3 | Depois do fluxo estar estavel |
+---
+
+## Loja, Entrega e Governança
+
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| Loja | Branding básico | V1 | ✅ | White-label de verdade |
+| Loja | Horários por dia e turno (UI visual) | V2 | ✅ | Operação de madrugada |
+| Loja | Toggle aberta/fechada | V2 | ✅ | Controle operacional |
+| Loja | Retirada | V1 | ✅ | Canal recorrente |
+| Entrega | Área por bairro | V1 | ✅ | Implementação simples e útil |
+| Entrega | Área por raio | V1 | ✅ | Cobertura melhor |
+| Entrega | Pedido mínimo | V1 | ✅ | Regra comercial básica |
+| Entrega | Frete grátis por valor | V1 | ✅ | Conversão |
+| Loja | Usuários e papéis | V1 | ✅ | Dono e operador coexistem |
+| Loja | Multi-loja | Onda3 | — | Escala, não piloto |
+
+---
+
+## CRM, Growth e Analytics
+
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| CRM | Perfil do cliente | V1 | ✅ | Base de memória de compra |
+| CRM | Histórico de pedidos | V1 | ✅ | Valor imediato |
+| CRM | Total gasto + ticket médio | V2 | ✅ | Prioridade comercial |
+| CRM | Última compra | V1 | ✅ | Reativação |
+| CRM | Flag de inatividade | V1 | ✅ | Diferencial real |
+| CRM | Tags e notas | V1 | ✅ | Operação humana |
+| CRM | Drawer de detalhe do cliente | V2 | ✅ | Visão completa |
+| CRM | Segmentação RFM | Onda2 | — | Inteligência acionável |
+| CRM | Campanhas por evento | Onda2 | — | Vencer a Neemo |
+| Growth | Fidelidade | Onda2 | — | Recorrência |
+| Growth | Programa de indicação | Onda2 | — | CAC zero |
+| Analytics | Dashboard operacional | V2 | ✅ | Gestão diária |
+| Analytics | Relatórios por período | V2 | ✅ | Leitura de negócio |
+| Analytics | Insights automáticos (IA) | Onda3 | — | Tier premium |
+
+---
+
+## Integrações e Plataforma
+
+| Domínio | Funcionalidade | Versão | Status | Motivo |
+|---------|---------------|--------|--------|--------|
+| **Integração** | **Mercado Pago (Pix + cartão)** | **P0** | **🔴 CRÍTICO** | **Core de receita — antecipar** |
+| Integração | Supabase Storage (imagens) | V2 | ✅ | Catálogo e banners |
+| Integração | Socket.io (realtime) | V2 | ✅ | Board de pedidos |
+| Integração | WhatsApp oficial (Baileys/WAHA) | Onda2 | — | Tier R$ 1.500/mês |
+| Integração | NFe | Onda3 | — | Maturidade operacional |
+| Plataforma | Multi-tenant self-service | Onda2 | — | Onboarding sem o fundador |
+| Plataforma | Mobile app (React Native) | Onda3 | — | Após validação |
+| Plataforma | IA por agentes de domínio | Onda3 | — | Tier R$ 2.500/mês |
+
+---
+
+## Deploy e Infraestrutura
+
+| Domínio | Funcionalidade | Story | Status | Motivo |
+|---------|---------------|-------|--------|--------|
+| Deploy | web-client + web-partner na Vercel | P3-01 | 🔄 Pendente | Produção |
+| Deploy | API na Railway | P3-02 | 🔄 Pendente | Produção |
+| CI | GitHub Actions (typecheck + build) | P3-03 | 🔄 Pendente | Qualidade |
+| QA | Playwright — fluxo cliente | P4-01 | 🔄 Pendente | Confiabilidade |
+| QA | Playwright — fluxo parceiro | P4-02 | 🔄 Pendente | Confiabilidade |

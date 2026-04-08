@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { prisma, type Prisma, type PrismaClient } from "@vendza/database";
 
 import { getOrderStatusChangedQueue } from "../../jobs/queues.js";
@@ -18,6 +16,8 @@ export type PartnerOrderStatus =
 export type PartnerOrderFilters = {
   status?: string;
   search?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 export type PartnerOrderItem = {
@@ -247,34 +247,44 @@ async function findStoreOrder(storeId: string, id: string) {
 }
 
 export async function listPartnerOrders(context: PartnerContext, filters: PartnerOrderFilters = {}) {
-  const orders = await prisma.order.findMany({
-    where: {
-      storeId: context.storeId,
-      ...(filters.status ? { status: filters.status } : {}),
-      ...(filters.search
-        ? {
-            OR: [
-              { publicId: { contains: filters.search, mode: "insensitive" } },
-              { customerName: { contains: filters.search, mode: "insensitive" } },
-              { customerPhone: { contains: filters.search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: {
-      placedAt: "desc",
-    },
-    include: {
-      items: {
-        orderBy: { createdAt: "asc" },
-      },
-      events: {
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
+  const page = Math.max(1, filters.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 50));
+  const skip = (page - 1) * pageSize;
 
-  return orders.map(toPartnerOrderRecord);
+  const where = {
+    storeId: context.storeId,
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.search
+      ? {
+          OR: [
+            { publicId: { contains: filters.search, mode: "insensitive" as const } },
+            { customerName: { contains: filters.search, mode: "insensitive" as const } },
+            { customerPhone: { contains: filters.search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [orders, total] = await prisma.$transaction([
+    prisma.order.findMany({
+      where,
+      orderBy: { placedAt: "desc" },
+      take: pageSize,
+      skip,
+      include: {
+        items: { orderBy: { createdAt: "asc" } },
+        events: { orderBy: { createdAt: "asc" } },
+      },
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  return {
+    orders: orders.map(toPartnerOrderRecord),
+    total,
+    page,
+    pageSize,
+  };
 }
 
 export async function getPartnerOrderById(context: PartnerContext, id: string) {
@@ -524,7 +534,8 @@ export async function createManualPartnerOrder(context: PartnerContext, input: P
   const discountCents = 0;
   const totalCents = subtotalCents + deliveryFeeCents - discountCents;
   const createdAt = new Date();
-  const publicId = `PED-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 6).toUpperCase()}`;
+  const orderCount = await prisma.order.count({ where: { storeId: context.storeId } });
+  const publicId = `PED-${String(orderCount + 1).padStart(4, "0")}`;
   const note = input.note ?? null;
 
   const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {

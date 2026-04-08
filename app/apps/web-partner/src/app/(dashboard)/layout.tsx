@@ -32,7 +32,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const acesso = await verificarAcesso();
-  if (acesso === "sem-acesso") redirect("/sem-acesso");
+  if (acesso === "sem-acesso") redirect("/onboarding");
 
   const storeId = await fetchStoreId();
 

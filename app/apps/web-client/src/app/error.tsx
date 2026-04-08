@@ -9,7 +9,7 @@ export default function Error({
 }) {
   return (
     <div className="wc-panel">
-      <h1>Falha na experiencia estrutural</h1>
+      <h1>Algo deu errado</h1>
       <p>{error.message}</p>
       <button className="wc-button" onClick={reset} type="button">
         Tentar novamente

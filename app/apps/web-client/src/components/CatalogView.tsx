@@ -172,6 +172,7 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
       {/* Grade de categorias — dados estáticos com imagens */}
       <div className="wc-category-grid">
         {CATEGORIES.map((cat) => (
+          // cat.id equivale ao slug da categoria (ex: "cervejas", "vinhos")
           <CategoryCard
             key={cat.id}
             category={cat}
