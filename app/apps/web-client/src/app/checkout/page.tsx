@@ -181,7 +181,7 @@ export default function CheckoutPage() {
                   padding: "10px 14px",
                   borderRadius: "var(--radius-sm)",
                   border: `1px solid ${pagamento === method ? "var(--green)" : "var(--border)"}`,
-                  background: pagamento === method ? "#d4edda" : "var(--surface)",
+                  background: pagamento === method ? "var(--color-payment-selected-bg)" : "var(--surface)",
                 }}
               >
                 <input

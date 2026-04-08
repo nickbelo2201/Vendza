@@ -19,12 +19,7 @@ export function CartSheet({ open, onClose }: Props) {
       {/* Overlay */}
       <div
         onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(26,26,46,0.48)",
-          zIndex: 1000,
-        }}
+        className="wc-cart-overlay"
       />
 
       {/* Drawer */}

@@ -21,18 +21,7 @@ export function AgeGate() {
   if (!visible) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(26,26,46,0.72)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9998,
-        padding: "24px",
-      }}
-    >
+    <div className="wc-agegate-overlay">
       <div
         className="wc-card"
         style={{ maxWidth: 420, width: "100%", textAlign: "center" }}
