@@ -56,11 +56,26 @@ export default async function HomePage({
   if (categoria) produtosParams.set("category", categoria);
   const produtosUrl = `/catalog/products${produtosParams.toString() ? `?${produtosParams.toString()}` : ""}`;
 
-  const [config, categories, products] = await Promise.all([
-    fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
-    fetchStorefrontCatalog<Category[]>("/catalog/categories"),
-    fetchStorefrontCatalog<Product[]>(produtosUrl),
-  ]);
+  const configFallback: StorefrontConfig = {
+    id: "",
+    branding: { name: "Vendza", slug: "", logoUrl: null },
+    status: "open",
+    minimumOrderValueCents: 0,
+  };
+
+  let config = configFallback;
+  let categories: Category[] = [];
+  let products: Product[] = [];
+
+  try {
+    [config, categories, products] = await Promise.all([
+      fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
+      fetchStorefrontCatalog<Category[]>("/catalog/categories"),
+      fetchStorefrontCatalog<Product[]>(produtosUrl),
+    ]);
+  } catch {
+    // API indisponível — exibe mock products para o visitante não ver tela vazia
+  }
 
   // Usa mock só quando catálogo vazio e sem filtros ativos
   const temFiltroAtivo = !!(busca || categoria);
