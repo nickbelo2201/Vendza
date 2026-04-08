@@ -1,7 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 async function _fetch<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}/v1${path}`, init);
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    signal: AbortSignal.timeout(8000),
+    ...init,
+  });
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
   const json = await res.json();
   return json.data as T;

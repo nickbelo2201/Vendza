@@ -7,6 +7,9 @@ import { fetchStorefrontConfig } from "../lib/api";
 
 import "./globals.css";
 
+// Força SSR on-demand — evita build-time fetch que trava se a API estiver dormindo
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Vendza",
   description: "Compre online com facilidade.",
