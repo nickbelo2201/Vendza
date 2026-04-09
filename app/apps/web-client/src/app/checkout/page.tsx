@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { formatCurrency } from "@vendza/utils";
 
 import { useCarrinho } from "../../context/CarrinhoContext";
+import { useEnderecos, usePerfil, type Endereco } from "../../hooks/useEnderecos";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
@@ -13,27 +14,61 @@ type PaymentMethod = "pix" | "cash" | "card_on_delivery";
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, subtotalCents, limparCarrinho } = useCarrinho();
+  const { enderecos, salvar: salvarEndereco } = useEnderecos();
+  const { perfil } = usePerfil();
 
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pedidoCriado, setPedidoCriado] = useState(false);
 
-  // Campos do form
+  // Campos do form — identificação
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
+
+  // Campos do form — endereço
   const [rua, setRua] = useState("");
   const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
+  const [cep, setCep] = useState("");
+
+  // Endereços salvos
+  const [enderecoSelecionado, setEnderecoSelecionado] = useState<string>("");
+  const [salvarEsteEndereco, setSalvarEsteEndereco] = useState(false);
+
   const [pagamento, setPagamento] = useState<PaymentMethod>("pix");
+
+  // Pré-preencher com dados do perfil ao montar
+  useEffect(() => {
+    if (perfil.nome) setNome(perfil.nome);
+    if (perfil.telefone) setTelefone(perfil.telefone);
+    if (perfil.email) setEmail(perfil.email);
+  }, [perfil.nome, perfil.telefone, perfil.email]);
 
   useEffect(() => {
     if (items.length === 0 && !pedidoCriado) {
       router.replace("/");
     }
   }, [items.length, router, pedidoCriado]);
+
+  function aplicarEndereco(end: Endereco) {
+    setRua(end.logradouro);
+    setNumero(end.numero);
+    setComplemento(end.complemento ?? "");
+    setBairro(end.bairro);
+    setCep(end.cep);
+  }
+
+  function handleSelecionarEndereco(id: string) {
+    setEnderecoSelecionado(id);
+    if (id) {
+      const end = enderecos.find((e) => e.id === id);
+      if (end) aplicarEndereco(end);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,9 +82,11 @@ export default function CheckoutPage() {
         address: {
           line1: rua,
           number: numero || undefined,
+          complement: complemento || undefined,
           neighborhood: bairro,
           city: cidade,
           state: estado,
+          postalCode: cep || undefined,
         },
         payment: { method: pagamento },
       };
@@ -65,6 +102,18 @@ export default function CheckoutPage() {
       if (!res.ok) {
         setErro(json.error?.message ?? "Erro ao criar pedido. Tente novamente.");
         return;
+      }
+
+      // Salvar endereço no localStorage se checkbox marcado
+      if (salvarEsteEndereco && rua && bairro) {
+        salvarEndereco({
+          label: "Outro",
+          logradouro: rua,
+          numero,
+          complemento: complemento || undefined,
+          bairro,
+          cep,
+        });
       }
 
       setPedidoCriado(true);
@@ -140,6 +189,27 @@ export default function CheckoutPage() {
         <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
           <legend style={{ fontWeight: 600, color: "var(--carbon)", marginBottom: 12 }}>Endereço de entrega</legend>
           <div className="wc-stack">
+            {/* Seletor de endereços salvos */}
+            {enderecos.length > 0 && (
+              <div>
+                <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
+                  Usar endereço salvo
+                </label>
+                <select
+                  className="wc-input"
+                  value={enderecoSelecionado}
+                  onChange={(e) => handleSelecionarEndereco(e.target.value)}
+                >
+                  <option value="">— Preencher manualmente —</option>
+                  {enderecos.map((end) => (
+                    <option key={end.id} value={end.id}>
+                      {end.label} — {end.logradouro}, {end.numero}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: 12 }}>
               <div>
                 <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Rua *</label>
@@ -150,11 +220,18 @@ export default function CheckoutPage() {
                 <input className="wc-input" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="123" />
               </div>
             </div>
+
+            <div>
+              <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Complemento</label>
+              <input className="wc-input" value={complemento} onChange={(e) => setComplemento(e.target.value)} placeholder="Apto, bloco..." />
+            </div>
+
             <div>
               <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Bairro *</label>
               <input className="wc-input" required value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Seu bairro" />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 80px", gap: 12 }}>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 140px", gap: 12 }}>
               <div>
                 <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Cidade *</label>
                 <input className="wc-input" required value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Cidade" />
@@ -163,7 +240,32 @@ export default function CheckoutPage() {
                 <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Estado *</label>
                 <input className="wc-input" required maxLength={2} value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" />
               </div>
+              <div>
+                <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>CEP</label>
+                <input className="wc-input" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" maxLength={9} />
+              </div>
             </div>
+
+            {/* Checkbox salvar endereço — só mostra se não está usando salvo */}
+            {!enderecoSelecionado && enderecos.length < 3 && (
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={salvarEsteEndereco}
+                  onChange={(e) => setSalvarEsteEndereco(e.target.checked)}
+                />
+                Salvar este endereço para próximas compras
+              </label>
+            )}
           </div>
         </fieldset>
 

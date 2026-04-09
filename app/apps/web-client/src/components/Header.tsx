@@ -173,10 +173,10 @@ export function Header({ nomeLoja }: Props) {
             <span>›</span>
           </button>
 
-          {/* Avatar */}
-          <div className="wc-avatar" title="Minha conta">
+          {/* Avatar — link para perfil */}
+          <a href="/perfil" className="wc-avatar" title="Minha conta" aria-label="Minha conta">
             V
-          </div>
+          </a>
 
           {/* Carrinho */}
           <button
