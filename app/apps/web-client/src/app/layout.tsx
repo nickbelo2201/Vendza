@@ -44,6 +44,8 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        {/* Viewport — garante escala correta em dispositivos móveis */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Evita flash de tema incorreto antes da hidratação */}
         <script
           dangerouslySetInnerHTML={{

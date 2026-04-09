@@ -1993,3 +1993,153 @@ html[data-theme="dark"] body {
 .kanban-col--over {
   animation: col-pulse 1.2s ease infinite;
 }
+
+/* ===== MOBILE V2 ≤ 768px ===== */
+
+/* Utilitário genérico de ocultação mobile */
+@media (max-width: 768px) {
+  .wp-hide-mobile {
+    display: none !important;
+  }
+}
+
+/* ── Sidebar: vira bottom navigation bar ── */
+@media (max-width: 768px) {
+  .sidebar-v2 {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    height: 56px;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid var(--v2-border);
+    z-index: 200;
+    overflow: visible;
+    /* Desativar a transição de largura que não faz sentido no mobile */
+    transition: none;
+  }
+
+  /* Cancelar expansão por hover no mobile */
+  .sidebar-v2:hover {
+    width: 100% !important;
+    box-shadow: none;
+  }
+
+  /* Ocultar elementos que não cabem na bottom nav */
+  .sidebar-v2-logo,
+  .sidebar-v2-divider,
+  .sidebar-v2-group-label {
+    display: none;
+  }
+
+  /* Grupos em linha horizontal distribuídos uniformemente */
+  .sidebar-v2-group {
+    flex-direction: row;
+    padding: 0;
+    flex: 1;
+    justify-content: space-around;
+    align-items: stretch;
+  }
+
+  /* Links em coluna (ícone + label empilhados) */
+  .sidebar-v2-link {
+    flex-direction: column;
+    height: 56px;
+    padding: 6px 4px;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    font-size: 9px;
+    overflow: visible;
+    border-radius: 0;
+  }
+
+  /* Forçar labels visíveis na bottom nav */
+  .sidebar-v2-link-label {
+    opacity: 1 !important;
+    width: auto !important;
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  /* Cancelar revelação via hover da sidebar no mobile */
+  .sidebar-v2:hover .sidebar-v2-link-label {
+    opacity: 1;
+    width: auto;
+  }
+
+  /* Body: sem margin-left, padding-bottom para não cobrir conteúdo */
+  .v2-body {
+    margin-left: 0 !important;
+    padding-bottom: 56px;
+  }
+}
+
+/* ── Topbar mobile ── */
+@media (max-width: 768px) {
+  .topbar-v2 {
+    padding: 0 12px;
+    height: 48px;
+  }
+
+  .topbar-title {
+    font-size: 18px;
+  }
+
+  .topbar-breadcrumb {
+    display: none;
+  }
+
+  .topbar-badge-ia {
+    display: none;
+  }
+
+  .topbar-right {
+    gap: 4px;
+  }
+
+  /* Esconder theme toggle no mobile (acessível via configurações) */
+  .theme-toggle {
+    display: none;
+  }
+}
+
+/* ── Tabelas scrolláveis no mobile ── */
+@media (max-width: 768px) {
+  .wp-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  .wp-card {
+    padding: 12px;
+  }
+}
+
+/* ── Modais e drawers como bottom sheets ── */
+@media (max-width: 768px) {
+  .wp-modal,
+  .wp-drawer {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 12px 12px 0 0;
+    margin: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+}
+
+/* ── Conteúdo principal mobile ── */
+@media (max-width: 768px) {
+  .v2-main {
+    padding: 12px;
+  }
+}

@@ -149,12 +149,12 @@ export function TopbarV2({ toggleLoja }: Props) {
         </Link>
 
         {/* Dúvidas */}
-        <Link href="/documentacao" className="topbar-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        <Link href="/documentacao" className="topbar-btn wp-hide-mobile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           Dúvidas
         </Link>
 
         {/* Minha Conta */}
-        <Link href="/configuracoes" className="topbar-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        <Link href="/configuracoes" className="topbar-btn wp-hide-mobile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           Minha Conta
         </Link>
 

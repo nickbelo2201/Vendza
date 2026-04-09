@@ -1023,3 +1023,230 @@ select {
   z-index: 9998;
   padding: 24px;
 }
+
+/* ===== MOBILE ≤ 480px ===== */
+@media (max-width: 480px) {
+
+  /* --- Header --- */
+  .wc-header {
+    height: auto;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .wc-logo {
+    /* Logo ocupa a primeira linha */
+    order: 1;
+  }
+
+  .wc-header-actions {
+    /* Ações ficam na mesma linha que o logo, à direita */
+    order: 2;
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .wc-search-wrapper {
+    /* Busca vai para a segunda linha, ocupando toda a largura */
+    order: 3;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 4px;
+  }
+
+  /* Compactar o toggle dark/light no mobile */
+  .wc-theme-toggle {
+    font-size: 0; /* oculta o label textual, mantém apenas ícone + track */
+  }
+
+  .wc-toggle-track {
+    width: 40px;
+    height: 22px;
+  }
+
+  .wc-toggle-thumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  .wc-toggle-thumb.dark {
+    transform: translateX(18px);
+  }
+
+  /* --- Grid de categorias --- */
+  /* Mantém 4 colunas mas reduz padding interno e tamanho do ícone */
+  .wc-category-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .wc-category-card {
+    padding: 10px 4px 8px;
+  }
+
+  .wc-category-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .wc-category-icon img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .wc-category-label {
+    font-size: 10px;
+  }
+
+  /* --- Grid de produtos: 2 colunas --- */
+  .wc-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .wc-product-image {
+    height: 140px;
+    padding: 12px;
+  }
+
+  .wc-product-image img {
+    max-height: 120px;
+  }
+
+  .wc-product-info {
+    padding: 8px 10px 10px;
+    gap: 4px;
+  }
+
+  .wc-product-name {
+    font-size: 13px;
+  }
+
+  .wc-price-now {
+    font-size: 14px;
+  }
+
+  /* --- Carrinho (slide from bottom no mobile) --- */
+  .wc-cart-panel {
+    top: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 85vh !important;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -4px 32px rgba(0,0,0,0.18) !important;
+  }
+
+  /* --- Checkout: coluna única --- */
+  /* O checkout usa style inline com gridTemplateColumns */
+  /* Sobrescrevemos com uma classe utilitária no wrapper principal */
+  .wc-checkout-layout,
+  /* Fallback: seleciona o div direto filho de .wc-main que usa display:grid no checkout */
+  .wc-main > div[style*="gridTemplateColumns"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  /* Campos em grid de 2+ colunas dentro do form viram coluna única */
+  .wc-main div[style*="gridTemplateColumns"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* --- Inputs e botões: touch targets adequados --- */
+  .wc-btn {
+    min-height: 44px;
+    padding: 0 16px;
+  }
+
+  .wc-btn-cta {
+    height: 44px;
+  }
+
+  /* Evita zoom automático do iOS em inputs (font-size < 16px dispara zoom) */
+  .wc-input,
+  .wc-search-input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Reajuste do search-input: aumenta fonte mas mantém a altura */
+  .wc-search-input {
+    height: 40px;
+  }
+
+  /* --- Tabelas: scroll horizontal para não quebrar --- */
+  .wc-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- Timeline: espaçamento adequado --- */
+  .wc-timeline-item {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  /* --- Toast: posição ajustada para não cobrir botões --- */
+  .wc-toast {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    text-align: center;
+  }
+
+  /* --- Footer: padding reduzido --- */
+  .wc-footer {
+    padding: 16px;
+    font-size: 12px;
+  }
+
+  /* --- Painel de erro/loading --- */
+  .wc-panel {
+    margin: 40px auto;
+    padding: 28px 20px;
+  }
+}
+
+/* ===== MOBILE ≤ 360px (telas muito pequenas) ===== */
+@media (max-width: 360px) {
+  /* Mantém 2 colunas de produtos */
+  .wc-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* Categorias: 4 colunas mas ainda mais compactas */
+  .wc-category-card {
+    padding: 8px 2px 6px;
+  }
+
+  .wc-category-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .wc-category-icon img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .wc-category-label {
+    font-size: 9px;
+  }
+
+  /* Main: padding mínimo */
+  .wc-main {
+    padding: 12px 10px 32px;
+  }
+}

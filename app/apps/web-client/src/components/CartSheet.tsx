@@ -24,6 +24,7 @@ export function CartSheet({ open, onClose }: Props) {
 
       {/* Drawer */}
       <div
+        className="wc-cart-panel"
         style={{
           position: "fixed",
           top: 0,
