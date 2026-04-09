@@ -23,10 +23,6 @@ export function useNewOrders() {
         auth: { token },
       });
 
-      socket.on("connect", () => {
-        socket?.emit("join:store");
-      });
-
       socket.on("order:created", () => setCount((c) => c + 1));
     }
 

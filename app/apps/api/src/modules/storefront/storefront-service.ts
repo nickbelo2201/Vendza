@@ -464,3 +464,176 @@ export async function getProductBySlugReal(storeId: string, slug: string) {
     offer: product.salePriceCents !== null && product.salePriceCents < product.listPriceCents,
   };
 }
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export async function calcularFrete(
+  storeId: string,
+  input: { lat?: number; lng?: number; cep?: string; bairro?: string },
+): Promise<
+  | { zonaId: string; label: string; feeCents: number; etaMinutes: number; minimumOrderCents: number; freeShippingAboveCents: number }
+  | { fora: true; motivo?: string }
+> {
+  // Resolver bairro via ViaCEP se CEP fornecido
+  let bairroResolvido = input.bairro?.trim() ?? "";
+
+  if (input.cep) {
+    const cepLimpo = input.cep.replace(/\D/g, "");
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      if (!resp.ok) return { fora: true, motivo: "CEP não encontrado" };
+      const json = (await resp.json()) as { erro?: boolean; bairro?: string };
+      if (json.erro) return { fora: true, motivo: "CEP não encontrado" };
+      bairroResolvido = (json.bairro ?? "").trim();
+    } catch {
+      return { fora: true, motivo: "CEP não encontrado" };
+    }
+  }
+
+  const zonas = await prisma.deliveryZone.findMany({
+    where: { storeId, isActive: true },
+  });
+
+  for (const zona of zonas) {
+    if (zona.mode === "radius") {
+      // Verificar por raio Haversine
+      if (
+        input.lat != null &&
+        input.lng != null &&
+        zona.centerLat != null &&
+        zona.centerLng != null &&
+        zona.radiusMeters != null
+      ) {
+        const distKm = haversineKm(input.lat, input.lng, zona.centerLat, zona.centerLng);
+        if (distKm <= zona.radiusMeters / 1000) {
+          return {
+            zonaId: zona.id,
+            label: zona.label,
+            feeCents: zona.deliveryFeeCents,
+            etaMinutes: zona.estimatedDeliveryMinutes,
+            minimumOrderCents: zona.minimumOrderValueCents,
+            freeShippingAboveCents: zona.freeShippingAboveCents,
+          };
+        }
+      }
+    } else if (zona.mode === "neighborhoods") {
+      // Verificar por bairro (case-insensitive)
+      const lista = Array.isArray(zona.neighborhoodsJson)
+        ? (zona.neighborhoodsJson as string[])
+        : [];
+      const bairroNorm = bairroResolvido.toLowerCase();
+      const encontrou = lista.some((b) => b.trim().toLowerCase() === bairroNorm);
+      if (encontrou) {
+        return {
+          zonaId: zona.id,
+          label: zona.label,
+          feeCents: zona.deliveryFeeCents,
+          etaMinutes: zona.estimatedDeliveryMinutes,
+          minimumOrderCents: zona.minimumOrderValueCents,
+          freeShippingAboveCents: zona.freeShippingAboveCents,
+        };
+      }
+    }
+  }
+
+  return { fora: true };
+}
+
+export async function getOrdersByPhone(
+  storeId: string,
+  phone: string,
+  page: number,
+  pageSize: number,
+) {
+  const customer = await prisma.customer.findUnique({
+    where: { storeId_phone: { storeId, phone } },
+    select: { id: true, name: true },
+  });
+
+  if (!customer) return { customer: null, orders: [], total: 0 };
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where: { storeId, customerId: customer.id },
+      select: {
+        id: true,
+        publicId: true,
+        status: true,
+        paymentMethod: true,
+        subtotalCents: true,
+        deliveryFeeCents: true,
+        totalCents: true,
+        placedAt: true,
+        items: {
+          select: {
+            id: true,
+            productId: true,
+            productName: true,
+            quantity: true,
+            unitPriceCents: true,
+            totalPriceCents: true,
+          },
+        },
+        events: {
+          select: { id: true, type: true, createdAt: true },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+      orderBy: { placedAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.order.count({ where: { storeId, customerId: customer.id } }),
+  ]);
+
+  const STATUS_PT: Record<string, string> = {
+    pending: "Recebido",
+    confirmed: "Confirmado",
+    preparing: "Em preparo",
+    ready_for_delivery: "Pronto para entrega",
+    out_for_delivery: "Saiu para entrega",
+    delivered: "Entregue",
+    cancelled: "Cancelado",
+  };
+
+  const EVENT_LABELS: Record<string, string> = {
+    placed: "Pedido recebido",
+    confirmed: "Pedido confirmado",
+    preparing: "Em preparo",
+    ready_for_delivery: "Pronto para entrega",
+    out_for_delivery: "Saiu para entrega",
+    delivered: "Entregue",
+    cancelled: "Pedido cancelado",
+  };
+
+  type OrderRow = (typeof orders)[number];
+  type OrderEventRow = OrderRow["events"][number];
+
+  return {
+    customer: { id: customer.id, name: customer.name },
+    orders: orders.map((o: OrderRow) => ({
+      ...o,
+      statusLabel: STATUS_PT[o.status] ?? o.status,
+      placedAt: o.placedAt.toISOString(),
+      timeline: o.events.map((e: OrderEventRow) => ({
+        type: e.type,
+        label: EVENT_LABELS[e.type] ?? e.type,
+        createdAt: e.createdAt.toISOString(),
+      })),
+    })),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}

@@ -173,6 +173,19 @@ export function Header({ nomeLoja }: Props) {
             <span>›</span>
           </button>
 
+          {/* Link minha conta */}
+          <a
+            href="/minha-conta"
+            style={{
+              fontSize: 13,
+              color: "var(--text-muted)",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Minha conta
+          </a>
+
           {/* Avatar — link para perfil */}
           <a href="/perfil" className="wc-avatar" title="Minha conta" aria-label="Minha conta">
             V

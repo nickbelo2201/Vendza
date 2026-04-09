@@ -11,6 +11,8 @@ export function getIO(): Server {
   return ioInstance;
 }
 
+type AuthenticatedSocket = Socket & { partnerStoreId?: string };
+
 const socketioPlugin: FastifyPluginAsync = async (app) => {
   const io = new Server(app.server, {
     cors: {
@@ -24,7 +26,9 @@ const socketioPlugin: FastifyPluginAsync = async (app) => {
     },
   });
 
-  // Middleware de autenticação — exige Bearer token para conexões Socket.io
+  // Middleware de autenticação — token é opcional.
+  // Conexões sem token são permitidas (ex: web-client rastreando pedido por publicId),
+  // mas ficam sem partnerStoreId e não podem entrar em salas de loja.
   io.use(async (socket, next) => {
     try {
       const token =
@@ -32,35 +36,53 @@ const socketioPlugin: FastifyPluginAsync = async (app) => {
         socket.handshake.headers.authorization?.replace("Bearer ", "");
 
       if (!token || typeof token !== "string") {
-        return next(new Error("Autenticação obrigatória. Envie token via auth.token ou header Authorization."));
+        // Conexão pública: permitida, sem acesso a salas de loja
+        (socket as AuthenticatedSocket).partnerStoreId = undefined;
+        return next();
       }
 
       const { data, error } = await app.supabase.auth.getUser(token);
 
       if (error || !data.user) {
-        return next(new Error("Token inválido ou expirado."));
+        // Token inválido: ainda permite conexão, mas sem permissão de loja
+        (socket as AuthenticatedSocket).partnerStoreId = undefined;
+        return next();
       }
 
       const partnerContext = await resolvePartnerContext(data.user.id);
 
-      // Armazenar contexto no socket para uso nos handlers
-      (socket as Socket & { partnerStoreId?: string }).partnerStoreId =
+      (socket as AuthenticatedSocket).partnerStoreId =
         partnerContext?.storeId ?? undefined;
 
       next();
     } catch {
-      next(new Error("Falha na autenticação do socket."));
+      // Falha inesperada: permite conexão sem permissões de loja
+      (socket as AuthenticatedSocket).partnerStoreId = undefined;
+      next();
     }
   });
 
-  io.on("connection", (socket: Socket & { partnerStoreId?: string }) => {
+  io.on("connection", (socket: AuthenticatedSocket) => {
     app.log.info(`[socket.io] cliente conectado: ${socket.id}`);
 
+    // Auto-join na sala da loja se o socket está autenticado como parceiro
+    if (socket.partnerStoreId) {
+      void socket.join(`store:${socket.partnerStoreId}`);
+      app.log.info(`[socket.io] socket ${socket.id} auto-joined store:${socket.partnerStoreId}`);
+    }
+
     socket.on("join:store", (storeId: string) => {
-      // Parceiros só podem entrar na sala da própria loja
-      if (socket.partnerStoreId && socket.partnerStoreId !== storeId) {
+      // Apenas parceiros autenticados podem entrar em salas de loja,
+      // e somente na sala da própria loja.
+      if (!socket.partnerStoreId) {
         app.log.warn(
-          `[socket.io] tentativa de join:store bloqueada — socket ${socket.id} tentou entrar em store:${storeId} mas pertence a store:${socket.partnerStoreId}`,
+          `[socket.io] join:store bloqueado — socket ${socket.id} não autenticado`,
+        );
+        return;
+      }
+      if (socket.partnerStoreId !== storeId) {
+        app.log.warn(
+          `[socket.io] join:store bloqueado — socket ${socket.id} tentou entrar em store:${storeId} mas pertence a store:${socket.partnerStoreId}`,
         );
         return;
       }

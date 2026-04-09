@@ -3,9 +3,11 @@ import type { FastifyPluginAsync } from "fastify";
 
 import { envelopeSchema, ok } from "../../lib/http.js";
 import {
+  calcularFrete,
   createOrderReal,
   getCategories,
   getOrderByPublicIdReal,
+  getOrdersByPhone,
   getProductBySlugReal,
   getProducts,
   getStorefrontConfig,
@@ -171,6 +173,58 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
         return reply.code(404).send(ok({ message: "Pedido nao encontrado." }, { stub: false }));
       }
       return ok(order, { stub: false });
+    },
+  );
+
+  const ClientePedidosQuerySchema = Type.Object({
+    phone: Type.String({ minLength: 8 }),
+    page: Type.Optional(Type.Integer({ minimum: 1, default: 1 })),
+    pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 50, default: 10 })),
+  });
+
+  type ClientePedidosQuery = Static<typeof ClientePedidosQuerySchema>;
+
+  app.get<{ Querystring: ClientePedidosQuery }>(
+    "/storefront/cliente/pedidos",
+    {
+      schema: {
+        querystring: ClientePedidosQuerySchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async ({ query }) => {
+      const storeId = await resolveStoreId();
+      const result = await getOrdersByPhone(
+        storeId,
+        query.phone,
+        query.page ?? 1,
+        query.pageSize ?? 10,
+      );
+      return ok(result, { stub: false });
+    },
+  );
+
+  const CalcularFreteBodySchema = Type.Object({
+    lat: Type.Optional(Type.Number()),
+    lng: Type.Optional(Type.Number()),
+    cep: Type.Optional(Type.String()),
+    bairro: Type.Optional(Type.String()),
+  });
+
+  type CalcularFreteBody = Static<typeof CalcularFreteBodySchema>;
+
+  app.post<{ Body: CalcularFreteBody }>(
+    "/storefront/calcular-frete",
+    {
+      schema: {
+        body: CalcularFreteBodySchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async ({ body }) => {
+      const storeId = await resolveStoreId();
+      const resultado = await calcularFrete(storeId, body);
+      return ok(resultado, { stub: false });
     },
   );
 };
