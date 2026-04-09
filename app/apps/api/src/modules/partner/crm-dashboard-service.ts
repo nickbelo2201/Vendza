@@ -2,6 +2,84 @@ import { prisma } from "@vendza/database";
 
 import type { PartnerContext } from "./context.js";
 
+// ─── Tags ────────────────────────────────────────────────────────────────────
+
+export async function addCustomerTag(context: PartnerContext, customerId: string, label: string) {
+  // Garantir que o cliente pertence à loja
+  const customer = await prisma.customer.findFirst({
+    where: { storeId: context.storeId, id: customerId },
+    select: { id: true },
+  });
+  if (!customer) return null;
+
+  return prisma.customerTag.upsert({
+    where: { customerId_label: { customerId, label } },
+    create: { customerId, label },
+    update: {},
+    select: { id: true, label: true, createdAt: true },
+  });
+}
+
+export async function removeCustomerTag(context: PartnerContext, customerId: string, label: string) {
+  const customer = await prisma.customer.findFirst({
+    where: { storeId: context.storeId, id: customerId },
+    select: { id: true },
+  });
+  if (!customer) return false;
+
+  const deleted = await prisma.customerTag.deleteMany({
+    where: { customerId, label },
+  });
+  return deleted.count > 0;
+}
+
+export async function listCustomerTags(context: PartnerContext, customerId: string) {
+  const customer = await prisma.customer.findFirst({
+    where: { storeId: context.storeId, id: customerId },
+    select: { id: true },
+  });
+  if (!customer) return null;
+
+  return prisma.customerTag.findMany({
+    where: { customerId },
+    select: { id: true, label: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+// ─── Notas ───────────────────────────────────────────────────────────────────
+
+export async function addCustomerNote(
+  context: PartnerContext,
+  customerId: string,
+  body: string,
+) {
+  const customer = await prisma.customer.findFirst({
+    where: { storeId: context.storeId, id: customerId },
+    select: { id: true },
+  });
+  if (!customer) return null;
+
+  return prisma.customerNote.create({
+    data: { customerId, body },
+    select: { id: true, body: true, createdAt: true },
+  });
+}
+
+export async function listCustomerNotes(context: PartnerContext, customerId: string) {
+  const customer = await prisma.customer.findFirst({
+    where: { storeId: context.storeId, id: customerId },
+    select: { id: true },
+  });
+  if (!customer) return null;
+
+  return prisma.customerNote.findMany({
+    where: { customerId },
+    select: { id: true, body: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function listCustomers(context: PartnerContext) {
   return prisma.customer.findMany({
     where: { storeId: context.storeId },

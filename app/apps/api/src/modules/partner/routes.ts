@@ -17,10 +17,15 @@ import {
 } from "./catalog-service.js";
 import { type PartnerContext } from "./context.js";
 import {
+  addCustomerNote,
+  addCustomerTag,
   getCustomerById,
   getDashboardSummary,
   getPartnerReports,
+  listCustomerNotes,
+  listCustomerTags,
   listCustomers,
+  removeCustomerTag,
   updateCustomer,
 } from "./crm-dashboard-service.js";
 import {
@@ -477,6 +482,74 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
       }
       return ok(customer);
+    },
+  );
+
+  // ── Tags do cliente ──────────────────────────────────────────────────────
+  app.get<{ Params: { id: string } }>(
+    "/partner/customers/:id/tags",
+    { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request, reply) => {
+      const tags = await listCustomerTags(partnerContext(request), request.params.id);
+      if (tags === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      return ok(tags);
+    },
+  );
+
+  app.post<{ Params: { id: string }; Body: { label: string } }>(
+    "/partner/customers/:id/tags",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        body: Type.Object({ label: Type.String({ minLength: 1, maxLength: 50 }) }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const tag = await addCustomerTag(partnerContext(request), request.params.id, request.body.label.trim());
+      if (tag === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      return ok(tag);
+    },
+  );
+
+  app.delete<{ Params: { id: string; label: string } }>(
+    "/partner/customers/:id/tags/:label",
+    { schema: { params: Type.Object({ id: Type.String(), label: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request, reply) => {
+      const removed = await removeCustomerTag(
+        partnerContext(request),
+        request.params.id,
+        decodeURIComponent(request.params.label),
+      );
+      if (!removed) return reply.code(404).send(ok({ message: "Tag nao encontrada." }));
+      return ok({ removed: true });
+    },
+  );
+
+  // ── Notas do cliente (append-only) ───────────────────────────────────────
+  app.get<{ Params: { id: string } }>(
+    "/partner/customers/:id/notas",
+    { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request, reply) => {
+      const notas = await listCustomerNotes(partnerContext(request), request.params.id);
+      if (notas === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      return ok(notas);
+    },
+  );
+
+  app.post<{ Params: { id: string }; Body: { body: string } }>(
+    "/partner/customers/:id/notas",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        body: Type.Object({ body: Type.String({ minLength: 1 }) }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const nota = await addCustomerNote(partnerContext(request), request.params.id, request.body.body.trim());
+      if (nota === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      return reply.code(201).send(ok(nota));
     },
   );
 
