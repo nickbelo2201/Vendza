@@ -136,7 +136,12 @@ export function Header({ nomeLoja }: Props) {
       <header className="wc-header">
         <a href="/" className="wc-logo" aria-label={nomeLoja}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt={nomeLoja} className="wc-logo-img" />
+          <img
+            src="/logo.png"
+            alt={nomeLoja}
+            className="wc-logo-img"
+            style={theme === "dark" ? { filter: "brightness(0) invert(1)" } : undefined}
+          />
         </a>
 
         <div className="wc-search-wrapper">
