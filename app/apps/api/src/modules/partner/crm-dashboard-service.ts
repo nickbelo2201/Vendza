@@ -170,33 +170,114 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
   type TopProductRow = { name: string; quantity: bigint; revenue_cents: bigint };
   type RevenueByDayRow = { date: Date | string; revenue_cents: bigint };
   type CountRow = { count: bigint };
+  type CancelledRow = { count: bigint };
+  type RepeatRow = { count: bigint };
+  type PaymentRow = { payment_method: string; count: bigint };
+  type SalesByHourRow = { hour: number | bigint; count: bigint; revenue_cents: bigint };
 
-  // Total de pedidos + faturamento + ticket médio (SQL agregado)
-  const summaryRows = (await prisma.$queryRaw`
-    SELECT COUNT(*) as count, SUM(total_cents) as sum, AVG(total_cents) as avg
-    FROM orders
-    WHERE store_id = ${context.storeId}::uuid
-      AND placed_at BETWEEN ${fromDate} AND ${toDate}
-      AND status != 'cancelled'
-  `) as SummaryRow[];
+  // Todas as queries em paralelo para melhor performance
+  const [
+    summaryRows,
+    topProductRows,
+    revenueByDayRows,
+    newCustomerRows,
+    cancelledRows,
+    repeatRows,
+    paymentRows,
+    salesByHourRows,
+  ] = await Promise.all([
+    // Total de pedidos + faturamento + ticket médio
+    prisma.$queryRaw`
+      SELECT COUNT(*) as count, SUM(total_cents) as sum, AVG(total_cents) as avg
+      FROM orders
+      WHERE store_id = ${context.storeId}::uuid
+        AND placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND status != 'cancelled'
+    ` as Promise<SummaryRow[]>,
+
+    // Top produtos
+    prisma.$queryRaw`
+      SELECT oi.product_name as name, SUM(oi.quantity) as quantity, SUM(oi.total_price_cents) as revenue_cents
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.store_id = ${context.storeId}::uuid
+        AND o.placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND o.status != 'cancelled'
+      GROUP BY oi.product_name
+      ORDER BY SUM(oi.quantity) DESC
+      LIMIT 10
+    ` as Promise<TopProductRow[]>,
+
+    // Receita por dia
+    prisma.$queryRaw`
+      SELECT DATE(placed_at) as date, SUM(total_cents) as revenue_cents
+      FROM orders
+      WHERE store_id = ${context.storeId}::uuid
+        AND placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND status != 'cancelled'
+      GROUP BY DATE(placed_at)
+      ORDER BY date ASC
+    ` as Promise<RevenueByDayRow[]>,
+
+    // Novos clientes no período
+    prisma.$queryRaw`
+      SELECT COUNT(*) as count
+      FROM customers
+      WHERE store_id = ${context.storeId}::uuid
+        AND created_at BETWEEN ${fromDate} AND ${toDate}
+    ` as Promise<CountRow[]>,
+
+    // Pedidos cancelados no período (para taxa de cancelamento)
+    prisma.$queryRaw`
+      SELECT COUNT(*) as count
+      FROM orders
+      WHERE store_id = ${context.storeId}::uuid
+        AND placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND status = 'cancelled'
+    ` as Promise<CancelledRow[]>,
+
+    // Clientes que já compraram antes do período (taxa de recompra)
+    prisma.$queryRaw`
+      SELECT COUNT(DISTINCT customer_id) as count
+      FROM orders
+      WHERE store_id = ${context.storeId}::uuid
+        AND placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND status != 'cancelled'
+        AND customer_id IN (
+          SELECT customer_id FROM orders
+          WHERE store_id = ${context.storeId}::uuid
+            AND placed_at < ${fromDate}
+            AND status != 'cancelled'
+        )
+    ` as Promise<RepeatRow[]>,
+
+    // Distribuição de formas de pagamento
+    prisma.$queryRaw`
+      SELECT payment_method, COUNT(*) as count
+      FROM orders
+      WHERE store_id = ${context.storeId}::uuid
+        AND placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND status != 'cancelled'
+      GROUP BY payment_method
+      ORDER BY count DESC
+    ` as Promise<PaymentRow[]>,
+
+    // Vendas por hora do dia
+    prisma.$queryRaw`
+      SELECT EXTRACT(HOUR FROM placed_at) as hour, COUNT(*) as count, SUM(total_cents) as revenue_cents
+      FROM orders
+      WHERE store_id = ${context.storeId}::uuid
+        AND placed_at BETWEEN ${fromDate} AND ${toDate}
+        AND status != 'cancelled'
+      GROUP BY EXTRACT(HOUR FROM placed_at)
+      ORDER BY hour ASC
+    ` as Promise<SalesByHourRow[]>,
+  ]);
 
   const summary = summaryRows[0];
   const totalOrders = Number(summary?.count ?? 0);
   const totalRevenueCents = Number(summary?.sum ?? 0);
   const averageTicketCents = totalOrders > 0 ? Math.round(Number(summary?.avg ?? 0)) : 0;
-
-  // Top produtos (SQL agregado)
-  const topProductRows = (await prisma.$queryRaw`
-    SELECT oi.product_name as name, SUM(oi.quantity) as quantity, SUM(oi.total_price_cents) as revenue_cents
-    FROM order_items oi
-    JOIN orders o ON oi.order_id = o.id
-    WHERE o.store_id = ${context.storeId}::uuid
-      AND o.placed_at BETWEEN ${fromDate} AND ${toDate}
-      AND o.status != 'cancelled'
-    GROUP BY oi.product_name
-    ORDER BY SUM(oi.quantity) DESC
-    LIMIT 10
-  `) as TopProductRow[];
 
   const topProducts = topProductRows.map((row: TopProductRow) => ({
     name: row.name,
@@ -204,31 +285,40 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
     revenueCents: Number(row.revenue_cents),
   }));
 
-  // Receita por dia (SQL agregado)
-  const revenueByDayRows = (await prisma.$queryRaw`
-    SELECT DATE(placed_at) as date, SUM(total_cents) as revenue_cents
-    FROM orders
-    WHERE store_id = ${context.storeId}::uuid
-      AND placed_at BETWEEN ${fromDate} AND ${toDate}
-      AND status != 'cancelled'
-    GROUP BY DATE(placed_at)
-    ORDER BY date ASC
-  `) as RevenueByDayRow[];
-
   const revenueByDay = revenueByDayRows.map((row: RevenueByDayRow) => ({
     date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date),
     revenueCents: Number(row.revenue_cents),
   }));
 
-  // Novos clientes no período (SQL agregado)
-  const newCustomerRows = (await prisma.$queryRaw`
-    SELECT COUNT(*) as count
-    FROM customers
-    WHERE store_id = ${context.storeId}::uuid
-      AND created_at BETWEEN ${fromDate} AND ${toDate}
-  `) as CountRow[];
-
   const newCustomers = Number(newCustomerRows[0]?.count ?? 0);
+
+  // Taxa de cancelamento
+  const cancelledOrders = Number(cancelledRows[0]?.count ?? 0);
+  const totalWithCancelled = totalOrders + cancelledOrders;
+  const cancellationRate =
+    totalWithCancelled > 0
+      ? Math.round((cancelledOrders / totalWithCancelled) * 100 * 10) / 10
+      : 0;
+
+  // Taxa de recompra
+  const repeatCustomers = Number(repeatRows[0]?.count ?? 0);
+  const repeatRate =
+    totalOrders > 0
+      ? Math.min(100, Math.round((repeatCustomers / totalOrders) * 100 * 10) / 10)
+      : 0;
+
+  // Distribuição de formas de pagamento
+  const paymentDistribution = paymentRows.map((row: PaymentRow) => ({
+    method: row.payment_method,
+    count: Number(row.count),
+  }));
+
+  // Vendas por hora do dia
+  const salesByHour = salesByHourRows.map((row: SalesByHourRow) => ({
+    hour: Number(row.hour),
+    count: Number(row.count),
+    revenueCents: Number(row.revenue_cents),
+  }));
 
   return {
     period: {
@@ -241,6 +331,12 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
     newCustomers,
     topProducts,
     revenueByDay,
+    cancelledOrders,
+    cancellationRate,
+    repeatCustomers,
+    repeatRate,
+    paymentDistribution,
+    salesByHour,
   };
 }
 

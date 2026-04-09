@@ -7,6 +7,8 @@ import { BarChart } from "./BarChart";
 
 type RevenueByDay = { date: string; revenueCents: number };
 type TopProduto = { name: string; quantity: number; revenueCents: number };
+type PaymentDistribution = { method: string; count: number };
+type SalesByHour = { hour: number; count: number; revenueCents: number };
 
 type Relatorio = {
   totalOrders: number;
@@ -15,6 +17,19 @@ type Relatorio = {
   newCustomers: number;
   revenueByDay: RevenueByDay[];
   topProducts: TopProduto[];
+  cancelledOrders: number;
+  cancellationRate: number;
+  repeatCustomers: number;
+  repeatRate: number;
+  paymentDistribution: PaymentDistribution[];
+  salesByHour: SalesByHour[];
+};
+
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: "PIX",
+  cash: "Dinheiro",
+  card_on_delivery: "Cartão na entrega",
+  card_online: "Cartão online",
 };
 
 function formatarData(d: Date): string {
@@ -85,7 +100,57 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
         </svg>
       ),
     },
+    {
+      titulo: "Taxa de cancelamento",
+      valor: relatorio ? `${relatorio.cancellationRate.toFixed(1)}%` : "—",
+      icone: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      ),
+    },
+    {
+      titulo: "Taxa de recompra",
+      valor: relatorio ? `${relatorio.repeatRate.toFixed(1)}%` : "—",
+      icone: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      ),
+    },
+    {
+      titulo: "Clientes recorrentes",
+      valor: relatorio ? String(relatorio.repeatCustomers) : "—",
+      icone: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          <polyline points="17 11 19 13 23 9"/>
+        </svg>
+      ),
+    },
   ];
+
+  const totalPagamentos = relatorio
+    ? relatorio.paymentDistribution.reduce((acc, item) => acc + item.count, 0)
+    : 0;
+
+  const maxHourCount = relatorio && relatorio.salesByHour.length > 0
+    ? Math.max(...relatorio.salesByHour.map((h) => h.count))
+    : 0;
+
+  const hourMap: Record<number, SalesByHour> = {};
+  if (relatorio) {
+    for (const entry of relatorio.salesByHour) {
+      hourMap[entry.hour] = entry;
+    }
+  }
 
   return (
     <div className="wp-stack-lg">
@@ -122,7 +187,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
       </div>
 
       {/* Cards de métricas */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
         {metricas.map((m) => (
           <div key={m.titulo} className="wp-panel" style={{ padding: "18px 20px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, color: "var(--text-muted)" }}>
@@ -208,6 +273,137 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Distribuição de pagamentos */}
+      <div className="wp-panel">
+        <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Distribuição de pagamentos</h2>
+
+        {!relatorio || relatorio.paymentDistribution.length === 0 ? (
+          <div className="wp-empty">
+            <p className="wp-empty-title">Sem dados no período</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {relatorio.paymentDistribution.map((item) => {
+              const pct = totalPagamentos > 0 ? (item.count / totalPagamentos) * 100 : 0;
+              const label = PAYMENT_LABEL[item.method] ?? item.method;
+              return (
+                <div key={item.method}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--carbon)" }}>
+                      {label}
+                    </span>
+                    <span style={{
+                      fontSize: 13,
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontWeight: 700,
+                      color: "var(--text-muted)",
+                    }}>
+                      {item.count}
+                    </span>
+                  </div>
+                  <div style={{
+                    height: 8,
+                    borderRadius: 4,
+                    background: "var(--border)",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: "var(--wp-green, #2D6A4F)",
+                      width: `${pct}%`,
+                      transition: "width 0.3s ease",
+                    }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>
+                    {pct.toFixed(1)}%
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Pico de vendas por hora */}
+      <div className="wp-panel">
+        <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Pico de vendas por hora</h2>
+
+        {!relatorio || relatorio.salesByHour.length === 0 ? (
+          <div className="wp-empty">
+            <p className="wp-empty-title">Sem dados</p>
+          </div>
+        ) : (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
+            gap: 8,
+          }}>
+            {Array.from({ length: 24 }, (_, hour) => {
+              const entry = hourMap[hour];
+              const count = entry?.count ?? 0;
+              const isMax = maxHourCount > 0 && count === maxHourCount && count > 0;
+              const barHeight = maxHourCount > 0 ? (count / maxHourCount) * 40 : 0;
+
+              return (
+                <div
+                  key={hour}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "8px 4px",
+                    borderRadius: 6,
+                    background: isMax ? "var(--wp-green, #2D6A4F)" : "transparent",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <div style={{
+                    height: 40,
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
+                  }}>
+                    {count > 0 && (
+                      <div style={{
+                        width: "60%",
+                        height: barHeight,
+                        borderRadius: 3,
+                        background: isMax ? "rgba(255,255,255,0.5)" : "var(--wp-green, #2D6A4F)",
+                        minHeight: 3,
+                      }} />
+                    )}
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: isMax ? "#fff" : "var(--text-muted)",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                  }}>
+                    {String(hour).padStart(2, "0")}h
+                  </span>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: isMax ? "#fff" : "var(--carbon)",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                  }}>
+                    {count > 0 ? count : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
