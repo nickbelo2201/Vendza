@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { useCarrinho } from "../context/CarrinhoContext";
 import { useTheme } from "../hooks/useTheme";
@@ -105,11 +105,14 @@ export function Header({ nomeLoja }: Props) {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [termoBusca, setTermoBusca] = useState(searchParams.get("busca") ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce de 300ms: atualiza a URL quando o usuário para de digitar
+  // Debounce de 300ms: atualiza a URL quando o usuário para de digitar.
+  // Só executa na home ("/") para não redirecionar outras páginas.
   useEffect(() => {
+    if (pathname !== "/") return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
@@ -126,7 +129,7 @@ export function Header({ nomeLoja }: Props) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [termoBusca]);
+  }, [termoBusca, pathname]);
 
   return (
     <>
