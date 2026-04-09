@@ -28,19 +28,47 @@ export async function salvarConfiguracoes(dados: {
 
 // ─── Aba Zonas de Entrega ─────────────────────────────────────────────────────
 
+type ZonaPayload = {
+  id?: string;
+  label: string;
+  feeCents: number;
+  etaMinutes: number;
+  mode: "radius" | "neighborhoods";
+  radiusKm?: number | null;
+  centerLat?: number | null;
+  centerLng?: number | null;
+  neighborhoods: string[];
+  minimumOrderCents: number;
+  freeShippingAboveCents: number;
+};
+
 export async function salvarZonasEntrega(
-  zonas: Array<{
-    id?: string;
-    label: string;
-    feeCents: number;
-    etaMinutes: number;
-    neighborhoods: string[];
-  }>
+  zonas: ZonaPayload[],
+  zonasRemovidas: string[]
 ) {
-  await fetchAPI("/partner/store/delivery-zones", {
-    method: "PATCH",
-    body: zonas,
-  });
+  // Deletar zonas removidas que tinham id
+  for (const id of zonasRemovidas) {
+    await fetchAPI(`/partner/configuracoes/zonas-entrega/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Criar ou atualizar zonas individualmente
+  for (const zona of zonas) {
+    const { id, ...body } = zona;
+    if (id) {
+      await fetchAPI(`/partner/configuracoes/zonas-entrega/${id}`, {
+        method: "PUT",
+        body,
+      });
+    } else {
+      await fetchAPI("/partner/configuracoes/zonas-entrega", {
+        method: "POST",
+        body,
+      });
+    }
+  }
+
   revalidatePath("/configuracoes");
 }
 

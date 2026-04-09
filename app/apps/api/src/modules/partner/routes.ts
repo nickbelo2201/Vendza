@@ -49,6 +49,13 @@ import {
   getHistoricoEstoque,
   registrarMovimentacao,
 } from "./estoque-service.js";
+import {
+  createDeliveryZone,
+  deleteDeliveryZone,
+  listDeliveryZones,
+  updateDeliveryZone,
+  type DeliveryZoneInput,
+} from "./delivery-zones-service.js";
 import { getPromocoes } from "./promocoes-service.js";
 import {
   getDeliveryZones,
@@ -165,6 +172,19 @@ const DeliveryZoneInputSchema = Type.Object({
 });
 const DeliveryZonesBodySchema = Type.Array(DeliveryZoneInputSchema);
 
+const DeliveryZoneBodySchema = Type.Object({
+  label: Type.String({ minLength: 1 }),
+  mode: Type.Union([Type.Literal("radius"), Type.Literal("neighborhoods")]),
+  radiusKm: Type.Optional(Type.Number({ minimum: 0 })),
+  neighborhoods: Type.Optional(Type.Array(Type.String())),
+  centerLat: Type.Optional(Type.Number()),
+  centerLng: Type.Optional(Type.Number()),
+  feeCents: Type.Integer({ minimum: 0 }),
+  etaMinutes: Type.Integer({ minimum: 1 }),
+  minimumOrderCents: Type.Optional(Type.Integer({ minimum: 0 })),
+  freeShippingAboveCents: Type.Optional(Type.Integer({ minimum: 0 })),
+});
+
 const LojaUpdateSchema = Type.Object({
   name: Type.Optional(Type.String({ minLength: 1 })),
   slug: Type.Optional(Type.String({ pattern: "^[a-z0-9-]+$" })),
@@ -206,6 +226,7 @@ type CustomerUpdateBody = Static<typeof CustomerUpdateSchema>;
 type StoreSettingsBody = Static<typeof StoreSettingsSchema>;
 type StoreHourBody = Static<typeof StoreHourSchema>;
 type DeliveryZoneInputBody = Static<typeof DeliveryZoneInputSchema>;
+type DeliveryZoneBody = Static<typeof DeliveryZoneBodySchema>;
 
 function partnerContext(request: FastifyRequest) {
   if (!request.partnerContext) {
@@ -706,6 +727,75 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request) => ok(await updateDeliveryZones(partnerContext(request), request.body)),
+  );
+
+  // ─── Zonas de Entrega (Grupo 3) ──────────────────────────────────────────────
+
+  app.get(
+    "/partner/configuracoes/zonas-entrega",
+    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    async (request) => ok(await listDeliveryZones(partnerContext(request))),
+  );
+
+  app.post<{ Body: DeliveryZoneBody }>(
+    "/partner/configuracoes/zonas-entrega",
+    {
+      schema: {
+        body: DeliveryZoneBodySchema,
+        response: { 201: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      reply.code(201);
+      const input: DeliveryZoneInput = {
+        label: request.body.label,
+        mode: request.body.mode,
+        radiusKm: request.body.radiusKm,
+        neighborhoods: request.body.neighborhoods,
+        centerLat: request.body.centerLat,
+        centerLng: request.body.centerLng,
+        feeCents: request.body.feeCents,
+        etaMinutes: request.body.etaMinutes,
+        minimumOrderCents: request.body.minimumOrderCents,
+        freeShippingAboveCents: request.body.freeShippingAboveCents,
+      };
+      return ok(await createDeliveryZone(partnerContext(request), input));
+    },
+  );
+
+  app.put<{ Params: { id: string }; Body: Partial<DeliveryZoneBody> }>(
+    "/partner/configuracoes/zonas-entrega/:id",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        body: Type.Partial(DeliveryZoneBodySchema),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const zona = await updateDeliveryZone(partnerContext(request), request.params.id, request.body as Partial<DeliveryZoneInput>);
+      if (!zona) {
+        return reply.code(404).send(ok({ message: "Zona de entrega nao encontrada." }));
+      }
+      return ok(zona);
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    "/partner/configuracoes/zonas-entrega/:id",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const zona = await deleteDeliveryZone(partnerContext(request), request.params.id);
+      if (!zona) {
+        return reply.code(404).send(ok({ message: "Zona de entrega nao encontrada." }));
+      }
+      return ok(zona);
+    },
   );
 
   // ─── Central de Promoções ────────────────────────────────────────────────────

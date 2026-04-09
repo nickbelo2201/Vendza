@@ -23,7 +23,13 @@ type Zona = {
   label: string;
   feeCents: number;
   etaMinutes: number;
+  mode: "radius" | "neighborhoods";
+  radiusKm?: number | null;
+  centerLat?: number | null;
+  centerLng?: number | null;
   neighborhoods: string[];
+  minimumOrderCents: number;
+  freeShippingAboveCents: number;
 };
 
 type HorarioDia = {

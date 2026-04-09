@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@vendza/utils";
 
 import { useCarrinho } from "../../context/CarrinhoContext";
@@ -10,6 +10,15 @@ import { useEnderecos, usePerfil, type Endereco } from "../../hooks/useEnderecos
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 type PaymentMethod = "pix" | "cash" | "card_on_delivery";
+
+type FreteInfo = {
+  zonaId: string;
+  label: string;
+  feeCents: number;
+  etaMinutes: number;
+  fora?: boolean;
+  motivo?: string;
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -41,6 +50,11 @@ export default function CheckoutPage() {
 
   const [pagamento, setPagamento] = useState<PaymentMethod>("pix");
 
+  // Estado de frete
+  const [freteInfo, setFreteInfo] = useState<FreteInfo | null>(null);
+  const [calculandoFrete, setCalculandoFrete] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Pré-preencher com dados do perfil ao montar
   useEffect(() => {
     if (perfil.nome) setNome(perfil.nome);
@@ -53,6 +67,57 @@ export default function CheckoutPage() {
       router.replace("/");
     }
   }, [items.length, router, pedidoCriado]);
+
+  // Debounce: recalcular frete quando bairro ou cep mudar
+  useEffect(() => {
+    if (!bairro && !cep) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      calcularFrete();
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bairro, cep]);
+
+  async function calcularFrete() {
+    if (!cep && !bairro) return;
+    setCalculandoFrete(true);
+    try {
+      const res = await fetch(`${API_URL}/v1/storefront/calcular-frete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cep: cep.replace(/\D/g, ""), bairro }),
+      });
+      const json = await res.json();
+      setFreteInfo(json.data);
+    } catch {
+      setFreteInfo(null);
+    } finally {
+      setCalculandoFrete(false);
+    }
+  }
+
+  function usarLocalizacao() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      setCalculandoFrete(true);
+      try {
+        const res = await fetch(`${API_URL}/v1/storefront/calcular-frete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        });
+        const json = await res.json();
+        setFreteInfo(json.data);
+      } catch {
+        setFreteInfo(null);
+      } finally {
+        setCalculandoFrete(false);
+      }
+    });
+  }
 
   function aplicarEndereco(end: Endereco) {
     setRua(end.logradouro);
@@ -69,6 +134,10 @@ export default function CheckoutPage() {
       if (end) aplicarEndereco(end);
     }
   }
+
+  const freteCents = freteInfo && !freteInfo.fora ? freteInfo.feeCents : 0;
+  const totalCents = subtotalCents + freteCents;
+  const foraDeArea = freteInfo?.fora === true;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,6 +158,8 @@ export default function CheckoutPage() {
           postalCode: cep || undefined,
         },
         payment: { method: pagamento },
+        deliveryZoneId: freteInfo?.zonaId,
+        freightCents: freteCents,
       };
 
       const res = await fetch(`${API_URL}/v1/orders`, {
@@ -246,6 +317,54 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Botão de geolocalização */}
+            <div>
+              <button
+                type="button"
+                onClick={usarLocalizacao}
+                className="wc-btn-outline"
+                style={{ fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                  <path d="M12 2A10 10 0 0 1 22 12" />
+                </svg>
+                Usar minha localização
+              </button>
+            </div>
+
+            {/* Indicador de cálculo de frete */}
+            {calculandoFrete && (
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                Calculando frete...
+              </div>
+            )}
+
+            {/* Aviso fora de área */}
+            {foraDeArea && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {freteInfo?.motivo ?? "Endereço fora da área de entrega"}
+              </div>
+            )}
+
             {/* Checkbox salvar endereço — só mostra se não está usando salvo */}
             {!enderecoSelecionado && enderecos.length < 3 && (
               <label
@@ -308,7 +427,7 @@ export default function CheckoutPage() {
         <button
           type="submit"
           className="wc-btn wc-btn-primary"
-          disabled={enviando}
+          disabled={enviando || foraDeArea}
           style={{ width: "100%" }}
         >
           {enviando ? "Enviando..." : "Finalizar pedido"}
@@ -331,13 +450,50 @@ export default function CheckoutPage() {
           </div>
         ))}
         <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: 0 }} />
-        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-          <span>Subtotal</span>
-          <span style={{ color: "var(--green)" }}>{formatCurrency(subtotalCents)}</span>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+          <span style={{ color: "var(--text-muted)" }}>Subtotal</span>
+          <span style={{ color: "var(--carbon)" }}>{formatCurrency(subtotalCents)}</span>
         </div>
-        <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
-          Frete calculado no processamento do pedido.
-        </p>
+
+        {/* Linha de frete */}
+        {calculandoFrete && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text-muted)" }}>
+            <span>Entrega</span>
+            <span>Calculando...</span>
+          </div>
+        )}
+        {!calculandoFrete && freteInfo && !freteInfo.fora && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+            <span style={{ color: "var(--text-muted)" }}>
+              Entrega
+              {freteInfo.etaMinutes > 0 && (
+                <span style={{ fontSize: 12, marginLeft: 6, color: "var(--text-muted)" }}>
+                  (~{freteInfo.etaMinutes} min)
+                </span>
+              )}
+            </span>
+            <span style={{ fontWeight: 600, color: freteInfo.feeCents === 0 ? "var(--green)" : "var(--carbon)" }}>
+              {freteInfo.feeCents === 0 ? "Grátis" : formatCurrency(freteInfo.feeCents)}
+            </span>
+          </div>
+        )}
+        {!calculandoFrete && freteInfo && freteInfo.fora && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#dc2626" }}>
+            <span>Entrega</span>
+            <span>Fora da área</span>
+          </div>
+        )}
+        {!calculandoFrete && !freteInfo && (
+          <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
+            Informe o bairro ou CEP para calcular o frete.
+          </p>
+        )}
+
+        <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: 0 }} />
+        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+          <span>Total</span>
+          <span style={{ color: "var(--green)" }}>{formatCurrency(totalCents)}</span>
+        </div>
       </aside>
     </div>
   );
