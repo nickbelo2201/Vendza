@@ -149,12 +149,12 @@ export function TopbarV2({ toggleLoja }: Props) {
         </Link>
 
         {/* Dúvidas */}
-        <button className="topbar-btn" type="button">
+        <Link href="/documentacao" className="topbar-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           Dúvidas
-        </button>
+        </Link>
 
         {/* Minha Conta */}
-        <Link href="/configuracoes" className="topbar-btn">
+        <Link href="/configuracoes" className="topbar-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           Minha Conta
         </Link>
 

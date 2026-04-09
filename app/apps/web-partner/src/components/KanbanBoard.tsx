@@ -28,15 +28,6 @@ export function KanbanBoard({ initialCols }: Props) {
       dragSource.current = { colLabel, itemId };
       setDraggingId(itemId);
       e.dataTransfer.effectAllowed = "move";
-      // Rotação sutil ao pegar o card
-      if (e.currentTarget instanceof HTMLElement) {
-        e.currentTarget.style.transform = "rotate(-2deg)";
-        setTimeout(() => {
-          if (e.currentTarget instanceof HTMLElement) {
-            e.currentTarget.style.transform = "";
-          }
-        }, 0);
-      }
     },
     []
   );
