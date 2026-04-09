@@ -154,13 +154,19 @@ export function TopbarV2({ toggleLoja }: Props) {
         </button>
 
         {/* Minha Conta */}
+        <Link href="/configuracoes" className="topbar-btn">
+          Minha Conta
+        </Link>
+
+        {/* Sair */}
         <button
           className="topbar-btn"
           type="button"
           onClick={handleLogout}
           disabled={carregandoLogout}
+          style={{ color: carregandoLogout ? "var(--text-muted)" : undefined }}
         >
-          {carregandoLogout ? "Saindo..." : "Minha Conta"}
+          {carregandoLogout ? "Saindo..." : "Sair"}
         </button>
 
         {/* Badge IA Ativa */}
