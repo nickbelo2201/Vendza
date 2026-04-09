@@ -86,6 +86,16 @@ function IconRefresh() {
   );
 }
 
+function IconEstoque() {
+  return (
+    <svg className="sidebar-v2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/>
+      <path d="M3 9l2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/>
+      <line x1="12" y1="3" x2="12" y2="9"/>
+    </svg>
+  );
+}
+
 /* ── Logo hexágono ── */
 function HexLogo() {
   return (
@@ -107,6 +117,7 @@ const operacao = [
   { href: "/",          label: "Visão Geral",       icon: <IconGrid /> },
   { href: "/pedidos",   label: "Pedidos",            icon: <IconBox /> },
   { href: "/catalogo",  label: "Produtos",           icon: <IconCube /> },
+  { href: "/estoque",   label: "Estoque",            icon: <IconEstoque /> },
   { href: "/clientes",  label: "Clientes",           icon: <IconPerson /> },
   { href: "/relatorios",label: "Relatórios",         icon: <IconBarChart /> },
 ];

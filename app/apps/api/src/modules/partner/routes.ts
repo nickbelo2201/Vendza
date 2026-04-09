@@ -35,6 +35,20 @@ import {
   listPartnerOrders,
   updatePartnerOrderStatus,
 } from "./orders-service.js";
+import {
+  convidarUsuario,
+  getContaBancaria,
+  getLoja,
+  listUsuarios,
+  revogarUsuario,
+  updateLoja,
+  upsertContaBancaria,
+} from "./configuracoes-service.js";
+import {
+  getEstoque,
+  getHistoricoEstoque,
+  registrarMovimentacao,
+} from "./estoque-service.js";
 import { getPromocoes } from "./promocoes-service.js";
 import {
   getDeliveryZones,
@@ -150,6 +164,35 @@ const DeliveryZoneInputSchema = Type.Object({
   radiusKm: Type.Number({ minimum: 0 }),
 });
 const DeliveryZonesBodySchema = Type.Array(DeliveryZoneInputSchema);
+
+const LojaUpdateSchema = Type.Object({
+  name: Type.Optional(Type.String({ minLength: 1 })),
+  slug: Type.Optional(Type.String({ pattern: "^[a-z0-9-]+$" })),
+  whatsappPhone: Type.Optional(Type.String()),
+  status: Type.Optional(Type.Union([Type.Literal("open"), Type.Literal("closed"), Type.Literal("paused")])),
+  minimumOrderValueCents: Type.Optional(Type.Integer({ minimum: 0 })),
+});
+
+const ContaBancariaUpdateSchema = Type.Object({
+  keyType: Type.Union([
+    Type.Literal("cpf"),
+    Type.Literal("cnpj"),
+    Type.Literal("telefone"),
+    Type.Literal("email"),
+    Type.Literal("aleatoria"),
+  ]),
+  pixKey: Type.String({ minLength: 1 }),
+  bankName: Type.Optional(Type.String()),
+});
+
+const ConviteSchema = Type.Object({
+  email: Type.String({ format: "email" }),
+  role: Type.Union([Type.Literal("manager"), Type.Literal("operator")]),
+});
+
+type LojaUpdateBody = Static<typeof LojaUpdateSchema>;
+type ContaBancariaUpdateBody = Static<typeof ContaBancariaUpdateSchema>;
+type ConviteBody = Static<typeof ConviteSchema>;
 
 type OrderFilters = Static<typeof OrderFiltersSchema>;
 type StatusUpdateBody = Static<typeof StatusUpdateSchema>;
@@ -446,6 +489,74 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // ─── Gestão de Estoque (Grupo 1) ─────────────────────────────────────────────
+
+  app.get(
+    "/partner/estoque",
+    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    async (request) => ok(await getEstoque(partnerContext(request))),
+  );
+
+  app.post<{
+    Body: {
+      productId: string;
+      tipo: string;
+      quantidade: number;
+      motivo: string;
+      dataHora?: string;
+    };
+  }>(
+    "/partner/estoque/movimentacao",
+    {
+      schema: {
+        body: Type.Object({
+          productId: Type.String(),
+          tipo: Type.String(),
+          quantidade: Type.Integer(),
+          motivo: Type.String({ minLength: 1 }),
+          dataHora: Type.Optional(Type.String()),
+        }),
+        response: { 201: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const resultado = await registrarMovimentacao(partnerContext(request), request.body);
+      if (!resultado) {
+        return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+      }
+      reply.code(201);
+      return ok(resultado);
+    },
+  );
+
+  app.get<{ Params: { productId: string }; Querystring: { page?: number; pageSize?: number } }>(
+    "/partner/estoque/:productId/historico",
+    {
+      schema: {
+        params: Type.Object({ productId: Type.String() }),
+        querystring: Type.Object({
+          page: Type.Optional(Type.Integer({ minimum: 1 })),
+          pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+        }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const { productId } = request.params;
+      const { page, pageSize } = request.query;
+      const historico = await getHistoricoEstoque(
+        partnerContext(request),
+        productId,
+        page ?? 1,
+        pageSize ?? 20,
+      );
+      if (!historico) {
+        return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+      }
+      return ok(historico);
+    },
+  );
+
   app.get("/partner/customers", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async (request) =>
     ok(await listCustomers(partnerContext(request))),
   );
@@ -603,5 +714,91 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     "/partner/promocoes",
     { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
     async (request) => ok(await getPromocoes(partnerContext(request).storeId)),
+  );
+
+  // ─── Configurações da Conta ───────────────────────────────────────────────────
+
+  app.get(
+    "/partner/configuracoes/loja",
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await getLoja(partnerContext(request))),
+  );
+
+  app.put<{ Body: LojaUpdateBody }>(
+    "/partner/configuracoes/loja",
+    {
+      schema: {
+        body: LojaUpdateSchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) => ok(await updateLoja(partnerContext(request), request.body)),
+  );
+
+  app.get(
+    "/partner/configuracoes/horarios",
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await getStoreHours(partnerContext(request))),
+  );
+
+  app.put<{ Body: StoreHourBody[] }>(
+    "/partner/configuracoes/horarios",
+    { schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await updateStoreHours(partnerContext(request), request.body)),
+  );
+
+  app.get(
+    "/partner/configuracoes/conta-bancaria",
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => ok(await getContaBancaria(partnerContext(request))),
+  );
+
+  app.put<{ Body: ContaBancariaUpdateBody }>(
+    "/partner/configuracoes/conta-bancaria",
+    {
+      schema: {
+        body: ContaBancariaUpdateSchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) => ok(await upsertContaBancaria(partnerContext(request), request.body)),
+  );
+
+  app.get(
+    "/partner/configuracoes/usuarios",
+    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    async (request) => ok(await listUsuarios(partnerContext(request))),
+  );
+
+  app.post<{ Body: ConviteBody }>(
+    "/partner/configuracoes/usuarios/convidar",
+    {
+      schema: {
+        body: ConviteSchema,
+        response: { 201: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const dados = await convidarUsuario(partnerContext(request), request.body);
+      reply.code(201);
+      return ok(dados, { stub: true });
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    "/partner/configuracoes/usuarios/:id",
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const resultado = await revogarUsuario(partnerContext(request), request.params.id);
+      if (!resultado) {
+        return reply.code(400).send(ok({ message: "Nao foi possivel revogar o usuario." }));
+      }
+      return ok(resultado);
+    },
   );
 };

@@ -1,11 +1,21 @@
+import Link from "next/link";
+
 import { ApiError, fetchAPI } from "../../../lib/api";
+import { DadosBancarios } from "./DadosBancarios";
 import { FormConfiguracoes } from "./FormConfiguracoes";
-import { ZonasEntrega } from "./ZonasEntrega";
 import { HorariosForm } from "./HorariosForm";
+import { UsuariosConfig } from "./UsuariosConfig";
+import { ZonasEntrega } from "./ZonasEntrega";
+
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type StoreSettings = {
-  id: string; name: string; slug: string;
-  whatsappPhone: string; status: string; minimumOrderValueCents: number;
+  id: string;
+  name: string;
+  slug: string;
+  whatsappPhone: string;
+  status: string;
+  minimumOrderValueCents: number;
 };
 
 type Zona = {
@@ -23,70 +33,216 @@ type HorarioDia = {
   isClosed: boolean;
 };
 
+type ContaBancaria = {
+  keyType: string;
+  lastFourDigits: string | null;
+  bankName: string | null;
+};
+
+type UsuarioStore = {
+  id: string;
+  userId: string;
+  role: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+};
+
+type SessaoAtual = {
+  userId: string;
+};
+
+// ─── Data fetchers ────────────────────────────────────────────────────────────
+
 async function getSettings(): Promise<StoreSettings | null> {
-  try { return await fetchAPI<StoreSettings>("/partner/store/settings"); }
-  catch (err) { if (err instanceof ApiError) return null; return null; }
+  try {
+    return await fetchAPI<StoreSettings>("/partner/store/settings");
+  } catch (err) {
+    if (err instanceof ApiError) return null;
+    return null;
+  }
 }
 
 async function getZonas(): Promise<Zona[]> {
-  try { return await fetchAPI<Zona[]>("/partner/store/delivery-zones"); }
-  catch { return []; }
+  try {
+    return await fetchAPI<Zona[]>("/partner/store/delivery-zones");
+  } catch {
+    return [];
+  }
 }
 
 async function getHorarios(): Promise<HorarioDia[]> {
-  try { return await fetchAPI<HorarioDia[]>("/partner/store/hours"); }
-  catch { return []; }
+  try {
+    return await fetchAPI<HorarioDia[]>("/partner/store/hours");
+  } catch {
+    return [];
+  }
 }
 
-export default async function SettingsPage() {
-  const [s, zonas, horarios] = await Promise.all([getSettings(), getZonas(), getHorarios()]);
+async function getContaBancaria(): Promise<ContaBancaria | null> {
+  try {
+    return await fetchAPI<ContaBancaria>("/partner/configuracoes/conta-bancaria");
+  } catch {
+    return null;
+  }
+}
+
+async function getUsuarios(): Promise<UsuarioStore[]> {
+  try {
+    return await fetchAPI<UsuarioStore[]>("/partner/configuracoes/usuarios");
+  } catch {
+    return [];
+  }
+}
+
+async function getSessaoAtual(): Promise<SessaoAtual | null> {
+  try {
+    return await fetchAPI<SessaoAtual>("/partner/me");
+  } catch {
+    return null;
+  }
+}
+
+// ─── Abas ─────────────────────────────────────────────────────────────────────
+
+const ABAS = [
+  { id: "loja", label: "Loja" },
+  { id: "horarios", label: "Horários" },
+  { id: "dados-bancarios", label: "Dados Bancários" },
+  { id: "usuarios", label: "Usuários" },
+] as const;
+
+type AbaId = (typeof ABAS)[number]["id"];
+
+function isAbaValida(v: string | undefined): v is AbaId {
+  return ABAS.some((a) => a.id === v);
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ aba?: string }>;
+}) {
+  const params = await searchParams;
+  const abaAtiva: AbaId = isAbaValida(params.aba) ? params.aba : "loja";
+
+  // Carrega dados de acordo com a aba ativa para evitar fetches desnecessários
+  const [s, zonas, horarios, conta, usuarios, sessao] = await Promise.all([
+    abaAtiva === "loja" ? getSettings() : null,
+    abaAtiva === "loja" ? getZonas() : null,
+    abaAtiva === "horarios" ? getHorarios() : null,
+    abaAtiva === "dados-bancarios" ? getContaBancaria() : null,
+    abaAtiva === "usuarios" ? getUsuarios() : null,
+    abaAtiva === "usuarios" ? getSessaoAtual() : null,
+  ]);
 
   return (
-    <div className="wp-stack-lg">
-      <div className="wp-page-header">
-        <h1>Configurações</h1>
-        <p>Nome, WhatsApp, pedido mínimo e parâmetros operacionais.</p>
-      </div>
+    <>
+      <style>{`
+        .conf-tabs {
+          display: flex;
+          gap: 4px;
+          border-bottom: 2px solid var(--border);
+          margin-bottom: 28px;
+        }
+        .conf-tab-btn {
+          background: none;
+          border: none;
+          padding: 10px 18px;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--text-muted);
+          cursor: pointer;
+          border-radius: 8px 8px 0 0;
+          text-decoration: none;
+          display: inline-block;
+          transition: color 0.15s, background 0.15s;
+          position: relative;
+          bottom: -2px;
+          border-bottom: 2px solid transparent;
+        }
+        .conf-tab-btn:hover {
+          color: var(--carbon);
+          background: var(--cream);
+        }
+        .conf-tab-btn[data-active="true"] {
+          color: var(--green);
+          font-weight: 600;
+          border-bottom: 2px solid var(--green);
+          background: none;
+        }
+      `}</style>
 
-      {!s ? (
-        <div className="wp-note">Não foi possível carregar configurações. Verifique a conexão com a API.</div>
-      ) : (
-        <div className="wp-grid">
-          <div className="wp-panel wp-span-8">
-            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Dados da loja</h2>
-            <FormConfiguracoes
-              settings={{ name: s.name, whatsappPhone: s.whatsappPhone ?? "", minimumOrderValueCents: s.minimumOrderValueCents }}
-            />
-          </div>
-
-          <div className="wp-span-4 wp-stack">
-            <div className="wp-panel">
-              <p className="wp-card-title">Identificação</p>
-              <div className="wp-stack-sm">
-                <div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Slug</div>
-                  <div style={{ fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", marginTop: 2 }}>{s.slug}</div>
-                </div>
-                <div className="wp-divider" />
-                <div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Status</div>
-                  <div style={{ marginTop: 4 }}>
-                    <span className={`wp-badge ${s.status === "open" ? "wp-badge-green" : "wp-badge-amber"}`}>
-                      {s.status === "open" ? "Aberta" : s.status === "closed" ? "Fechada" : s.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="wp-stack-lg">
+        <div className="wp-page-header">
+          <h1>Configurações</h1>
+          <p>Gerencie os dados, horários, conta bancária e usuários da loja.</p>
         </div>
-      )}
 
-      {/* Zonas de entrega */}
-      <ZonasEntrega zonas={zonas} />
+        {/* Navegação de abas */}
+        <nav className="conf-tabs" aria-label="Seções de configurações">
+          {ABAS.map((aba) => (
+            <Link
+              key={aba.id}
+              href={`/configuracoes?aba=${aba.id}`}
+              className="conf-tab-btn"
+              data-active={abaAtiva === aba.id ? "true" : "false"}
+            >
+              {aba.label}
+            </Link>
+          ))}
+        </nav>
 
-      {/* Horários de funcionamento */}
-      <HorariosForm initialHours={horarios.length > 0 ? horarios : null} />
-    </div>
+        {/* ─── Aba Loja ─── */}
+        {abaAtiva === "loja" && (
+          <>
+            {!s ? (
+              <div className="wp-note">
+                Não foi possível carregar as configurações. Verifique a conexão com a API.
+              </div>
+            ) : (
+              <div className="wp-stack-lg">
+                <div className="wp-panel">
+                  <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
+                    Dados da loja
+                  </h2>
+                  <FormConfiguracoes
+                    settings={{
+                      name: s.name,
+                      slug: s.slug,
+                      whatsappPhone: s.whatsappPhone ?? "",
+                      status: s.status,
+                      minimumOrderValueCents: s.minimumOrderValueCents,
+                    }}
+                  />
+                </div>
+
+                <ZonasEntrega zonas={zonas ?? []} />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ─── Aba Horários ─── */}
+        {abaAtiva === "horarios" && (
+          <HorariosForm initialHours={horarios && horarios.length > 0 ? horarios : null} />
+        )}
+
+        {/* ─── Aba Dados Bancários ─── */}
+        {abaAtiva === "dados-bancarios" && <DadosBancarios conta={conta ?? null} />}
+
+        {/* ─── Aba Usuários ─── */}
+        {abaAtiva === "usuarios" && (
+          <UsuariosConfig
+            usuarios={usuarios ?? []}
+            currentUserId={sessao?.userId ?? ""}
+          />
+        )}
+      </div>
+    </>
   );
 }

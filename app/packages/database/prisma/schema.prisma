@@ -91,6 +91,7 @@ model Store {
   tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   users              StoreUser[]
   hours              StoreHour[]
+  bankAccount        StoreBankAccount?
   deliveryZones      DeliveryZone[]
   customers          Customer[]
   categories         Category[]
@@ -136,6 +137,21 @@ model StoreHour {
 
   @@unique([storeId, weekday])
   @@map("store_hours")
+}
+
+model StoreBankAccount {
+  id              String   @id @default(uuid()) @db.Uuid
+  storeId         String   @unique @map("store_id") @db.Uuid
+  keyType         String   @map("key_type")
+  encryptedKey    String   @map("encrypted_key")
+  lastFourDigits  String   @map("last_four_digits")
+  bankName        String?  @map("bank_name")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  updatedByUserId String?  @map("updated_by_user_id") @db.Uuid
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("store_bank_accounts")
 }
 
 model DeliveryZone {
