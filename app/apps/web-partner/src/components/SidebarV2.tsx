@@ -105,19 +105,11 @@ function IconSettings() {
   );
 }
 
-/* ── Logo hexágono ── */
-function HexLogo() {
+/* ── Logo oficial ── */
+function Logo() {
   return (
-    <svg className="sidebar-v2-logo-hex" viewBox="0 0 28 28" fill="none">
-      <path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5Z" fill="#2D5A3D"/>
-      <path
-        d="M9 19L12 9L14 15L16 9L19 19"
-        stroke="#ffffff"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/logo-white.png" alt="Vendza" style={{ height: 36, width: "auto", objectFit: "contain" }} />
   );
 }
 
@@ -150,8 +142,7 @@ export function SidebarV2() {
     <div className="sidebar-v2">
       {/* Logo */}
       <div className="sidebar-v2-logo">
-        <HexLogo />
-        <span className="sidebar-v2-logo-text">Vendza</span>
+        <Logo />
       </div>
 
       {/* Grupo Operação */}

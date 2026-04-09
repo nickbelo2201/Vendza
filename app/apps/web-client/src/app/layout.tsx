@@ -13,6 +13,15 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Vendza",
   description: "Compre online com facilidade.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "Vendza",
+    description: "Compre online com facilidade.",
+    images: [{ url: "/logo.png", width: 512, height: 512 }],
+  },
 };
 
 type StorefrontConfig = {
