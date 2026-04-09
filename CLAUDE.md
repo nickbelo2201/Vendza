@@ -181,16 +181,22 @@ All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 
 | Serviço | URL | Branch | Plataforma |
 |---|---|---|---|
-| API | `https://vendza-production.up.railway.app` | `master` | Railway |
+| API | `https://vendza-production.up.railway.app` | `main` | Railway |
 | web-partner | `https://web-partner-three.vercel.app` | `main` | Vercel |
 
 **Workflow de push:**
 ```bash
-git push origin master          # Railway (API) — automático
-git push origin master:main     # Vercel (frontends) — quando pronto para publicar
+git push origin main    # deploya Railway + Vercel automaticamente
 ```
 
-**Nunca trabalhe diretamente no `main`.** O `main` é somente destino de push do `master`.
+**`main` é o único branch permanente.** Todo desenvolvimento acontece direto nele.
+
+**Para testar mudanças sem afetar produção**, use feature branches:
+```bash
+git checkout -b feat/minha-mudanca
+git push origin feat/minha-mudanca
+# Vercel gera preview URL automática para essa branch
+```
 
 **Antes de fazer push para `main`:**
 1. `corepack pnpm typecheck` — deve passar com 0 erros
