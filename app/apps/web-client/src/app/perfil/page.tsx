@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEnderecos, usePerfil, type Endereco } from "../../hooks/useEnderecos";
 
 const LABELS_ENDERECO = ["Casa", "Trabalho", "Outro"] as const;
@@ -210,6 +210,12 @@ export default function PerfilPage() {
   const { perfil, salvarPerfil } = usePerfil();
   const [adicionandoEndereco, setAdicionandoEndereco] = useState(false);
   const [perfilSalvo, setPerfilSalvo] = useState(false);
+  const [carregando, setCarregando] = useState(true);
+
+  // Aguarda montagem no cliente para evitar mismatch de hidratação SSR
+  useEffect(() => {
+    setCarregando(false);
+  }, []);
 
   const [nome, setNome] = useState(perfil.nome);
   const [telefone, setTelefone] = useState(perfil.telefone);
@@ -220,6 +226,11 @@ export default function PerfilPage() {
     salvarPerfil({ nome, telefone, email });
     setPerfilSalvo(true);
     setTimeout(() => setPerfilSalvo(false), 2500);
+  }
+
+  // Aguarda hidratação do localStorage antes de renderizar
+  if (carregando) {
+    return null;
   }
 
   return (

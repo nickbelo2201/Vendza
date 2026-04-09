@@ -164,28 +164,6 @@ export function Header({ nomeLoja }: Props) {
             </div>
           </button>
 
-          {/* Seletor de endereço */}
-          <button className="wc-address-pill" aria-label="Selecionar endereço de entrega">
-            <div>
-              <span className="wc-address-label">Receber em</span>
-              <span className="wc-address-value">São Paulo, SP</span>
-            </div>
-            <span>›</span>
-          </button>
-
-          {/* Link minha conta */}
-          <a
-            href="/minha-conta"
-            style={{
-              fontSize: 13,
-              color: "var(--text-muted)",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Minha conta
-          </a>
-
           {/* Avatar — link para perfil */}
           <a href="/perfil" className="wc-avatar" title="Minha conta" aria-label="Minha conta">
             V

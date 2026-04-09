@@ -198,6 +198,11 @@ export default function CheckoutPage() {
     }
   }
 
+  // Aguarda a hidratação do localStorage antes de renderizar qualquer coisa
+  if (carrinhoCarregando) {
+    return null;
+  }
+
   if (items.length === 0) {
     return <p style={{ textAlign: "center", padding: "64px 0", color: "var(--text-muted)" }}>Redirecionando...</p>;
   }
