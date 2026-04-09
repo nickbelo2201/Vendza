@@ -18,6 +18,7 @@ type CarrinhoContextType = {
   items: CarrinhoItem[];
   totalItens: number;
   subtotalCents: number;
+  carregando: boolean;
   adicionarItem: (item: Omit<CarrinhoItem, "id" | "quantity"> & { quantity?: number }) => void;
   removerItem: (productId: string) => void;
   atualizarQuantidade: (productId: string, quantity: number) => void;
@@ -38,6 +39,12 @@ function carregarDoLocalStorage(): CarrinhoItem[] {
 
 export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CarrinhoItem[]>(() => carregarDoLocalStorage());
+  // Impede redirect prematuro no SSR: só false após montar no cliente
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    setCarregando(false);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -94,6 +101,7 @@ export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
         items,
         totalItens,
         subtotalCents,
+        carregando,
         adicionarItem,
         removerItem,
         atualizarQuantidade,

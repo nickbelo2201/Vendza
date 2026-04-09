@@ -22,7 +22,7 @@ type FreteInfo = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotalCents, limparCarrinho } = useCarrinho();
+  const { items, subtotalCents, limparCarrinho, carregando: carrinhoCarregando } = useCarrinho();
   const { enderecos, salvar: salvarEndereco } = useEnderecos();
   const { perfil } = usePerfil();
 
@@ -63,10 +63,11 @@ export default function CheckoutPage() {
   }, [perfil.nome, perfil.telefone, perfil.email]);
 
   useEffect(() => {
+    if (carrinhoCarregando) return; // aguardar hidratação do localStorage
     if (items.length === 0 && !pedidoCriado) {
       router.replace("/");
     }
-  }, [items.length, router, pedidoCriado]);
+  }, [carrinhoCarregando, items.length, router, pedidoCriado]);
 
   // Debounce: recalcular frete quando bairro ou cep mudar
   useEffect(() => {
