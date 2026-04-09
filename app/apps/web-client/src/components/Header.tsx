@@ -140,7 +140,6 @@ export function Header({ nomeLoja }: Props) {
             src="/logo.png"
             alt={nomeLoja}
             className="wc-logo-img"
-            style={theme === "dark" ? { filter: "brightness(0) invert(1)" } : undefined}
           />
         </a>
 

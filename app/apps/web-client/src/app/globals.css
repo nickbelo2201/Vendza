@@ -200,9 +200,11 @@ select {
   object-fit: contain;
 }
 
-/* Dark mode: logo branca — padrão de mercado para fundos escuros */
-[data-theme="dark"] .wc-logo-img {
-  filter: brightness(0) invert(1);
+/* Dark mode: pill branco para exibir logo colorida sobre fundo escuro */
+[data-theme="dark"] .wc-logo {
+  background: #ffffff;
+  padding: 4px 10px;
+  border-radius: 8px;
 }
 
 .wc-search-wrapper {
