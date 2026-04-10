@@ -200,9 +200,9 @@ select {
   object-fit: contain;
 }
 
-/* Dark mode: troca para variante branca via CSS */
+/* Dark mode: inverte cores para exibir logo branca com nome */
 [data-theme="dark"] .wc-logo-img {
-  content: url('/logo-white.png');
+  filter: brightness(0) invert(1);
 }
 
 .wc-search-wrapper {
