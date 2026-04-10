@@ -112,6 +112,9 @@ type ProductUpsertInput = {
   categoryId?: string;
   listPriceCents: number;
   salePriceCents?: number;
+  imageUrl?: string | null;
+  isAvailable?: boolean;
+  isFeatured?: boolean;
 };
 
 type ProductPatchInput = Partial<ProductUpsertInput>;
@@ -217,11 +220,11 @@ export async function createPartnerProduct(context: PartnerContext, input: Produ
         name: input.name,
         slug: input.slug,
         description: "",
-        imageUrl: null,
+        imageUrl: input.imageUrl ?? null,
         listPriceCents: input.listPriceCents,
         salePriceCents: input.salePriceCents ?? input.listPriceCents,
-        isAvailable: true,
-        isFeatured: false,
+        isAvailable: input.isAvailable ?? true,
+        isFeatured: input.isFeatured ?? false,
       },
       include: {
         category: {
@@ -263,6 +266,9 @@ export async function updatePartnerProduct(context: PartnerContext, id: string, 
       ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
       ...(input.listPriceCents !== undefined ? { listPriceCents: input.listPriceCents } : {}),
       ...(input.salePriceCents !== undefined ? { salePriceCents: input.salePriceCents } : {}),
+      ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
+      ...(input.isAvailable !== undefined ? { isAvailable: input.isAvailable } : {}),
+      ...(input.isFeatured !== undefined ? { isFeatured: input.isFeatured } : {}),
     },
     include: {
       category: {

@@ -298,7 +298,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/*"
                     style={{ display: "none" }}
                     onChange={handleFileUpload}
                   />

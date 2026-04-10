@@ -18,6 +18,9 @@ export async function criarProduto(body: {
   categoryId?: string;
   listPriceCents: number;
   salePriceCents?: number | null;
+  imageUrl?: string | null;
+  isAvailable?: boolean;
+  isFeatured?: boolean;
 }) {
   await fetchAPI("/partner/products", {
     method: "POST",
@@ -32,6 +35,9 @@ export async function editarProduto(id: string, body: {
   categoryId?: string;
   listPriceCents?: number;
   salePriceCents?: number | null;
+  imageUrl?: string | null;
+  isAvailable?: boolean;
+  isFeatured?: boolean;
 }) {
   await fetchAPI(`/partner/products/${id}`, {
     method: "PATCH",

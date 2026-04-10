@@ -119,6 +119,9 @@ const ProductUpsertSchema = Type.Object({
   categoryId: Type.Optional(Type.String()),
   listPriceCents: Type.Integer({ minimum: 0 }),
   salePriceCents: Type.Optional(Type.Integer({ minimum: 0 })),
+  imageUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  isAvailable: Type.Optional(Type.Boolean()),
+  isFeatured: Type.Optional(Type.Boolean()),
 });
 
 const AvailabilitySchema = Type.Object({
