@@ -137,7 +137,7 @@ export function Header({ nomeLoja }: Props) {
         <a href="/" className="wc-logo" aria-label={nomeLoja}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/logo-nobg.png"
             alt={nomeLoja}
             className="wc-logo-img"
           />

@@ -200,11 +200,9 @@ select {
   object-fit: contain;
 }
 
-/* Dark mode: pill branco para exibir logo colorida sobre fundo escuro */
-[data-theme="dark"] .wc-logo {
-  background: #ffffff;
-  padding: 4px 10px;
-  border-radius: 8px;
+/* Dark mode: troca para variante branca via CSS */
+[data-theme="dark"] .wc-logo-img {
+  content: url('/logo-white.png');
 }
 
 .wc-search-wrapper {
