@@ -198,11 +198,19 @@ select {
   height: 36px;
   width: auto;
   object-fit: contain;
+  /* Remove fundo branco no light mode (header branco × branco = invisível) */
+  mix-blend-mode: multiply;
 }
 
-/* Dark mode: inverte cores para exibir logo branca com nome */
+/* Dark mode: pill branco compacto — não há variante dark da logo disponível */
+[data-theme="dark"] .wc-logo {
+  background: #FFFFFF;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
 [data-theme="dark"] .wc-logo-img {
-  filter: brightness(0) invert(1);
+  mix-blend-mode: normal;
 }
 
 .wc-search-wrapper {
