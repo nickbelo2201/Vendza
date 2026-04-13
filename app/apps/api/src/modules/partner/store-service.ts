@@ -35,12 +35,12 @@ function mapStoreSettings(store: {
 }) {
   return {
     id: store.id,
-    slug: store.slug,
-    name: store.name,
-    whatsappPhone: store.whatsappPhone,
-    status: store.status,
-    timezone: store.timezone,
-    minimumOrderValueCents: store.minimumOrderValueCents,
+    slug: store.slug ?? "",
+    name: store.name ?? "",
+    whatsappPhone: store.whatsappPhone ?? "",
+    status: store.status ?? "open",
+    timezone: store.timezone ?? "America/Sao_Paulo",
+    minimumOrderValueCents: store.minimumOrderValueCents ?? 0,
     paymentMethods: ["pix", "cash", "card_online", "card_on_delivery"],
     designGate: true,
   };
