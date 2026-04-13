@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 import { moverCardKanban } from "../app/(dashboard)/kanban-actions";
+import { PedidoDrawerKanban } from "./PedidoDrawerKanban";
 
 // Mapeamento coluna kanban → status da API
 const COL_STATUS: Record<string, string> = {
@@ -46,12 +47,15 @@ function IconWarning() {
   );
 }
 
+type SelectedItem = { id: string; orderId: string; colLabel: string } | null;
+
 export function KanbanBoard({ initialCols }: Props) {
   const [cols, setCols] = useState<KanbanCol[]>(initialCols);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overColLabel, setOverColLabel] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
 
   const dragSource = useRef<{ colLabel: string; itemId: string } | null>(null);
   // Ref sempre atualizada com o estado atual — evita stale closure no handler async
@@ -93,6 +97,46 @@ export function KanbanBoard({ initialCols }: Props) {
       setOverColLabel(null);
     }
   }, []);
+
+  const handleCardClick = useCallback((item: KanbanItem, colLabel: string) => {
+    setSelectedItem({ id: item.id, orderId: item.orderId, colLabel });
+  }, []);
+
+  const handleDrawerClose = useCallback(() => {
+    setSelectedItem(null);
+  }, []);
+
+  const handleStatusAvancado = useCallback((novoStatus: string, novaColLabel: string) => {
+    if (!selectedItem) return;
+    const { id: itemId } = selectedItem;
+    setCols((prev) => {
+      const next = prev.map((col) => ({ ...col, items: [...col.items] }));
+      // Remove o item da coluna atual
+      let movedItem: KanbanItem | undefined;
+      for (const col of next) {
+        const idx = col.items.findIndex((i) => i.id === itemId);
+        if (idx !== -1) {
+          [movedItem] = col.items.splice(idx, 1) as [KanbanItem];
+          break;
+        }
+      }
+      if (!movedItem) return prev;
+      // Insere na nova coluna
+      const dst = next.find((c) => c.label === novaColLabel);
+      if (!dst) return prev;
+      dst.items.push(movedItem);
+      return next;
+    });
+    setSelectedItem((prev) => prev ? { ...prev, colLabel: novaColLabel } : null);
+  }, [selectedItem]);
+
+  const handleCancelado = useCallback(() => {
+    if (!selectedItem) return;
+    const { id: itemId } = selectedItem;
+    setCols((prev) =>
+      prev.map((col) => ({ ...col, items: col.items.filter((i) => i.id !== itemId) }))
+    );
+  }, [selectedItem]);
 
   const handleDrop = useCallback(async (e: React.DragEvent, targetColLabel: string) => {
     e.preventDefault();
@@ -162,13 +206,14 @@ export function KanbanBoard({ initialCols }: Props) {
                   return (
                     <div
                       key={item.id}
-                      className={`kanban-item${isDragging ? " kanban-item--dragging" : ""}`}
+                      className={`kanban-item kanban-item--clickable${isDragging ? " kanban-item--dragging" : ""}`}
                       draggable={!isLoading}
                       onDragStart={(e) => handleDragStart(e, col.label, item.id)}
                       onDragEnd={handleDragEnd}
+                      onClick={() => !isLoading && !isDragging && handleCardClick(item, col.label)}
                       style={{
                         opacity: isLoading ? 0.5 : isDragging ? 0.6 : 1,
-                        cursor: isLoading ? "wait" : "grab",
+                        cursor: isLoading ? "wait" : "pointer",
                         transition: "opacity 0.15s",
                       }}
                     >
@@ -244,7 +289,22 @@ export function KanbanBoard({ initialCols }: Props) {
         </div>
       )}
 
-      <style>{`@keyframes kanban-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes kanban-spin { to { transform: rotate(360deg); } }
+        .kanban-item--clickable:hover {
+          border-color: var(--g) !important;
+          box-shadow: 0 2px 8px rgba(45,106,79,.15);
+        }
+      `}</style>
+
+      {/* Drawer de resumo do pedido */}
+      <PedidoDrawerKanban
+        orderId={selectedItem?.orderId ?? null}
+        colLabel={selectedItem?.colLabel ?? null}
+        onClose={handleDrawerClose}
+        onStatusAvancado={handleStatusAvancado}
+        onCancelado={handleCancelado}
+      />
     </div>
   );
 }
