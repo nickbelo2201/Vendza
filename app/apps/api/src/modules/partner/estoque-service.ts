@@ -8,7 +8,7 @@ type MovimentacaoInput = {
   productId: string;
   tipo: string;
   quantidade: number;
-  motivo: string;
+  motivo?: string;
   dataHora?: string;
 };
 
@@ -147,7 +147,7 @@ export async function registrarMovimentacao(context: PartnerContext, input: Movi
         storeId: context.storeId,
         type: tipoMapeado,
         quantityDelta: input.quantidade,
-        reason: input.motivo,
+        reason: input.motivo ?? "",
         createdByUserId: context.storeUserId,
         ...(input.dataHora ? { createdAt: new Date(input.dataHora) } : {}),
       },

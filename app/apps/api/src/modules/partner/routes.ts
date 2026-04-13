@@ -526,7 +526,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       productId: string;
       tipo: string;
       quantidade: number;
-      motivo: string;
+      motivo?: string;
       dataHora?: string;
     };
   }>(
@@ -537,7 +537,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
           productId: Type.String(),
           tipo: Type.String(),
           quantidade: Type.Integer(),
-          motivo: Type.String({ minLength: 1 }),
+          motivo: Type.Optional(Type.String()),
           dataHora: Type.Optional(Type.String()),
         }),
         response: { 201: envelopeSchema(Type.Any()) },
@@ -892,6 +892,43 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         return reply.code(400).send(ok({ message: "Nao foi possivel revogar o usuario." }));
       }
       return ok(resultado);
+    },
+  );
+
+  // ── Upload de imagem (signed URL) ────────────────────────────────────────────
+  app.post<{ Body: { ext: string; productId?: string } }>(
+    "/partner/upload/signed-url",
+    {
+      schema: {
+        body: Type.Object({
+          ext: Type.String(),
+          productId: Type.Optional(Type.String()),
+        }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      const { ext, productId } = request.body;
+      const identificador = productId ?? `temp_${Date.now()}`;
+      const path = `${identificador}.${ext.replace(/^\./, "")}`;
+
+      const { data, error } = await app.supabaseAdmin.storage
+        .from("product-images")
+        .createSignedUploadUrl(path);
+
+      if (error || !data) {
+        return reply.code(500).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "UPLOAD_ERROR", message: error?.message ?? "Erro ao gerar URL de upload." },
+        });
+      }
+
+      const { data: { publicUrl } } = app.supabaseAdmin.storage
+        .from("product-images")
+        .getPublicUrl(path);
+
+      return ok({ signedUrl: data.signedUrl, token: data.token, path, publicUrl });
     },
   );
 };

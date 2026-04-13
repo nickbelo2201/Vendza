@@ -7,6 +7,56 @@ import { createClient } from "../../../utils/supabase/client";
 
 import { criarProduto, editarProduto } from "./actions";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function fetchComAuth<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? null;
+
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || `HTTP ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data as T;
+}
+
+async function comprimirImagem(file: File, maxWidthPx = 1200, qualidade = 0.82): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = Math.min(1, maxWidthPx / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Falha ao comprimir imagem."));
+      }, mimeType, qualidade);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Falha ao carregar imagem.")); };
+    img.src = url;
+  });
+}
+
 type Categoria = { id: string; name: string; slug: string };
 
 type ProdutoForm = {
@@ -105,29 +155,37 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
     setErro(null);
     setUploadando(true);
     try {
-      const supabase = createClient();
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const identificador = produto?.id ?? `temp_${Date.now()}`;
-      const path = `${identificador}.${ext}`;
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
 
+      // Comprime a imagem antes do upload
+      const blob = await comprimirImagem(file);
+
+      // Solicita URL de upload assinada ao backend (que garante o bucket existe)
+      const { signedUrl, token, path, publicUrl } = await fetchComAuth<{
+        signedUrl: string;
+        token: string;
+        path: string;
+        publicUrl: string;
+      }>("/partner/upload/signed-url", {
+        method: "POST",
+        body: JSON.stringify({ ext, productId: produto?.id }),
+      });
+
+      // Faz upload direto para o Supabase Storage via URL assinada
+      const supabase = createClient();
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(path, file, { upsert: true });
+        .uploadToSignedUrl(path, token, blob, { upsert: true });
 
       if (uploadError) {
         throw new Error(uploadError.message);
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(path);
 
       setImageUrl(publicUrl);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao enviar imagem.");
     } finally {
       setUploadando(false);
-      // Limpar o input para permitir reenvio do mesmo arquivo
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }

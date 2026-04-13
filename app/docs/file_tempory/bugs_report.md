@@ -1,107 +1,66 @@
 # Bugs Report — Linear BUG Issues
 > Gerado em: 2026-04-10 | Agente: nicholas-orchestrator
-> Atualizado: 2026-04-10 — ETAPA 2 concluída
+> Atualizado: 2026-04-13 — ETAPA 2 concluída
 
 ---
 
 ## Bug #1 — SOF-25
-
 - **Título:** Dbug: Tela de pedidos — Painel de detalhes transparente no Dark Mode
 - **Link:** https://linear.app/venza-project/issue/SOF-25/dbug-tela-de-pedidos
 - **Prioridade:** Alta
-- **Status:** `resolvido`
-
-### Root Cause
-Em `globals.css` linha 1567, dentro de `[data-theme="dark"]`:
-```css
---surface: rgba(30, 41, 59, 0.5);  /* 50% transparente — BUG */
-```
-O drawer de pedidos (`PedidoDetalhe.tsx`) usa `background: "var(--surface)"`. Em dark mode, o token era semi-transparente, causando o vazamento visual.
-
-### Fix Aplicado
-**`app/apps/web-partner/src/app/globals.css`** linha 1567:
-```css
-/* Antes */
---surface: rgba(30, 41, 59, 0.5);
-/* Depois */
---surface: #1e293b;
-```
+- **Status:** `resolvido` (commit 0486247)
 
 ---
 
 ## Bug #2 — SOF-27
-
-- **Título:** Dbug: Tela de estoque — Painel de histórico transparente no Dark Mode
+- **Título:** Dbug: Tela de estoque — campo `motivo` obrigatório mesmo sendo opcional
 - **Link:** https://linear.app/venza-project/issue/SOF-27/dbug-tela-de-estoque
 - **Prioridade:** Alta
 - **Status:** `resolvido`
 
 ### Root Cause
-Mesma causa que SOF-25. O `DrawerHistorico` em `estoque/page.tsx` também usa `background: "var(--surface)"`. A correção do token CSS resolve ambos.
+O schema TypeBox do endpoint `POST /partner/estoque/movimentacao` declarava `motivo: Type.String({ minLength: 1 })` (obrigatório, sem string vazia), enquanto o frontend exibia o campo como "(opcional)" para movimentações do tipo `replenishment`.
 
 ### Fix Aplicado
-Mesmo fix do SOF-25 — `--surface: #1e293b` em dark mode.
+**`apps/api/src/modules/partner/routes.ts`:**
+- Tipo genérico: `motivo: string` → `motivo?: string`
+- Validação TypeBox: `Type.String({ minLength: 1 })` → `Type.Optional(Type.String())`
+
+**`apps/api/src/modules/partner/estoque-service.ts`:**
+- Tipo `MovimentacaoInput`: `motivo: string` → `motivo?: string`
+- Insert no DB: `reason: input.motivo` → `reason: input.motivo ?? ""`
+
+Schema Prisma não foi alterado (campo `reason String` permanece non-nullable, recebe `""` quando não informado).
 
 ---
 
 ## Bug #3 — SOF-26
-
-- **Título:** Dbug: Tela de produtos — Imagem de produto não salva / erro no upload
+- **Título:** Dbug: Tela de produtos — Upload de imagem falha com "Bucket not found"
 - **Link:** https://linear.app/venza-project/issue/SOF-26/dbug-tela-de-produtos
 - **Prioridade:** Alta
 - **Status:** `resolvido`
 
 ### Root Cause (3 camadas)
+1. O bucket `product-images` não existia no Supabase (ou políticas RLS bloqueavam upload)
+2. O upload era feito diretamente pelo cliente com anon key, sem garantia de que o bucket existe
+3. Sem compressão de imagem, arquivos grandes causavam erros de tamanho
 
-**Camada 1 — API `routes.ts`:** `ProductUpsertSchema` não declarava `imageUrl`, `isAvailable`, `isFeatured`. Se TypeBox usa `additionalProperties: false`, requests com esses campos são rejeitados.
+### Fix Aplicado
 
-**Camada 2 — API `catalog-service.ts`:** `ProductUpsertInput` não incluía os campos. `createPartnerProduct` hardcodava `imageUrl: null`. `updatePartnerProduct` não atualizava nenhum dos 3 campos.
+**`apps/api/src/plugins/supabase.ts`:**
+- Adicionado `supabaseAdmin` com `SUPABASE_SERVICE_ROLE_KEY` (já configurado no .env)
+- Na inicialização: verifica se bucket `product-images` existe; cria-o como público com limite de 10MB se não existir
+- Adicionado `supabaseAdmin` ao `FastifyInstance` via module augmentation
 
-**Camada 3 — Frontend `actions.ts`:** `criarProduto` e `editarProduto` não declaravam `imageUrl`, `isAvailable`, `isFeatured` nos tipos, causando possível descarte silencioso.
+**`apps/api/src/modules/partner/routes.ts`:**
+- Novo endpoint `POST /partner/upload/signed-url` (autenticado)
+- Usa `supabaseAdmin` para gerar signed upload URL via `createSignedUploadUrl`
+- Retorna `{ signedUrl, token, path, publicUrl }`
 
-**Camada 4 — Frontend `ProdutoModal.tsx`:** `accept="image/jpeg,image/png,image/webp"` rejeitava GIF e outros formatos.
-
-### Fixes Aplicados
-
-**`app/apps/api/src/modules/partner/routes.ts`** — `ProductUpsertSchema`:
-```typescript
-imageUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-isAvailable: Type.Optional(Type.Boolean()),
-isFeatured: Type.Optional(Type.Boolean()),
-```
-
-**`app/apps/api/src/modules/partner/catalog-service.ts`** — `ProductUpsertInput`:
-```typescript
-imageUrl?: string | null;
-isAvailable?: boolean;
-isFeatured?: boolean;
-```
-
-**`catalog-service.ts`** — `createPartnerProduct`:
-```typescript
-imageUrl: input.imageUrl ?? null,       // era: imageUrl: null
-isAvailable: input.isAvailable ?? true, // era: isAvailable: true (hardcoded)
-isFeatured: input.isFeatured ?? false,  // era: isFeatured: false (hardcoded)
-```
-
-**`catalog-service.ts`** — `updatePartnerProduct` data spread:
-```typescript
-...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
-...(input.isAvailable !== undefined ? { isAvailable: input.isAvailable } : {}),
-...(input.isFeatured !== undefined ? { isFeatured: input.isFeatured } : {}),
-```
-
-**`app/apps/web-partner/src/app/(dashboard)/catalogo/actions.ts`** — ambos os tipos:
-```typescript
-imageUrl?: string | null;
-isAvailable?: boolean;
-isFeatured?: boolean;
-```
-
-**`app/apps/web-partner/src/app/(dashboard)/catalogo/ProdutoModal.tsx`**:
-```
-accept="image/*"   // era: "image/jpeg,image/png,image/webp"
-```
+**`apps/web-partner/src/app/(dashboard)/catalogo/ProdutoModal.tsx`:**
+- Adicionado `fetchComAuth` (padrão dos outros componentes) e `comprimirImagem` via Canvas API
+- Novo fluxo: comprimir → obter signed URL do backend → upload via `uploadToSignedUrl`
+- Aceita qualquer formato de imagem sem restrição de tamanho no cliente
 
 ---
 
@@ -110,10 +69,10 @@ accept="image/*"   // era: "image/jpeg,image/png,image/webp"
 | # | ID | Título | Status |
 |---|-----|--------|--------|
 | 1 | SOF-25 | Drawer pedidos transparente dark mode | resolvido |
-| 2 | SOF-27 | Drawer estoque transparente dark mode | resolvido |
-| 3 | SOF-26 | Imagem produto não salva — pipeline quebrado | resolvido |
+| 2 | SOF-27 | Campo motivo obrigatório no estoque | resolvido |
+| 3 | SOF-26 | Upload imagem — Bucket not found | resolvido |
 
-**Total encontrados:** 3 issues Linear / 2 bugs únicos (SOF-25+SOF-27 mesma causa)
+**Total encontrados:** 3 issues Linear
 **Total resolvidos:** 3
 **Total bloqueados:** 0
 **Typecheck:** 0 erros
