@@ -858,6 +858,15 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   );
 
   app.get(
+    "/partner/me",
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    async (request) => {
+      const ctx = partnerContext(request);
+      return ok({ userId: ctx.storeUserId, storeId: ctx.storeId, role: ctx.role });
+    },
+  );
+
+  app.get(
     "/partner/configuracoes/usuarios",
     { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
     async (request) => ok(await listUsuarios(partnerContext(request))),

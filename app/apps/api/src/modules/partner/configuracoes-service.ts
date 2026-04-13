@@ -153,7 +153,16 @@ export async function listUsuarios(context: PartnerContext) {
     orderBy: { createdAt: "asc" },
   });
 
-  return usuarios;
+  return usuarios.map((u: { id: string; name: string; email: string; role: string; isActive: boolean; createdAt: Date }) => ({
+    id: u.id,
+    userId: u.id,
+    role: u.role,
+    user: {
+      id: u.id,
+      name: u.name ?? null,
+      email: u.email,
+    },
+  }));
 }
 
 export async function convidarUsuario(context: PartnerContext, input: ConviteInput) {
