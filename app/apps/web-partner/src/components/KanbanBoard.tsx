@@ -2,33 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 
-import { createClient } from "../utils/supabase/client";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-
-async function fetchComAuth<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? null;
-
-  const res = await fetch(`${API_URL}/v1${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(txt || `HTTP ${res.status}`);
-  }
-
-  const json = await res.json();
-  return json.data as T;
-}
+import { moverCardKanban } from "../app/(dashboard)/kanban-actions";
 
 // Mapeamento coluna kanban → status da API
 const COL_STATUS: Record<string, string> = {
@@ -152,10 +126,7 @@ export function KanbanBoard({ initialCols }: Props) {
 
     setLoadingId(itemId);
     try {
-      await fetchComAuth(`/partner/orders/${item.orderId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
+      await moverCardKanban(item.orderId, newStatus);
     } catch {
       // Reverte para o estado anterior ao drag
       setCols(snapshot);
