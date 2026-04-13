@@ -2,6 +2,7 @@ import { formatCurrency } from "@vendza/utils";
 
 import { ApiError, fetchAPI } from "../../lib/api";
 import { KanbanBoard } from "../../components/KanbanBoard";
+import { NovoPedidoFAB } from "./NovoPedidoFAB";
 
 /* ── Sparkline SVG inline ── */
 function Sparkline({ points, color }: { points: string; color: string }) {
@@ -139,36 +140,36 @@ export default async function PartnerHomePage() {
   // Agrupar pedidos por status para o Kanban
   const kanbanCols = [
     {
-      label: "A Fazer",
+      label: "Preparando",
       items: orders
-        .filter((o) => ["pending", "confirmed"].includes(o.status))
+        .filter((o) => ["pending", "confirmed", "preparing"].includes(o.status))
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
           cliente: o.customerName,
-          tempo: new Date(o.placedAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          tempo: o.placedAt, // ISO timestamp — KanbanBoard calcula o tempo decorrido
         })),
     },
     {
-      label: "Em Progresso",
+      label: "Entregando",
       items: orders
-        .filter((o) => ["preparing", "ready_for_delivery"].includes(o.status))
+        .filter((o) => ["ready_for_delivery", "out_for_delivery"].includes(o.status))
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
           cliente: o.customerName,
-          tempo: new Date(o.placedAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          tempo: o.placedAt,
         })),
     },
     {
-      label: "Concluído",
+      label: "Entregue",
       items: orders
         .filter((o) => o.status === "delivered")
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
           cliente: o.customerName,
-          tempo: new Date(o.placedAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          tempo: o.placedAt,
         })),
     },
   ];
@@ -278,6 +279,9 @@ export default async function PartnerHomePage() {
           </div>
         </div>
       </div>
+
+      {/* FAB de atalho para criar novo pedido */}
+      <NovoPedidoFAB />
     </div>
   );
 }

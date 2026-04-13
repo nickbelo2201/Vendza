@@ -7,16 +7,16 @@ import { PedidoDrawerKanban } from "./PedidoDrawerKanban";
 
 // Mapeamento coluna kanban → status da API
 const COL_STATUS: Record<string, string> = {
-  "A Fazer": "confirmed",
-  "Em Progresso": "preparing",
-  "Concluído": "delivered",
+  "Preparando": "preparing",
+  "Entregando": "out_for_delivery",
+  "Entregue": "delivered",
 };
 
 type KanbanItem = {
   id: string;      // publicId — exibição
   orderId: string; // UUID — chamadas API
   cliente: string;
-  tempo: string;
+  tempo: string;   // ISO timestamp do placedAt
 };
 
 type KanbanCol = {
@@ -49,6 +49,32 @@ function IconWarning() {
 
 type SelectedItem = { id: string; orderId: string; colLabel: string } | null;
 
+// Formata o tempo decorrido desde um ISO timestamp
+function formatTempoDecorrido(isoString: string): string {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "agora";
+  if (diffMin < 60) return `há ${diffMin}min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `há ${diffH}h`;
+  return `há ${Math.floor(diffH / 24)}d`;
+}
+
+// Limiares de alerta por coluna (em minutos)
+const ALERTA_MINUTOS: Record<string, number> = {
+  "Preparando": 30,
+  "Entregando": 120,
+  "Entregue": Infinity,
+};
+
+// Retorna true se o pedido ultrapassou o limiar de tempo da coluna
+function isCardAtrasado(isoString: string, colLabel: string): boolean {
+  const limiar = ALERTA_MINUTOS[colLabel] ?? Infinity;
+  if (!isFinite(limiar)) return false;
+  const diffMin = (Date.now() - new Date(isoString).getTime()) / 60000;
+  return diffMin > limiar;
+}
+
 export function KanbanBoard({ initialCols }: Props) {
   const [cols, setCols] = useState<KanbanCol[]>(initialCols);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -56,6 +82,8 @@ export function KanbanBoard({ initialCols }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
+  // Tick a cada 30s para recalcular tempos decorridos e alertas
+  const [tick, setTick] = useState(0);
 
   const dragSource = useRef<{ colLabel: string; itemId: string } | null>(null);
   // Ref sempre atualizada com o estado atual — evita stale closure no handler async
@@ -70,6 +98,12 @@ export function KanbanBoard({ initialCols }: Props) {
     toastTimer.current = setTimeout(() => setToast(null), 4500);
     return () => { if (toastTimer.current) clearTimeout(toastTimer.current); };
   }, [toast]);
+
+  // Intervalo de 30s para atualizar tempo decorrido e borda de alerta dos cards
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDragStart = useCallback(
     (e: React.DragEvent, colLabel: string, itemId: string) => {
@@ -140,10 +174,11 @@ export function KanbanBoard({ initialCols }: Props) {
 
   const handleDrop = useCallback(async (e: React.DragEvent, targetColLabel: string) => {
     e.preventDefault();
+    setDraggingId(null); // garante cleanup mesmo que dragend não dispare (inconsistência do HTML5 DnD)
+    setOverColLabel(null);
     if (!dragSource.current) return;
 
     const { colLabel: srcColLabel, itemId } = dragSource.current;
-    setOverColLabel(null);
     if (srcColLabel === targetColLabel) return;
 
     // Snapshot do estado atual para rollback (lê via ref — sempre fresco)
@@ -203,6 +238,9 @@ export function KanbanBoard({ initialCols }: Props) {
                 col.items.map((item) => {
                   const isDragging = draggingId === item.id;
                   const isLoading = loadingId === item.id;
+                  // Suprime aviso de variável não usada — tick é lido implicitamente via closure
+                  void tick;
+                  const atrasado = isCardAtrasado(item.tempo, col.label);
                   return (
                     <div
                       key={item.id}
@@ -215,11 +253,19 @@ export function KanbanBoard({ initialCols }: Props) {
                         opacity: isLoading ? 0.5 : isDragging ? 0.6 : 1,
                         cursor: isLoading ? "wait" : "pointer",
                         transition: "opacity 0.15s",
+                        borderColor: atrasado ? "#DC2626" : undefined,
+                        borderWidth: atrasado ? 2 : undefined,
+                        boxShadow: atrasado ? "0 0 0 3px rgba(220,38,38,.08)" : undefined,
                       }}
                     >
                       <span className="kanban-item-id">{item.id}: {item.cliente}</span>
                       <span className="kanban-item-sub" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        {item.tempo}
+                        {formatTempoDecorrido(item.tempo)}
+                        {atrasado && (
+                          <span title="Pedido parado há muito tempo" style={{ color: "#DC2626", display: "flex", alignItems: "center" }}>
+                            <IconWarning />
+                          </span>
+                        )}
                         {isLoading && (
                           <span
                             aria-label="Salvando..."

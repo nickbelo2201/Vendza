@@ -1,6 +1,46 @@
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+
 import { prisma } from "@vendza/database";
 
 import type { PartnerContext } from "./context.js";
+
+// ─── Criptografia PIX (AES-256-GCM) ─────────────────────────────────────────
+
+const PIX_KEY_SECRET = process.env.PIX_ENCRYPTION_KEY ?? "";
+const ALGORITHM = "aes-256-gcm";
+
+function encryptPixKey(plaintext: string): string {
+  if (!PIX_KEY_SECRET || PIX_KEY_SECRET.length < 32) {
+    throw new Error("PIX_ENCRYPTION_KEY deve ter ao menos 32 caracteres");
+  }
+  const iv = randomBytes(12);
+  const key = Buffer.from(PIX_KEY_SECRET.slice(0, 32));
+  const cipher = createCipheriv(ALGORITHM, key, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  // Formato: iv(12):authTag(16):encrypted — tudo em hex
+  return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted.toString("hex")}`;
+}
+
+function decryptPixKey(ciphertext: string): string {
+  if (!PIX_KEY_SECRET) return ciphertext; // fallback seguro
+  // Detecta formato antigo (Base64 simples, sem ":")
+  if (!ciphertext.includes(":")) {
+    return Buffer.from(ciphertext, "base64").toString("utf8");
+  }
+  const parts = ciphertext.split(":");
+  const ivHex = parts[0] ?? "";
+  const authTagHex = parts[1] ?? "";
+  const encryptedHex = parts[2] ?? "";
+  const key = Buffer.from(PIX_KEY_SECRET.slice(0, 32));
+  const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivHex, "hex"));
+  decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(encryptedHex, "hex")),
+    decipher.final(),
+  ]);
+  return decrypted.toString("utf8");
+}
 
 type LojaInput = {
   name?: string;
@@ -103,7 +143,7 @@ export async function getContaBancaria(context: PartnerContext) {
 }
 
 export async function upsertContaBancaria(context: PartnerContext, input: ContaBancariaInput) {
-  const encryptedKey = Buffer.from(input.pixKey).toString("base64");
+  const encryptedKey = encryptPixKey(input.pixKey);
   const lastFourDigits = input.pixKey.slice(-4);
 
   const conta = await prisma.storeBankAccount.upsert({

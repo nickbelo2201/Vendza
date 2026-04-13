@@ -1,7 +1,6 @@
 import { fetchStorefrontCatalog, fetchStorefrontConfig } from "../lib/api";
 import { AgeGate } from "../components/AgeGate";
 import { CatalogView } from "../components/CatalogView";
-import { MOCK_PRODUCTS } from "../data/products";
 
 type StorefrontConfig = {
   id: string;
@@ -74,13 +73,10 @@ export default async function HomePage({
       fetchStorefrontCatalog<Product[]>(produtosUrl),
     ]);
   } catch {
-    // API indisponível — exibe mock products para o visitante não ver tela vazia
+    // API indisponível — exibe estado vazio
   }
 
-  // Usa mock só quando catálogo vazio e sem filtros ativos
-  const temFiltroAtivo = !!(busca || categoria);
-  const produtosExibidos: Product[] =
-    products.length > 0 ? products : temFiltroAtivo ? [] : MOCK_PRODUCTS;
+  const produtosExibidos: Product[] = products;
 
   return (
     <>

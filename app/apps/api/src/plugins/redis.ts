@@ -20,7 +20,10 @@ const redisPlugin: FastifyPluginAsync = async (app) => {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     lazyConnect: true,
-    retryStrategy: () => null, // não reconectar — logar e seguir
+    retryStrategy: (times: number) => {
+      if (times > 10) return null; // desistir após 10 tentativas
+      return Math.min(times * 200, 3000); // backoff: 200ms, 400ms, ..., 3000ms
+    },
   });
 
   redis.on("error", (err: Error) => {

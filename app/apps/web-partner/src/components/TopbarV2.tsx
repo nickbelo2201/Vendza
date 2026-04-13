@@ -14,6 +14,10 @@ const ROUTE_META: Record<string, { secao: string; titulo: string }> = {
   "/catalogo": { secao: "Operação", titulo: "Catálogo" },
   "/clientes": { secao: "Operação", titulo: "Clientes" },
   "/relatorios": { secao: "Operação", titulo: "Relatórios" },
+  "/financeiro": { secao: "Dashboard", titulo: "Financeiro" },
+  "/estoque": { secao: "Operação", titulo: "Estoque" },
+  "/promocoes": { secao: "Operação", titulo: "Promoções" },
+  "/documentacao": { secao: "Dashboard", titulo: "Documentação" },
   "/configuracoes": { secao: "Configuração", titulo: "Configurações" },
 };
 
@@ -50,11 +54,12 @@ export function TopbarV2({ toggleLoja }: Props) {
     try {
       const supabase = createClient();
       await supabase.auth.signOut();
-      router.push("/login");
     } catch (err) {
       console.error("Erro ao fazer logout:", err);
     } finally {
       setCarregandoLogout(false);
+      // Redireciona sempre, mesmo em caso de erro — sessão pode já ter expirado
+      router.push("/login");
     }
   }
 

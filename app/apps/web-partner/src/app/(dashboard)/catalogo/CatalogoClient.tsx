@@ -119,8 +119,42 @@ export function CatalogoClient({ produtos, categorias }: Props) {
               {produtos.map((p) => (
                 <tr key={p.id}>
                   <td>
-                    <div style={{ fontWeight: 600 }}>{p.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{p.slug}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {/* Miniatura do produto */}
+                      <div style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        background: "var(--cream)",
+                        border: "1px solid var(--border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>
+                        {p.imageUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          /* Ícone placeholder quando o produto não tem foto */
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                        )}
+                      </div>
+                      {/* Nome e slug do produto */}
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{p.name}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{p.slug}</div>
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <span className="wp-badge wp-badge-muted">{p.categorySlug ?? "—"}</span>

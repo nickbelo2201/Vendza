@@ -48,7 +48,11 @@ export default function RedefinirSenhaPage() {
   if (sucesso) {
     return (
       <div className="wp-auth-card" style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
+        <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
         <h2 className="wp-auth-title">Senha redefinida!</h2>
         <p className="wp-auth-subtitle">
           Sua senha foi alterada com sucesso.

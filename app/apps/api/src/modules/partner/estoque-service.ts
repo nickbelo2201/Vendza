@@ -1,4 +1,4 @@
-import { InventoryMovementType, prisma } from "@vendza/database";
+import { InventoryMovementType, prisma, type Prisma } from "@vendza/database";
 
 import type { PartnerContext } from "./context.js";
 
@@ -61,7 +61,7 @@ export async function getEstoque(context: PartnerContext) {
     }),
   );
 
-  const vendaMap = new Map(vendasPorProduto.map((v) => [v.productId, v.quantidadeVendida]));
+  const vendaMap = new Map(vendasPorProduto.map((v: { productId: string; quantidadeVendida: number }) => [v.productId, v.quantidadeVendida]));
 
   // Calcula receita por produto nos últimos 30 dias para curva ABC
   const receitaPorProduto = await Promise.all(
@@ -81,7 +81,7 @@ export async function getEstoque(context: PartnerContext) {
   );
 
   // Calcula curva ABC
-  const receitaTotal = receitaPorProduto.reduce((acc, r) => acc + r.receita, 0);
+  const receitaTotal = receitaPorProduto.reduce((acc: number, r: { receita: number }) => acc + r.receita, 0);
 
   // Ordena por receita desc para calcular acumulado
   const receitaOrdenada = [...receitaPorProduto].sort((a, b) => b.receita - a.receita);
@@ -109,7 +109,7 @@ export async function getEstoque(context: PartnerContext) {
   }
 
   return itens.map((item: typeof itens[number]) => {
-    const quantidadeVendida = vendaMap.get(item.productId) ?? 0;
+    const quantidadeVendida: number = vendaMap.get(item.productId) ?? 0;
     const giro = item.currentStock === 0 ? 0 : quantidadeVendida / item.currentStock;
 
     return {
@@ -139,7 +139,7 @@ export async function registrarMovimentacao(context: PartnerContext, input: Movi
 
   const tipoMapeado = mapTipoMovimentacao(input.tipo);
 
-  const resultado = await prisma.$transaction(async (tx: any) => {
+  const resultado = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // APPEND-ONLY: apenas cria o movimento, nunca atualiza/deleta
     const movimento = await tx.inventoryMovement.create({
       data: {

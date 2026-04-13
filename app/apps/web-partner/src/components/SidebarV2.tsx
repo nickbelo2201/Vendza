@@ -177,14 +177,27 @@ export function SidebarV2() {
       <div className="sidebar-v2-group">
         <span className="sidebar-v2-group-label">Inteligência</span>
         {inteligencia.map((item) => (
-          <Link
+          <div
             key={item.label}
-            href={item.href}
             className="sidebar-v2-link"
+            style={{ opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" }}
           >
             {item.icon}
             <span className="sidebar-v2-link-label">{item.label}</span>
-          </Link>
+            <span style={{
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              background: "var(--v2-text-muted, #6B7280)",
+              color: "#fff",
+              borderRadius: 4,
+              padding: "1px 5px",
+              marginLeft: "auto",
+            }}>
+              Em breve
+            </span>
+          </div>
         ))}
       </div>
 

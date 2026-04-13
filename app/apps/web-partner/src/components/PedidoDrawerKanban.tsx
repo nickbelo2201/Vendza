@@ -41,9 +41,9 @@ const CHANNEL_LABELS: Record<string, string> = {
 
 // Mapeamento de avanço de status dentro do kanban
 const KANBAN_NEXT: Record<string, { status: string; colLabel: string } | null> = {
-  "A Fazer": { status: "preparing", colLabel: "Em Progresso" },
-  "Em Progresso": { status: "delivered", colLabel: "Concluído" },
-  "Concluído": null,
+  "Preparando": { status: "out_for_delivery", colLabel: "Entregando" },
+  "Entregando": { status: "delivered", colLabel: "Entregue" },
+  "Entregue": null,
 };
 
 type OrderItem = {
@@ -192,7 +192,7 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
   if (!orderId) return null;
 
   const proximo = currentColLabel ? KANBAN_NEXT[currentColLabel] : null;
-  const isConcluido = currentColLabel === "Concluído";
+  const isConcluido = currentColLabel === "Entregue";
 
   return (
     <>
@@ -506,13 +506,14 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               )}
-              {isConcluido ? "Concluído" : proximo ? `→ ${proximo.colLabel}` : "Avançar Status"}
+              {isConcluido ? "Entregue" : proximo ? `→ ${proximo.colLabel}` : "Avançar Status"}
             </button>
 
             {/* Imprimir */}
-            <button
-              type="button"
-              onClick={() => window.print()}
+            <a
+              href={`/pedidos/${orderId}/imprimir`}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
@@ -525,6 +526,7 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
+                textDecoration: "none",
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -533,7 +535,7 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
                 <rect x="6" y="14" width="12" height="8" />
               </svg>
               Imprimir
-            </button>
+            </a>
 
             {/* Cancelar */}
             <button

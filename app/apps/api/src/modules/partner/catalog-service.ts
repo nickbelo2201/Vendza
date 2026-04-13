@@ -1,4 +1,4 @@
-import { InventoryMovementType, prisma } from "@vendza/database";
+import { InventoryMovementType, prisma, type Prisma } from "@vendza/database";
 
 import type { PartnerContext } from "./context.js";
 
@@ -212,7 +212,7 @@ export async function listPartnerProducts(context: PartnerContext) {
 }
 
 export async function createPartnerProduct(context: PartnerContext, input: ProductUpsertInput) {
-  const product = await prisma.$transaction(async (tx: any) => {
+  const product = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const created = await tx.product.create({
       data: {
         storeId: context.storeId,
@@ -350,7 +350,7 @@ export async function createInventoryMovement(context: PartnerContext, input: In
     return null;
   }
 
-  const movement = await prisma.$transaction(async (tx: any) => {
+  const movement = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const updatedItem = await tx.inventoryItem.update({
       where: { id: inventoryItem.id },
       data: {

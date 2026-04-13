@@ -1,4 +1,4 @@
-import { prisma } from "@vendza/database";
+import { prisma, type Prisma } from "@vendza/database";
 
 import type { PartnerContext } from "./context.js";
 
@@ -171,7 +171,7 @@ export async function getDeliveryZones(context: PartnerContext) {
 }
 
 export async function updateDeliveryZones(context: PartnerContext, input: DeliveryZoneInput[]) {
-  await prisma.$transaction(async (tx: any) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.deliveryZone.deleteMany({
       where: { storeId: context.storeId },
     });

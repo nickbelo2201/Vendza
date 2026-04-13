@@ -113,6 +113,5 @@ O que ainda esta em mock ou pendente de integracao real:
 
 - backend primeiro
 - sem agentes na V1
-- `web-client` e `web-partner` ficam estruturais ate aprovacao visual
 - cobertura do V1 fica em `bairro + raio`
-- Mercado Pago e o unico gateway do V1
+- Commit na Main

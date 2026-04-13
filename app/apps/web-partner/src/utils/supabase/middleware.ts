@@ -37,7 +37,9 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/cadastro') &&
     !request.nextUrl.pathname.startsWith('/esqueci-senha') &&
     !request.nextUrl.pathname.startsWith('/redefinir-senha') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/sem-acesso') &&
+    !request.nextUrl.pathname.startsWith('/onboarding')
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'

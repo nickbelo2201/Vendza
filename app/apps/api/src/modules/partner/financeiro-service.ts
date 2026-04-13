@@ -546,27 +546,33 @@ export async function exportarFinanceiro(context: PartnerContext, params: Export
     ORDER BY placed_at ASC
   ` as Promise<RowCompleto[]>);
 
-  const escaparCsv = (val: string) => {
-    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-      return `"${val.replace(/"/g, '""')}"`;
+  // I-11: Proteção contra CSV/formula injection — mesma lógica de orders-service
+  const escapeCsvField = (val: string): string => {
+    const FORMULA_PREFIXES = ["=", "+", "-", "@", "\t", "\r"];
+    let sanitized = val;
+    if (FORMULA_PREFIXES.some((prefix) => sanitized.startsWith(prefix))) {
+      sanitized = `'${sanitized}`;
     }
-    return val;
+    if (sanitized.includes(",") || sanitized.includes('"') || sanitized.includes("\n") || sanitized !== val) {
+      return `"${sanitized.replace(/"/g, '""')}"`;
+    }
+    return sanitized;
   };
 
   const linhas = [
     "id,dataHora,cliente,telefone,valorBruto,taxaEntrega,valorLiquido,metodoPagamento,statusPagamento,statusPedido",
     ...pedidosRaw.map((p: RowCompleto) =>
       [
-        escaparCsv(p.public_id),
+        escapeCsvField(p.public_id),
         p.placed_at.toISOString(),
-        escaparCsv(p.customer_name),
-        escaparCsv(p.customer_phone),
+        escapeCsvField(p.customer_name),
+        escapeCsvField(p.customer_phone),
         Number(p.total_cents),
         Number(p.delivery_fee_cents),
         Number(p.total_cents) - Number(p.delivery_fee_cents),
-        p.payment_method,
-        p.payment_status,
-        p.status,
+        escapeCsvField(p.payment_method),
+        escapeCsvField(p.payment_status),
+        escapeCsvField(p.status),
       ].join(","),
     ),
   ];

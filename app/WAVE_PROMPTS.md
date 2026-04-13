@@ -331,7 +331,7 @@ APÓS TERMINAR:
 
 ---
 
-### WAVE 2-C — CRM: Tags, Notas e Histórico do Cliente(METADE)
+### WAVE 2-C — CRM: Tags, Notas e Histórico do Cliente(FEITO)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).
@@ -339,6 +339,7 @@ Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Tur
 TAREFA: Implementar Tags, Notas internas e Histórico do cliente no CRM (Grupo 10).
 
 CONTEXTO:
+-metade da tarefa foi feita, analise o que foi feito e contiue.
 - API Fastify 5 em apps/api/src/ — porta 3333
 - web-partner Next.js 15 em apps/web-partner/ — porta 3001
 - Schema Prisma em packages/database/prisma/schema.prisma
@@ -399,20 +400,20 @@ APÓS TERMINAR:
 
 ---
 
-## WAVE 3 — Sequencial (schema changes — uma de cada vez)
+## WAVE 3 — Sequencial (schema changes — uma de cada vez) (feito)
 
 > ⚠️ Não rodar em paralelo. Cada uma faz `db:push`. Aguardar commit da anterior antes de iniciar a próxima.
 
 ---
 
-### WAVE 3-1 — P2-09: Endereços Salvos do Cliente
+### WAVE 3-1 — P2-09: Endereços Salvos do Cliente(feito)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).
 
 TAREFA: Implementar endereços salvos do cliente (P2-09 + Grupo 12).
 
-IMPORTANTE: Esta tarefa inclui mudança no schema Prisma. Rodar db:push ao final.
+IMPORTANTE: Esta tarefa inclui mudança no schema Prisma. Testa via mcp playwrite e Rodar db:push ao final.
 
 CONTEXTO:
 - web-client: apps/web-client/ — vitrine
@@ -476,7 +477,7 @@ APÓS TERMINAR:
 
 ---
 
-### WAVE 3-2 — Grupo 8: Minha Conta do Parceiro / Configurações
+### WAVE 3-2 — Grupo 8: Minha Conta do Parceiro / Configurações|(feito)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).
@@ -550,7 +551,7 @@ APÓS TERMINAR:
 
 ---
 
-### WAVE 3-3 — Grupo 1: Gestão de Estoque
+### WAVE 3-3 — Grupo 1: Gestão de Estoque(FEITO)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).
@@ -611,11 +612,11 @@ APÓS TERMINAR:
 
 ---
 
-## WAVE 4 — 3 sessões simultâneas (após Wave 3 completa)
+## WAVE 4 — 3 sessões simultâneas (após Wave 3 completa)(FEITA)
 
 ---
 
-### WAVE 4-A — Zonas de Entrega e Cálculo de Frete
+### WAVE 4-A — Zonas de Entrega e Cálculo de Frete(FEITO)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).
@@ -643,7 +644,7 @@ CHECKLIST — API Storefront:
    - Para lat/lng: calcular distância Haversine até centerLat/centerLng de cada zona
    - Para neighborhoods: verificar se bairro do endereço está no array neighborhoods
    - Retornar: { zonaId, label, feeCents, etaMinutes, minimumOrderCents } ou { fora: true }
-
+    
 CHECKLIST — Frontend web-partner:
 4. Nova aba "Entrega" em /configuracoes/:
    - Toggle: Modo Raio | Modo Bairros
@@ -670,7 +671,7 @@ APÓS TERMINAR:
 
 ---
 
-### WAVE 4-B — Minha Conta do Cliente
+### WAVE 4-B — Minha Conta do Cliente(FEITO)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).
@@ -720,7 +721,7 @@ APÓS TERMINAR:
 
 ---
 
-### WAVE 4-C — Notificações Realtime de Pedidos
+### WAVE 4-C — Notificações Realtime de Pedidos (FEITO)
 
 ```
 Você é um agente full-stack trabalhando no projeto Vendza (monorepo pnpm + Turbo em app/).

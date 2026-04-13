@@ -48,7 +48,7 @@ export default function DocumentacaoPage() {
             lineHeight: 1.6,
           }}
         >
-          Nossa documentacao esta em analise e sera disponibilizada em breve.
+          Nossa documentação está em análise e será disponibilizada em breve.
         </p>
       </div>
     </div>

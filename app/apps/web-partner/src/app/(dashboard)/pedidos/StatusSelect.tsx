@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { atualizarStatusPedido } from "./actions";
 
@@ -27,34 +27,49 @@ type Props = {
 
 export function StatusSelect({ orderId, statusAtual, statusLabel }: Props) {
   const [pending, startTransition] = useTransition();
+  const [erroStatus, setErroStatus] = useState<string | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const novo = e.target.value;
-    startTransition(() => { atualizarStatusPedido(orderId, novo); });
+    setErroStatus(null);
+    startTransition(async () => {
+      try {
+        await atualizarStatusPedido(orderId, novo);
+      } catch {
+        setErroStatus("Falha ao atualizar status. Tente novamente.");
+      }
+    });
   }
 
   return (
-    <div style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
-      <span className={STATUS_CLASS[statusAtual] ?? "wp-status"} style={{ paddingRight: 28 }}>
-        {pending ? "Salvando..." : (statusLabel[statusAtual] ?? statusAtual)}
-      </span>
-      <svg
-        style={{ position: "absolute", right: 8, pointerEvents: "none", opacity: 0.6 }}
-        width="11" height="11" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5"
-      >
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
-      <select
-        value={statusAtual}
-        onChange={handleChange}
-        disabled={pending}
-        style={{ position: "absolute", inset: 0, width: "100%", opacity: 0, cursor: "pointer" }}
-      >
-        {ALL_STATUSES.map((s) => (
-          <option key={s} value={s}>{statusLabel[s] ?? s}</option>
-        ))}
-      </select>
+    <div style={{ display: "inline-flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+        <span className={STATUS_CLASS[statusAtual] ?? "wp-status"} style={{ paddingRight: 28 }}>
+          {pending ? "Salvando..." : (statusLabel[statusAtual] ?? statusAtual)}
+        </span>
+        <svg
+          style={{ position: "absolute", right: 8, pointerEvents: "none", opacity: 0.6 }}
+          width="11" height="11" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5"
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+        <select
+          value={statusAtual}
+          onChange={handleChange}
+          disabled={pending}
+          style={{ position: "absolute", inset: 0, width: "100%", opacity: 0, cursor: "pointer" }}
+        >
+          {ALL_STATUSES.map((s) => (
+            <option key={s} value={s}>{statusLabel[s] ?? s}</option>
+          ))}
+        </select>
+      </div>
+      {erroStatus && (
+        <span style={{ fontSize: 11, color: "#ef4444", lineHeight: 1.3 }}>
+          {erroStatus}
+        </span>
+      )}
     </div>
   );
 }
