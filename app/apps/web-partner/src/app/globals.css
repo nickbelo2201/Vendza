@@ -2143,3 +2143,29 @@ html[data-theme="dark"] body {
     padding: 12px;
   }
 }
+
+/* ── Impressão de comanda ── */
+@media print {
+  /* Ocultar toda a UI do dashboard */
+  .v2-shell,
+  .v2-sidebar,
+  .v2-body > *:not(.v2-main),
+  nav,
+  .wp-shell,
+  .wp-sidebar,
+  .wp-topbar,
+  .wp-page-header,
+  .topbar-v2,
+  .sidebar-v2 { display: none !important; }
+
+  /* Exibir apenas o conteúdo da comanda */
+  .comanda-print-wrapper {
+    display: block !important;
+  }
+
+  /* Reset de body para impressão */
+  body {
+    background: white !important;
+    font-family: 'Courier New', monospace;
+  }
+}
