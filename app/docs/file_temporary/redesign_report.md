@@ -168,6 +168,55 @@
 | `react-leaflet` | latest | Wrapper React para Leaflet | SOF-29 |
 | `@types/leaflet` | latest | Tipos TypeScript para Leaflet | SOF-29 |
 | `leaflet-draw` ou `@geoman-io/leaflet-geoman-free` | latest | Toolbar de desenho de zonas | SOF-29 |
+| `recharts` | latest | Gráficos da tela de relatórios | SOF-32 |
+
+---
+
+## Redesign #5 — SOF-31
+
+- **Título:** Redesign: Web-client (carrossel de categorias)
+- **Link:** https://linear.app/venza-project/issue/SOF-31
+- **Prioridade:** Urgente
+- **Status:** `resolvido`
+- **Descrição:** Substituição do grid de categorias por carrossel horizontal compacto no web-client, referência Zé Delivery.
+- **Arquivos afetados:**
+  - `apps/web-client/src/components/CatalogView.tsx` — componente `CategoryCarouselItem`, wrapper `.wc-category-carousel-wrapper` com setas, item "Todos" fixo primeiro
+  - `apps/web-client/src/app/globals.css` — CSS do carrossel com breakpoints tablet/desktop e dark mode
+
+---
+
+## Redesign #6 — SOF-32
+
+- **Título:** Redesign: Tela de relatórios
+- **Link:** https://linear.app/venza-project/issue/SOF-32
+- **Prioridade:** Média
+- **Status:** `resolvido`
+- **Descrição:** Redesign completo da tela de relatórios com Recharts, layout grid 2 colunas, 8 KPIs, 6 novos componentes.
+- **Arquivos afetados:**
+  - `page.tsx` — reescrito com layout grid, KPIs, imports dos novos componentes
+  - `SeletorPeriodo.tsx` — date range personalizado, botão atualizar, dropdown exportar
+  - `GraficoTempoReal.tsx` — polling 30s, bolinha pulsante
+  - `GraficoLinha.tsx` — AreaChart Recharts, toggle Faturamento/Pedidos
+  - `GraficoDonut.tsx` — donut genérico (Clientes, Origem)
+  - `TabelaProdutos.tsx` — busca, badges top 3, mini-barra % do total
+  - `GraficoPagamentos.tsx` — barras horizontais CSS puro
+  - `GraficoPicoHora.tsx` — BarChart 24h, cor por intensidade
+
+---
+
+## Redesign #7 — SOF-33
+
+- **Título:** Features analíticas adicionais e interatividade avançada
+- **Link:** https://linear.app/venza-project/issue/SOF-33
+- **Prioridade:** Média
+- **Status:** `resolvido`
+- **Descrição:** Insights automáticos, drill-down nos KPIs, tabela de clientes recorrentes.
+- **Arquivos afetados:**
+  - `InsightsCard.tsx` — card com fundo --gl, até 5 insights por lógica pura (pico, pagamento, dia, cancelamento, fidelidade)
+  - `KpiGrid.tsx` — Client Component com KPIs clicáveis, chevron visual
+  - `KpiDrillDrawer.tsx` — drawer 520px com modos pedidos/cancelamentos/novos-clientes/faturamento, fetch com auth Supabase, skeleton
+  - `TabelaClientes.tsx` — accordion colapsável, filtros Todos/Novos/Recorrentes, badge "Top cliente"
+  - `page.tsx` — integração de todos os novos componentes
 
 ---
 
@@ -179,3 +228,6 @@
 | SOF-19 | `resolvido` | Sistema de abas eliminado, página única com 5 cards, ConfigNavLateral, 2 colunas, turnos duplos, avatares, menu 3 pontos |
 | SOF-29 | `resolvido` | Mapa Leaflet com leaflet-draw, desenho de círculos/polígonos, painel de configuração de zonas, migração gradual |
 | SOF-30 | `resolvido` | Responsividade 3 breakpoints, toast de sucesso, validação inline, máscara WhatsApp, beforeunload |
+| SOF-31 | `resolvido` | Carrossel horizontal de categorias no web-client, setas desktop, snap mobile, dark mode |
+| SOF-32 | `resolvido` | Redesign completo relatórios com Recharts: 6 novos componentes, layout grid 2-col, SeletorPeriodo melhorado |
+| SOF-33 | `resolvido` | Insights automáticos, drill-down KPIs com drawer, tabela clientes recorrentes accordion |
