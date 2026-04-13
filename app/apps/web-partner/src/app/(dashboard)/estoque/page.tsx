@@ -180,10 +180,10 @@ function DrawerHistorico({ produto, onClose }: DrawerHistoricoProps) {
 
     (async () => {
       try {
-        const dados = await fetchComAuth<MovimentoHistorico[]>(
+        const resposta = await fetchComAuth<{ data: MovimentoHistorico[]; total: number; page: number; pageSize: number }>(
           `/partner/estoque/${produto.productId}/historico?page=1&pageSize=20`
         );
-        if (!cancelado) setHistorico(dados);
+        if (!cancelado) setHistorico(resposta.data);
       } catch (err) {
         if (!cancelado) {
           setErro(err instanceof Error ? err.message : "Erro ao carregar histórico.");
