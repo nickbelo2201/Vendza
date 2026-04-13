@@ -9,6 +9,9 @@ import { GraficoDonut } from "./GraficoDonut";
 import { GraficoPagamentos } from "./GraficoPagamentos";
 import { GraficoPicoHora } from "./GraficoPicoHora";
 import { TabelaProdutos } from "./TabelaProdutos";
+import { InsightsCard } from "./InsightsCard";
+import { KpiGrid } from "./KpiGrid";
+import { TabelaClientes, ClienteRelatorio } from "./TabelaClientes";
 
 type RevenueByDay = { date: string; revenueCents: number };
 type TopProduto = { name: string; quantity: number; revenueCents: number };
@@ -28,6 +31,7 @@ type Relatorio = {
   repeatRate: number;
   paymentDistribution: PaymentDistribution[];
   salesByHour: SalesByHour[];
+  topClientes?: ClienteRelatorio[];
 };
 
 function formatarData(d: Date): string {
@@ -59,15 +63,6 @@ const CORES_ORIGEM: string[] = [
   "var(--s3, #64748b)",
 ];
 
-type KPI = {
-  id: string;
-  titulo: string;
-  valor: string;
-  deltaPercent?: number;
-  icone: React.ReactNode;
-  destaque?: boolean;
-};
-
 export default async function RelatoriosPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const hoje = formatarData(new Date());
@@ -78,12 +73,13 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
 
   const relatorio = await getRelatorio(from, to);
 
-  // KPIs
-  const kpis: KPI[] = [
+  // KPIs — agora com drillTipo para KpiGrid
+  const kpis = [
     {
       id: "pedidos",
       titulo: "Total de pedidos",
       valor: relatorio ? String(relatorio.totalOrders) : "—",
+      drillTipo: "pedidos" as const,
       icone: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -95,6 +91,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
       titulo: "Faturamento total",
       valor: relatorio ? formatCurrency(relatorio.totalRevenueCents) : "—",
       destaque: true,
+      drillTipo: "faturamento" as const,
       icone: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <line x1="12" y1="1" x2="12" y2="23" />
@@ -116,6 +113,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
       id: "novos",
       titulo: "Novos clientes",
       valor: relatorio ? String(relatorio.newCustomers) : "—",
+      drillTipo: "novos-clientes" as const,
       icone: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -129,6 +127,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
       id: "cancelamento",
       titulo: "Cancelamentos",
       valor: relatorio ? `${relatorio.cancellationRate.toFixed(1)}%` : "—",
+      drillTipo: "cancelamentos" as const,
       icone: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <circle cx="12" cy="12" r="10" />
@@ -167,6 +166,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
       id: "pedidos-cancelados",
       titulo: "Pedidos cancelados",
       valor: relatorio ? String(relatorio.cancelledOrders) : "—",
+      drillTipo: "cancelamentos" as const,
       icone: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <polyline points="3 6 5 6 21 6" />
@@ -184,7 +184,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
       ]
     : [];
 
-  // Origem dos pedidos: usar paymentDistribution como proxy de canais (stub com canal "app")
+  // Origem dos pedidos: usar paymentDistribution como proxy de canais
   const origemData = relatorio
     ? relatorio.paymentDistribution.map((p, i) => ({
         name:
@@ -208,6 +208,9 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
     totalRevenueCents: relatorio?.totalRevenueCents ?? 0,
     averageTicketCents: relatorio?.averageTicketCents ?? 0,
   };
+
+  const topProducts = relatorio?.topProducts ?? [];
+  const topClientes: ClienteRelatorio[] = relatorio?.topClientes ?? [];
 
   return (
     <>
@@ -241,66 +244,16 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
           averageTicketCents={dadosDia.averageTicketCents}
         />
 
-        {/* KPIs — grid 4 colunas */}
-        <div
-          className="relatorio-kpi-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 16,
-          }}
-        >
-          {kpis.map((kpi) => (
-            <div
-              key={kpi.id}
-              className="wp-panel"
-              style={{
-                padding: "18px 20px",
-                ...(kpi.destaque
-                  ? { borderLeft: "3px solid var(--g, #1A7A5E)" }
-                  : {}),
-              }}
-            >
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 12,
-                color: kpi.destaque ? "var(--g, #1A7A5E)" : "var(--text-muted)",
-              }}>
-                {kpi.icone}
-                <span style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}>
-                  {kpi.titulo}
-                </span>
-              </div>
-              <div style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontSize: 22,
-                fontWeight: 700,
-                color: "var(--carbon)",
-                lineHeight: 1,
-                marginBottom: kpi.deltaPercent !== undefined ? 6 : 0,
-              }}>
-                {kpi.valor}
-              </div>
-              {kpi.deltaPercent !== undefined && (
-                <div style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: kpi.deltaPercent >= 0 ? "var(--g, #1A7A5E)" : "#dc2626",
-                  marginTop: 4,
-                }}>
-                  {kpi.deltaPercent >= 0 ? "↑" : "↓"} {Math.abs(kpi.deltaPercent).toFixed(1)}% vs anterior
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Insights automáticos */}
+        <InsightsCard relatorio={relatorio} />
+
+        {/* KPIs — Client Component com drill-down */}
+        <KpiGrid
+          kpis={kpis}
+          from={from}
+          to={to}
+          topProducts={topProducts}
+        />
 
         {/* Linha 1: Gráfico 60% + Donut Clientes 40% */}
         <div
@@ -339,6 +292,9 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
           <GraficoPagamentos dados={relatorio?.paymentDistribution ?? []} />
           <GraficoPicoHora dados={relatorio?.salesByHour ?? []} />
         </div>
+
+        {/* Análise de Clientes — accordion */}
+        <TabelaClientes clientes={topClientes} />
       </div>
     </>
   );
