@@ -1248,3 +1248,156 @@ select {
     padding: 12px 10px 32px;
   }
 }
+
+/* ═══════════════════════════════════════════
+   CARROSSEL DE CATEGORIAS (SOF-31)
+═══════════════════════════════════════════ */
+
+.wc-category-carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wc-category-carousel {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px 8px 8px;
+  flex: 1;
+  /* Evita layout shift */
+  min-height: 110px;
+}
+
+.wc-category-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.wc-cat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 8px 6px 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 72px;
+}
+
+.wc-cat-item:hover {
+  background: var(--color-category-bg, #f3f4f6);
+}
+
+.wc-cat-item--active {
+  border-color: var(--color-cta, #2D5A3D);
+  background: var(--color-category-active-bg, #eef4ff);
+}
+
+.wc-cat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-category-bg, #f3f4f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: background 0.15s;
+}
+
+.wc-cat-item--active .wc-cat-icon {
+  background: var(--color-category-active-bg, #eef4ff);
+}
+
+.wc-cat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #6B7280);
+  text-align: center;
+  white-space: nowrap;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.wc-cat-item--active .wc-cat-label {
+  color: var(--color-cta, #2D5A3D);
+  font-weight: 600;
+}
+
+/* Setas de navegação — visíveis só no desktop */
+.wc-carousel-arrow {
+  display: none; /* escondido por padrão (mobile) */
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border, #e5e0d8);
+  background: var(--color-surface, #fff);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #6B7280);
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.wc-carousel-arrow:hover {
+  background: var(--color-category-bg, #f3f4f6);
+  color: var(--color-text-primary, #0A0A0A);
+}
+
+/* Tablet: ícones um pouco maiores */
+@media (min-width: 768px) {
+  .wc-cat-icon {
+    width: 64px;
+    height: 64px;
+  }
+  .wc-cat-item {
+    min-width: 80px;
+  }
+  .wc-cat-label {
+    font-size: 13px;
+    max-width: 80px;
+  }
+}
+
+/* Desktop: mostra setas, ícones compactos */
+@media (min-width: 1024px) {
+  .wc-carousel-arrow {
+    display: flex;
+  }
+  .wc-cat-icon {
+    width: 52px;
+    height: 52px;
+  }
+  .wc-cat-item {
+    min-width: 68px;
+  }
+}
+
+/* Dark mode */
+[data-theme="dark"] .wc-cat-icon {
+  background: var(--color-category-bg, #1A1A1A);
+}
+[data-theme="dark"] .wc-cat-item--active .wc-cat-icon {
+  background: var(--color-category-active-bg, #0A1929);
+}
+[data-theme="dark"] .wc-carousel-arrow {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+[data-theme="dark"] .wc-carousel-arrow:hover {
+  background: #334155;
+  color: #f1f5f9;
+}

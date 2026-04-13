@@ -8,6 +8,37 @@ import { useCarrinho } from "../context/CarrinhoContext";
 import { CATEGORIES, type Category as StaticCategory } from "../data/categories";
 import { BRANDS, type Brand } from "../data/brands";
 
+function CategoryCarouselItem({ category, isActive, onClick }: {
+  category: { id: string; label: string; emoji: string; imageUrl: string | null };
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <button
+      className={`wc-cat-item${isActive ? " wc-cat-item--active" : ""}`}
+      onClick={onClick}
+    >
+      <div className="wc-cat-icon">
+        {category.imageUrl && !imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={category.imageUrl}
+            alt={category.label}
+            width={36}
+            height={36}
+            onError={() => setImgError(true)}
+            style={{ objectFit: "contain", width: 36, height: 36 }}
+          />
+        ) : (
+          <span style={{ fontSize: 28, lineHeight: 1 }}>{category.emoji}</span>
+        )}
+      </div>
+      <span className="wc-cat-label">{category.label}</span>
+    </button>
+  );
+}
+
 type Category = {
   id: string;
   name: string;
@@ -169,17 +200,62 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
 
   return (
     <section>
-      {/* Grade de categorias — dados estáticos com imagens */}
-      <div className="wc-category-grid">
-        {CATEGORIES.map((cat) => (
-          // cat.id equivale ao slug da categoria (ex: "cervejas", "vinhos")
-          <CategoryCard
-            key={cat.id}
-            category={cat}
-            isActive={filtroCategoria === cat.id}
-            onClick={() => toggleCategoria(cat.id)}
-          />
-        ))}
+      {/* Carrossel de categorias */}
+      <div className="wc-category-carousel-wrapper">
+        {/* Botão seta esquerda — só no desktop */}
+        <button
+          className="wc-carousel-arrow wc-carousel-arrow--left"
+          onClick={() => {
+            const el = document.getElementById("wc-cat-scroll");
+            if (el) el.scrollBy({ left: -200, behavior: "smooth" });
+          }}
+          aria-label="Anterior"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+
+        {/* Track do carrossel */}
+        <div className="wc-category-carousel" id="wc-cat-scroll">
+          {/* Item "Todos" sempre primeiro */}
+          <button
+            className={`wc-cat-item${!filtroCategoria ? " wc-cat-item--active" : ""}`}
+            onClick={() => setFiltroCategoria(null)}
+          >
+            <div className="wc-cat-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+            </div>
+            <span className="wc-cat-label">Todos</span>
+          </button>
+
+          {/* Categorias da API + dados estáticos */}
+          {CATEGORIES.map((cat) => (
+            <CategoryCarouselItem
+              key={cat.id}
+              category={cat}
+              isActive={filtroCategoria === cat.id}
+              onClick={() => toggleCategoria(cat.id)}
+            />
+          ))}
+        </div>
+
+        {/* Botão seta direita — só no desktop */}
+        <button
+          className="wc-carousel-arrow wc-carousel-arrow--right"
+          onClick={() => {
+            const el = document.getElementById("wc-cat-scroll");
+            if (el) el.scrollBy({ left: 200, behavior: "smooth" });
+          }}
+          aria-label="Próximo"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
       </div>
 
       {/* Chips de subcategoria — dados da API */}
