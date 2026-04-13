@@ -1,11 +1,10 @@
-import Link from "next/link";
-
 import { ApiError, fetchAPI } from "../../../lib/api";
+import { ConfigNavLateral } from "./ConfigNavLateral";
 import { DadosBancarios } from "./DadosBancarios";
 import { FormConfiguracoes } from "./FormConfiguracoes";
 import { HorariosForm } from "./HorariosForm";
 import { UsuariosConfig } from "./UsuariosConfig";
-import { ZonasEntrega } from "./ZonasEntrega";
+import { MapaZonasEntrega } from "./MapaZonasEntrega";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -111,75 +110,78 @@ async function getSessaoAtual(): Promise<SessaoAtual | null> {
   }
 }
 
-// ─── Abas ─────────────────────────────────────────────────────────────────────
-
-const ABAS = [
-  { id: "loja", label: "Loja" },
-  { id: "horarios", label: "Horários" },
-  { id: "dados-bancarios", label: "Dados Bancários" },
-  { id: "usuarios", label: "Usuários" },
-] as const;
-
-type AbaId = (typeof ABAS)[number]["id"];
-
-function isAbaValida(v: string | undefined): v is AbaId {
-  return ABAS.some((a) => a.id === v);
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function SettingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ aba?: string }>;
-}) {
-  const params = await searchParams;
-  const abaAtiva: AbaId = isAbaValida(params.aba) ? params.aba : "loja";
-
-  // Carrega dados de acordo com a aba ativa para evitar fetches desnecessários
+export default async function SettingsPage() {
   const [s, zonas, horarios, conta, usuarios, sessao] = await Promise.all([
-    abaAtiva === "loja" ? getSettings() : null,
-    abaAtiva === "loja" ? getZonas() : null,
-    abaAtiva === "horarios" ? getHorarios() : null,
-    abaAtiva === "dados-bancarios" ? getContaBancaria() : null,
-    abaAtiva === "usuarios" ? getUsuarios() : null,
-    abaAtiva === "usuarios" ? getSessaoAtual() : null,
+    getSettings(),
+    getZonas(),
+    getHorarios(),
+    getContaBancaria(),
+    getUsuarios(),
+    getSessaoAtual(),
   ]);
 
   return (
     <>
       <style>{`
-        .conf-tabs {
-          display: flex;
-          gap: 4px;
-          border-bottom: 2px solid var(--border);
-          margin-bottom: 28px;
+        @keyframes slide-in-right {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
-        .conf-tab-btn {
-          background: none;
-          border: none;
-          padding: 10px 18px;
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--text-muted);
-          cursor: pointer;
-          border-radius: 8px 8px 0 0;
-          text-decoration: none;
-          display: inline-block;
-          transition: color 0.15s, background 0.15s;
-          position: relative;
-          bottom: -2px;
-          border-bottom: 2px solid transparent;
+
+        /* Tablet: 768px - 1200px */
+        @media (max-width: 1200px) {
+          .conf-layout {
+            flex-direction: column !important;
+          }
+          .conf-nav-lateral {
+            display: none !important;
+          }
+          .conf-nav-dropdown {
+            display: block !important;
+            margin-bottom: 16px;
+          }
+          .conf-2col {
+            grid-template-columns: 1fr !important;
+          }
+          .conf-mapa-layout {
+            flex-direction: column !important;
+            height: auto !important;
+          }
+          .conf-mapa-map {
+            flex: none !important;
+            height: 300px !important;
+            width: 100% !important;
+          }
+          .conf-mapa-panel {
+            flex: none !important;
+            width: 100% !important;
+            border-left: none !important;
+            border-top: 1px solid var(--border) !important;
+          }
         }
-        .conf-tab-btn:hover {
-          color: var(--carbon);
-          background: var(--cream);
+
+        /* Mobile: < 768px */
+        @media (max-width: 768px) {
+          .conf-input {
+            min-height: 44px !important;
+          }
+          .conf-btn-save {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            margin: 0 -20px;
+          }
         }
-        .conf-tab-btn[data-active="true"] {
-          color: var(--green);
-          font-weight: 600;
-          border-bottom: 2px solid var(--green);
-          background: none;
+
+        /* Dropdown da nav — oculto por padrão (desktop) */
+        .conf-nav-dropdown {
+          display: none;
         }
       `}</style>
 
@@ -189,65 +191,50 @@ export default async function SettingsPage({
           <p>Gerencie os dados, horários, conta bancária e usuários da loja.</p>
         </div>
 
-        {/* Navegação de abas */}
-        <nav className="conf-tabs" aria-label="Seções de configurações">
-          {ABAS.map((aba) => (
-            <Link
-              key={aba.id}
-              href={`/configuracoes?aba=${aba.id}`}
-              className="conf-tab-btn"
-              data-active={abaAtiva === aba.id ? "true" : "false"}
-            >
-              {aba.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="conf-layout" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+          {/* Nav lateral sticky — desktop */}
+          <ConfigNavLateral />
 
-        {/* ─── Aba Loja ─── */}
-        {abaAtiva === "loja" && (
-          <>
-            {!s ? (
-              <div className="wp-note">
-                Não foi possível carregar as configurações. Verifique a conexão com a API.
-              </div>
-            ) : (
-              <div className="wp-stack-lg">
-                <div className="wp-panel">
-                  <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
-                    Dados da loja
-                  </h2>
-                  <FormConfiguracoes
-                    settings={{
-                      name: s.name,
-                      slug: s.slug,
-                      whatsappPhone: s.whatsappPhone ?? "",
-                      status: s.status,
-                      minimumOrderValueCents: s.minimumOrderValueCents,
-                    }}
-                  />
+          {/* Cards em sequência */}
+          <div className="wp-stack-lg" style={{ flex: 1, minWidth: 0 }}>
+            <section id="loja">
+              {!s ? (
+                <div className="wp-note">
+                  Não foi possível carregar as configurações. Verifique a conexão com a API.
                 </div>
+              ) : (
+                <FormConfiguracoes
+                  settings={{
+                    name: s.name,
+                    slug: s.slug,
+                    whatsappPhone: s.whatsappPhone ?? "",
+                    status: s.status,
+                    minimumOrderValueCents: s.minimumOrderValueCents,
+                  }}
+                />
+              )}
+            </section>
 
-                <ZonasEntrega zonas={zonas ?? []} />
-              </div>
-            )}
-          </>
-        )}
+            <section id="horarios">
+              <HorariosForm initialHours={horarios && horarios.length > 0 ? horarios : null} />
+            </section>
 
-        {/* ─── Aba Horários ─── */}
-        {abaAtiva === "horarios" && (
-          <HorariosForm initialHours={horarios && horarios.length > 0 ? horarios : null} />
-        )}
+            <section id="dados-bancarios">
+              <DadosBancarios conta={conta ?? null} />
+            </section>
 
-        {/* ─── Aba Dados Bancários ─── */}
-        {abaAtiva === "dados-bancarios" && <DadosBancarios conta={conta ?? null} />}
+            <section id="zonas">
+              <MapaZonasEntrega zonas={zonas ?? []} />
+            </section>
 
-        {/* ─── Aba Usuários ─── */}
-        {abaAtiva === "usuarios" && (
-          <UsuariosConfig
-            usuarios={usuarios ?? []}
-            currentUserId={sessao?.userId ?? ""}
-          />
-        )}
+            <section id="usuarios">
+              <UsuariosConfig
+                usuarios={usuarios ?? []}
+                currentUserId={sessao?.userId ?? ""}
+              />
+            </section>
+          </div>
+        </div>
       </div>
     </>
   );
