@@ -12,7 +12,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 type OrderItem = {
   productId: string;
-  productName: string;
+  title: string;
   quantity: number;
   unitPriceCents: number;
   totalCents: number;
@@ -123,7 +123,7 @@ export function ComandaPedido({ pedido, nomeLojaEnv }: Props) {
         {pedido.items.map((item, idx) => (
           <div key={item.productId ?? idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
             <span>
-              {item.quantity}x {item.productName}
+              {item.quantity}x {item.title}
             </span>
             <span style={{ whiteSpace: "nowrap", marginLeft: 8 }}>
               {formatCents(item.totalCents)}
