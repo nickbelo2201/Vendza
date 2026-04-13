@@ -68,7 +68,7 @@ export function GraficoTempoReal({ totalOrders, totalRevenueCents, averageTicket
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        <div style={{ textAlign: "center", padding: "12px 8px", borderRadius: 10, background: "var(--gl, #e8f5f0)" }}>
+        <div className="tr-sub-card" style={{ textAlign: "center", padding: "12px 8px", borderRadius: 10 }}>
           <div style={{
             fontFamily: "'Space Grotesk', sans-serif",
             fontSize: 28,
@@ -78,10 +78,10 @@ export function GraficoTempoReal({ totalOrders, totalRevenueCents, averageTicket
           }}>
             {ordens}
           </div>
-          <div style={{ fontSize: 12, color: "var(--s3, #64748b)", marginTop: 6 }}>Pedidos hoje</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>Pedidos hoje</div>
         </div>
 
-        <div style={{ textAlign: "center", padding: "12px 8px", borderRadius: 10, background: "var(--gl, #e8f5f0)" }}>
+        <div className="tr-sub-card" style={{ textAlign: "center", padding: "12px 8px", borderRadius: 10 }}>
           <div style={{
             fontFamily: "'Space Grotesk', sans-serif",
             fontSize: 22,
@@ -91,10 +91,10 @@ export function GraficoTempoReal({ totalOrders, totalRevenueCents, averageTicket
           }}>
             {formatCurrency(receita)}
           </div>
-          <div style={{ fontSize: 12, color: "var(--s3, #64748b)", marginTop: 6 }}>Receita hoje</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>Receita hoje</div>
         </div>
 
-        <div style={{ textAlign: "center", padding: "12px 8px", borderRadius: 10, background: "var(--gl, #e8f5f0)" }}>
+        <div className="tr-sub-card" style={{ textAlign: "center", padding: "12px 8px", borderRadius: 10 }}>
           <div style={{
             fontFamily: "'Space Grotesk', sans-serif",
             fontSize: 22,
@@ -104,7 +104,7 @@ export function GraficoTempoReal({ totalOrders, totalRevenueCents, averageTicket
           }}>
             {formatCurrency(ticket)}
           </div>
-          <div style={{ fontSize: 12, color: "var(--s3, #64748b)", marginTop: 6 }}>Ticket médio</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>Ticket médio</div>
         </div>
       </div>
 
@@ -113,6 +113,13 @@ export function GraficoTempoReal({ totalOrders, totalRevenueCents, averageTicket
           0%   { box-shadow: 0 0 0 0 rgba(26,122,94,0.5); }
           70%  { box-shadow: 0 0 0 8px rgba(26,122,94,0); }
           100% { box-shadow: 0 0 0 0 rgba(26,122,94,0); }
+        }
+        .tr-sub-card {
+          background: var(--gl, #e8f5f0);
+        }
+        [data-theme="dark"] .tr-sub-card {
+          background: rgba(26, 122, 94, 0.12);
+          border: 1px solid rgba(26, 122, 94, 0.2);
         }
       `}</style>
     </div>

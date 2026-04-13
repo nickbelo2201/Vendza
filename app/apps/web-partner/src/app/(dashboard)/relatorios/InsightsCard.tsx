@@ -145,10 +145,23 @@ export function InsightsCard({ relatorio }: Props) {
   if (insights.length === 0) return null;
 
   return (
+    <>
+    <style>{`
+      .insights-card {
+        background: var(--gl, #e8f5f0);
+        border: 1px solid var(--g, #1A7A5E);
+      }
+      [data-theme="dark"] .insights-card {
+        background: rgba(26, 122, 94, 0.08);
+        border: 1px solid rgba(26, 122, 94, 0.25);
+      }
+      [data-theme="dark"] .insights-card .insight-texto {
+        color: var(--carbon, #F1F5F9);
+      }
+    `}</style>
     <div
+      className="insights-card"
       style={{
-        background: "var(--gl, #e8f5f0)",
-        border: "1px solid var(--g, #1A7A5E)",
         borderRadius: 12,
         padding: "16px 20px",
       }}
@@ -220,6 +233,7 @@ export function InsightsCard({ relatorio }: Props) {
               <IconeInsight tamanho={13} />
             </span>
             <span
+              className="insight-texto"
               style={{
                 fontSize: 13,
                 color: "var(--carbon, #1A1A2E)",
@@ -232,5 +246,6 @@ export function InsightsCard({ relatorio }: Props) {
         ))}
       </ul>
     </div>
+    </>
   );
 }
