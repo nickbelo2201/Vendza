@@ -14,6 +14,23 @@ type Order = {
   totalCents: number; placedAt: string; items: OrderItem[];
 };
 
+const CHANNEL_LABELS: Record<string, string> = {
+  web: "Web",
+  whatsapp: "WhatsApp",
+  manual: "Manual",
+  balcao: "Balcão",
+};
+
+const CHANNEL_STYLE: Record<string, React.CSSProperties> = {
+  balcao: {
+    display: "inline-block", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
+    background: "var(--s7)", color: "var(--text-muted)", letterSpacing: "0.02em",
+  },
+  default: {
+    display: "inline-block", fontSize: 11, color: "var(--text-muted)",
+  },
+};
+
 const PAYMENT_LABELS: Record<string, string> = {
   pix: "PIX",
   cash: "Dinheiro",
@@ -95,7 +112,11 @@ export function PedidosClient({ pedidos, statusFiltro }: Props) {
                 >
                   <td>
                     <div style={{ fontWeight: 700 }}>{order.publicId}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{order.channel}</div>
+                    <div style={{ marginTop: 3 }}>
+                      <span style={order.channel === "balcao" ? CHANNEL_STYLE.balcao : CHANNEL_STYLE.default}>
+                        {CHANNEL_LABELS[order.channel] ?? order.channel}
+                      </span>
+                    </div>
                   </td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{order.customerName}</div>
