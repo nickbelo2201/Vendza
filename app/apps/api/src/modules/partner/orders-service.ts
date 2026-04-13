@@ -47,7 +47,7 @@ export type PartnerOrderRecord = {
   id: string;
   publicId: string;
   status: PartnerOrderStatus;
-  channel: "web" | "whatsapp" | "manual";
+  channel: "web" | "whatsapp" | "manual" | "balcao";
   customerId: string;
   customerName: string;
   customerPhone: string;
@@ -70,20 +70,21 @@ export type PartnerOrderCreationResult = PartnerOrderRecord & {
 export type PartnerManualOrderInput = {
   customer: {
     name: string;
-    phone: string;
+    phone?: string | null;
     email?: string;
   };
   items: Array<{
     productId: string;
     quantity: number;
   }>;
-  address: {
+  address?: {
     line1: string;
     number?: string;
     neighborhood: string;
     city: string;
     state: string;
-  };
+  } | null;
+  deliveryType?: "balcao" | "delivery";
   payment: {
     method: PartnerOrderRecord["paymentMethod"];
   };
@@ -534,20 +535,26 @@ export async function createManualPartnerOrder(context: PartnerContext, input: P
   const discountCents = 0;
   const totalCents = subtotalCents + deliveryFeeCents - discountCents;
   const createdAt = new Date();
-  const orderCount = await prisma.order.count({ where: { storeId: context.storeId } });
-  const publicId = `PED-${String(orderCount + 1).padStart(4, "0")}`;
   const note = input.note ?? null;
 
   const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // C-09: Lock por storeId para evitar race condition no publicId sequencial
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${context.storeId}::text))`;
+    const orderCount = await tx.order.count({ where: { storeId: context.storeId } });
+    const publicId = `PED-${String(orderCount + 1).padStart(4, "0")}`;
+
+    // Cliente anônimo: gera telefone único para satisfazer a unique constraint
+    const customerPhone = input.customer.phone ?? `ANON-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+
     const customer = await tx.customer.upsert({
       where: {
         storeId_phone: {
           storeId: context.storeId,
-          phone: input.customer.phone,
+          phone: customerPhone,
         },
       },
       update: {
-        name: input.customer.name,
+        name: input.customer.phone ? input.customer.name : undefined,
         email: input.customer.email ?? undefined,
         lastOrderAt: createdAt,
         totalSpentCents: {
@@ -557,32 +564,34 @@ export async function createManualPartnerOrder(context: PartnerContext, input: P
       create: {
         storeId: context.storeId,
         name: input.customer.name,
-        phone: input.customer.phone,
+        phone: customerPhone,
         email: input.customer.email ?? null,
         lastOrderAt: createdAt,
         totalSpentCents: totalCents,
       },
     });
 
-    await resolveCustomerAddressSeed(tx, customer.id, input.address);
+    if (input.address) {
+      await resolveCustomerAddressSeed(tx, customer.id, input.address);
+    }
 
     const createdOrder = await tx.order.create({
       data: {
         storeId: context.storeId,
         customerId: customer.id,
         publicId,
-        channel: "manual",
+        channel: input.deliveryType === "balcao" ? "balcao" : "manual",
         status: "pending",
         paymentMethod: input.payment.method,
         customerName: input.customer.name,
-        customerPhone: input.customer.phone,
+        customerPhone: input.customer.phone ?? "",
         customerEmail: input.customer.email ?? null,
-        deliveryStreet: input.address.line1,
-        deliveryNumber: input.address.number ?? "S/N",
+        deliveryStreet: input.address?.line1 ?? "",
+        deliveryNumber: input.address?.number ?? "S/N",
         deliveryComplement: null,
-        deliveryNeighborhood: input.address.neighborhood,
-        deliveryCity: input.address.city,
-        deliveryState: input.address.state,
+        deliveryNeighborhood: input.address?.neighborhood ?? "",
+        deliveryCity: input.address?.city ?? "",
+        deliveryState: input.address?.state ?? "",
         deliveryPostalCode: DEFAULT_POSTAL_CODE,
         deliveryLat: null,
         deliveryLng: null,

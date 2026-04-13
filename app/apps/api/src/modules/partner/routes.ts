@@ -1,6 +1,7 @@
 import { Type, type Static } from "@sinclair/typebox";
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 
+import { prisma } from "@vendza/database";
 import { envelopeSchema, ok } from "../../lib/http.js";
 import {
   createInventoryMovement,
@@ -94,19 +95,20 @@ const StatusUpdateSchema = Type.Object({
 const ManualOrderSchema = Type.Object({
   customer: Type.Object({
     name: Type.String(),
-    phone: Type.String(),
+    phone: Type.Optional(Type.String()),
     email: Type.Optional(Type.String({ format: "email" })),
   }),
   items: Type.Array(Type.Object({ productId: Type.String(), quantity: Type.Integer({ minimum: 1 }) }), {
     minItems: 1,
   }),
-  address: Type.Object({
+  address: Type.Optional(Type.Object({
     line1: Type.String(),
     number: Type.Optional(Type.String()),
     neighborhood: Type.String(),
     city: Type.String(),
     state: Type.String(),
-  }),
+  })),
+  deliveryType: Type.Optional(Type.Union([Type.Literal("balcao"), Type.Literal("delivery")])),
   payment: Type.Object({
     method: Type.Union([
       Type.Literal("pix"),
@@ -326,7 +328,11 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         return ok(await getPartnerReports(partnerContext(request), request.query));
       } catch (err) {
         if (err instanceof Error && err.message.includes("90 dias")) {
-          return reply.code(400).send({ error: err.message });
+          return reply.code(400).send({
+            data: null,
+            meta: { requestedAt: new Date().toISOString(), stub: false },
+            error: { code: "PERIOD_TOO_LONG", message: err.message },
+          });
         }
         throw err;
       }
@@ -1027,8 +1033,36 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
     async (request, reply) => {
       const { ext, productId } = request.body;
+
+      // C-08: Validar ext contra allowlist
+      const EXT_ALLOWLIST = ["jpg", "jpeg", "png", "webp", "gif"];
+      const extNormalizada = ext.replace(/^\./, "").toLowerCase();
+      if (!EXT_ALLOWLIST.includes(extNormalizada)) {
+        return reply.code(400).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "INVALID_EXT", message: `Extensão não permitida. Use: ${EXT_ALLOWLIST.join(", ")}.` },
+        });
+      }
+
+      // C-08: Validar que productId pertence ao storeId do contexto
+      if (productId) {
+        const ctx = partnerContext(request);
+        const produto = await prisma.product.findFirst({
+          where: { id: productId, storeId: ctx.storeId },
+          select: { id: true },
+        });
+        if (!produto) {
+          return reply.code(403).send({
+            data: null,
+            meta: { requestedAt: new Date().toISOString(), stub: false },
+            error: { code: "PRODUCT_NOT_FOUND", message: "Produto não encontrado ou não pertence a esta loja." },
+          });
+        }
+      }
+
       const identificador = productId ?? `temp_${Date.now()}`;
-      const path = `${identificador}.${ext.replace(/^\./, "")}`;
+      const path = `${identificador}.${extNormalizada}`;
 
       const { data, error } = await app.supabaseAdmin.storage
         .from("product-images")

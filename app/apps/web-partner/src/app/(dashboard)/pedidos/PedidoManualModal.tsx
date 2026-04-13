@@ -24,6 +24,7 @@ type ItemPedido = {
 };
 
 type Secao = "cliente" | "itens" | "entrega";
+type TipoEntrega = "balcao" | "delivery";
 
 async function fetchComAuth<T>(path: string, options: RequestInit = {}): Promise<T> {
   const supabase = createClient();
@@ -53,6 +54,29 @@ function formatCents(cents: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
+// ─── Ícones SVG ───────────────────────────────────────────────────────────────
+
+function IconStore() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/>
+      <path d="M3 9l2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/>
+      <line x1="12" y1="3" x2="12" y2="9"/>
+    </svg>
+  );
+}
+
+function IconTruck() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="3" width="15" height="13"/>
+      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+      <circle cx="5.5" cy="18.5" r="2.5"/>
+      <circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+  );
+}
+
 type Props = {
   aberto: boolean;
   onFechar: () => void;
@@ -65,6 +89,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   const [erro, setErro] = useState<string | null>(null);
 
   // Seção 1 — Cliente
+  const [identificarCliente, setIdentificarCliente] = useState(false);
   const [telefone, setTelefone] = useState("");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -76,6 +101,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   const [itensPedido, setItensPedido] = useState<ItemPedido[]>([]);
 
   // Seção 3 — Entrega e pagamento
+  const [tipoEntrega, setTipoEntrega] = useState<TipoEntrega>("balcao");
   const [rua, setRua] = useState("");
   const [numero, setNumero] = useState("");
   const [bairro, setBairro] = useState("");
@@ -83,13 +109,15 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   const [estado, setEstado] = useState("");
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "cash" | "card_on_delivery">("pix");
 
-  // Carregar produtos ao abrir
+  // Reset ao abrir
   useEffect(() => {
     if (!aberto) return;
     setSecao("cliente");
     setErro(null);
+    setIdentificarCliente(false);
     setTelefone(""); setNome(""); setEmail("");
     setItensPedido([]); setBuscaProduto("");
+    setTipoEntrega("balcao");
     setRua(""); setNumero(""); setBairro(""); setCidade(""); setEstado("");
     setMetodoPagamento("pix");
 
@@ -161,7 +189,8 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   async function handleSubmit() {
     setErro(null);
 
-    if (!nome.trim() || !telefone.trim()) {
+    // Validação de cliente (só quando identificado)
+    if (identificarCliente && (!nome.trim() || !telefone.trim())) {
       setErro("Nome e telefone do cliente são obrigatórios.");
       setSecao("cliente");
       return;
@@ -171,7 +200,8 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
       setSecao("itens");
       return;
     }
-    if (!rua.trim() || !bairro.trim() || !cidade.trim() || !estado.trim()) {
+    // Validação de endereço (só para delivery)
+    if (tipoEntrega === "delivery" && (!rua.trim() || !bairro.trim() || !cidade.trim() || !estado.trim())) {
       setErro("Endereço incompleto (rua, bairro, cidade e estado são obrigatórios).");
       setSecao("entrega");
       return;
@@ -182,19 +212,26 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
       await fetchComAuth("/partner/orders/manual", {
         method: "POST",
         body: JSON.stringify({
-          customer: {
-            name: nome.trim(),
-            phone: telefone.trim(),
-            ...(email.trim() ? { email: email.trim() } : {}),
-          },
+          customer: identificarCliente
+            ? {
+                name: nome.trim(),
+                phone: telefone.trim(),
+                ...(email.trim() ? { email: email.trim() } : {}),
+              }
+            : { name: "Consumidor" },
           items: itensPedido.map((i) => ({ productId: i.productId, quantity: i.quantidade })),
-          address: {
-            line1: rua.trim(),
-            ...(numero.trim() ? { number: numero.trim() } : {}),
-            neighborhood: bairro.trim(),
-            city: cidade.trim(),
-            state: estado.trim(),
-          },
+          deliveryType: tipoEntrega,
+          ...(tipoEntrega === "delivery"
+            ? {
+                address: {
+                  line1: rua.trim(),
+                  ...(numero.trim() ? { number: numero.trim() } : {}),
+                  neighborhood: bairro.trim(),
+                  city: cidade.trim(),
+                  state: estado.trim(),
+                },
+              }
+            : {}),
           payment: { method: metodoPagamento },
         }),
       });
@@ -215,6 +252,15 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
     { id: "itens", label: "2. Itens" },
     { id: "entrega", label: "3. Entrega e pagamento" },
   ];
+
+  const toggleStyle = (ativo: boolean): React.CSSProperties => ({
+    display: "flex", alignItems: "center", gap: 7,
+    padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+    cursor: "pointer", transition: "all 0.15s",
+    background: ativo ? "var(--g)" : "var(--s8)",
+    color: ativo ? "#fff" : "var(--night)",
+    border: ativo ? "1.5px solid var(--g)" : "1.5px solid var(--s6)",
+  });
 
   return (
     <div
@@ -276,57 +322,93 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
 
         {/* Corpo com scroll */}
         <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
-          {/* Seção 1 — Cliente */}
+          {/* ── Seção 1 — Cliente ── */}
           {secao === "cliente" && (
             <div className="wp-stack">
-              <div className="wp-form-group">
-                <label className="wp-label">Telefone *</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    className="wp-input"
-                    value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
-                    onBlur={() => buscarCliente(telefone)}
-                    placeholder="(11) 99999-9999"
-                    inputMode="tel"
-                    style={{ flex: 1 }}
-                  />
-                  <button
-                    type="button"
-                    className="wp-btn wp-btn-secondary"
-                    style={{ fontSize: 13, whiteSpace: "nowrap" }}
-                    disabled={buscandoCliente}
-                    onClick={() => buscarCliente(telefone)}
-                  >
-                    {buscandoCliente ? "Buscando..." : "Buscar"}
-                  </button>
+              {/* Toggle identificar cliente */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: "var(--s8)", borderRadius: 10, padding: "12px 14px",
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--night)" }}>Identificar cliente</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                    {identificarCliente ? "Preencha os dados do cliente" : "Venda anônima — pedido como Consumidor"}
+                  </div>
                 </div>
-                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                  Se o cliente já existe, seus dados serão preenchidos automaticamente.
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setIdentificarCliente((v) => !v)}
+                  style={{
+                    width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+                    background: identificarCliente ? "var(--g)" : "var(--s5)",
+                    position: "relative", transition: "background 0.2s", flexShrink: 0,
+                  }}
+                  aria-checked={identificarCliente}
+                  role="switch"
+                >
+                  <span style={{
+                    position: "absolute", top: 3, left: identificarCliente ? 23 : 3,
+                    width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                    transition: "left 0.2s",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                  }} />
+                </button>
               </div>
 
-              <div className="wp-form-group">
-                <label className="wp-label">Nome *</label>
-                <input
-                  className="wp-input"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Nome completo"
-                />
-              </div>
+              {/* Campos de cliente — visíveis apenas quando identificando */}
+              {identificarCliente && (
+                <>
+                  <div className="wp-form-group">
+                    <label className="wp-label">Telefone *</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        className="wp-input"
+                        value={telefone}
+                        onChange={(e) => setTelefone(e.target.value)}
+                        onBlur={() => buscarCliente(telefone)}
+                        placeholder="(11) 99999-9999"
+                        inputMode="tel"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="wp-btn wp-btn-secondary"
+                        style={{ fontSize: 13, whiteSpace: "nowrap" }}
+                        disabled={buscandoCliente}
+                        onClick={() => buscarCliente(telefone)}
+                      >
+                        {buscandoCliente ? "Buscando..." : "Buscar"}
+                      </button>
+                    </div>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      Se o cliente já existe, seus dados serão preenchidos automaticamente.
+                    </span>
+                  </div>
 
-              <div className="wp-form-group">
-                <label className="wp-label">Email (opcional)</label>
-                <input
-                  className="wp-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@exemplo.com"
-                  type="email"
-                  inputMode="email"
-                />
-              </div>
+                  <div className="wp-form-group">
+                    <label className="wp-label">Nome *</label>
+                    <input
+                      className="wp-input"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Nome completo"
+                    />
+                  </div>
+
+                  <div className="wp-form-group">
+                    <label className="wp-label">Email (opcional)</label>
+                    <input
+                      className="wp-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@exemplo.com"
+                      type="email"
+                      inputMode="email"
+                    />
+                  </div>
+                </>
+              )}
 
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <button
@@ -343,7 +425,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
             </div>
           )}
 
-          {/* Seção 2 — Itens */}
+          {/* ── Seção 2 — Itens ── */}
           {secao === "itens" && (
             <div className="wp-stack">
               {/* Busca de produto */}
@@ -490,62 +572,90 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
             </div>
           )}
 
-          {/* Seção 3 — Entrega e pagamento */}
+          {/* ── Seção 3 — Entrega e pagamento ── */}
           {secao === "entrega" && (
             <div className="wp-stack">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-                <div className="wp-form-group">
-                  <label className="wp-label">Rua *</label>
-                  <input
-                    className="wp-input"
-                    value={rua}
-                    onChange={(e) => setRua(e.target.value)}
-                    placeholder="Nome da rua"
-                  />
+              {/* Toggle Balcão / Delivery */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+                  Tipo de venda
                 </div>
-                <div className="wp-form-group" style={{ minWidth: 80 }}>
-                  <label className="wp-label">Número</label>
-                  <input
-                    className="wp-input"
-                    value={numero}
-                    onChange={(e) => setNumero(e.target.value)}
-                    placeholder="S/N"
-                  />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" style={toggleStyle(tipoEntrega === "balcao")} onClick={() => setTipoEntrega("balcao")}>
+                    <IconStore />
+                    Balcão
+                  </button>
+                  <button type="button" style={toggleStyle(tipoEntrega === "delivery")} onClick={() => setTipoEntrega("delivery")}>
+                    <IconTruck />
+                    Delivery
+                  </button>
                 </div>
-              </div>
-
-              <div className="wp-form-group">
-                <label className="wp-label">Bairro *</label>
-                <input
-                  className="wp-input"
-                  value={bairro}
-                  onChange={(e) => setBairro(e.target.value)}
-                  placeholder="Bairro"
-                />
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-                <div className="wp-form-group">
-                  <label className="wp-label">Cidade *</label>
-                  <input
-                    className="wp-input"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                    placeholder="Cidade"
-                  />
-                </div>
-                <div className="wp-form-group" style={{ minWidth: 70 }}>
-                  <label className="wp-label">Estado *</label>
-                  <input
-                    className="wp-input"
-                    value={estado}
-                    onChange={(e) => setEstado(e.target.value.toUpperCase().slice(0, 2))}
-                    placeholder="SP"
-                    maxLength={2}
-                  />
+                <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
+                  {tipoEntrega === "balcao"
+                    ? "Venda presencial — cliente retira no balcão"
+                    : "Pedido com entrega — preencha o endereço abaixo"}
                 </div>
               </div>
 
+              {/* Formulário de endereço — apenas Delivery */}
+              {tipoEntrega === "delivery" && (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+                    <div className="wp-form-group">
+                      <label className="wp-label">Rua *</label>
+                      <input
+                        className="wp-input"
+                        value={rua}
+                        onChange={(e) => setRua(e.target.value)}
+                        placeholder="Nome da rua"
+                      />
+                    </div>
+                    <div className="wp-form-group" style={{ minWidth: 80 }}>
+                      <label className="wp-label">Número</label>
+                      <input
+                        className="wp-input"
+                        value={numero}
+                        onChange={(e) => setNumero(e.target.value)}
+                        placeholder="S/N"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="wp-form-group">
+                    <label className="wp-label">Bairro *</label>
+                    <input
+                      className="wp-input"
+                      value={bairro}
+                      onChange={(e) => setBairro(e.target.value)}
+                      placeholder="Bairro"
+                    />
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+                    <div className="wp-form-group">
+                      <label className="wp-label">Cidade *</label>
+                      <input
+                        className="wp-input"
+                        value={cidade}
+                        onChange={(e) => setCidade(e.target.value)}
+                        placeholder="Cidade"
+                      />
+                    </div>
+                    <div className="wp-form-group" style={{ minWidth: 70 }}>
+                      <label className="wp-label">Estado *</label>
+                      <input
+                        className="wp-input"
+                        value={estado}
+                        onChange={(e) => setEstado(e.target.value.toUpperCase().slice(0, 2))}
+                        placeholder="SP"
+                        maxLength={2}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Forma de pagamento */}
               <div className="wp-form-group">
                 <label className="wp-label">Forma de pagamento *</label>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
