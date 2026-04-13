@@ -58,6 +58,11 @@ import {
 } from "./delivery-zones-service.js";
 import { getPromocoes } from "./promocoes-service.js";
 import {
+  getFinanceiroKpis,
+  getExtratoFinanceiro,
+  exportarFinanceiro,
+} from "./financeiro-service.js";
+import {
   getDeliveryZones,
   getStoreHours,
   getStoreSettings,
@@ -901,6 +906,110 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         return reply.code(400).send(ok({ message: "Nao foi possivel revogar o usuario." }));
       }
       return ok(resultado);
+    },
+  );
+
+  // ─── Financeiro ─────────────────────────────────────────────────────────────
+
+  app.get<{ Querystring: { from?: string; to?: string } }>(
+    "/partner/financeiro",
+    {
+      schema: {
+        querystring: Type.Object({ from: Type.Optional(Type.String()), to: Type.Optional(Type.String()) }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) => {
+      const { from, to } = request.query;
+      const agora = new Date();
+      const dataFim = to ? new Date(to) : agora;
+      const dataInicio = from ? new Date(from) : new Date(agora.getFullYear(), agora.getMonth(), 1);
+      return ok(await getFinanceiroKpis(partnerContext(request), dataInicio, dataFim));
+    },
+  );
+
+  app.get<{
+    Querystring: {
+      from?: string;
+      to?: string;
+      status?: string;
+      metodo?: string;
+      busca?: string;
+      page?: number;
+      pageSize?: number;
+      orderBy?: string;
+      orderDir?: string;
+    };
+  }>(
+    "/partner/financeiro/extrato",
+    {
+      schema: {
+        querystring: Type.Object({
+          from: Type.Optional(Type.String()),
+          to: Type.Optional(Type.String()),
+          status: Type.Optional(Type.String()),
+          metodo: Type.Optional(Type.String()),
+          busca: Type.Optional(Type.String()),
+          page: Type.Optional(Type.Integer({ minimum: 1 })),
+          pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+          orderBy: Type.Optional(Type.String()),
+          orderDir: Type.Optional(Type.String()),
+        }),
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) => {
+      const { from, to, status, metodo, busca, page, pageSize, orderBy, orderDir } = request.query;
+      const agora = new Date();
+      const dataFim = to ? new Date(to) : agora;
+      const dataInicio = from ? new Date(from) : new Date(agora.getFullYear(), agora.getMonth(), 1);
+      return ok(
+        await getExtratoFinanceiro(partnerContext(request), {
+          from: dataInicio,
+          to: dataFim,
+          status,
+          metodo,
+          busca,
+          page: page ?? 1,
+          pageSize: pageSize ?? 20,
+          orderBy,
+          orderDir: orderDir as "asc" | "desc" | undefined,
+        }),
+      );
+    },
+  );
+
+  app.get<{ Querystring: { from?: string; to?: string; tipo?: string; status?: string; metodo?: string } }>(
+    "/partner/financeiro/exportar",
+    {
+      schema: {
+        querystring: Type.Object({
+          from: Type.Optional(Type.String()),
+          to: Type.Optional(Type.String()),
+          tipo: Type.Optional(Type.String()),
+          status: Type.Optional(Type.String()),
+          metodo: Type.Optional(Type.String()),
+        }),
+      },
+    },
+    async (request, reply) => {
+      const { from, to, tipo, status, metodo } = request.query;
+      const agora = new Date();
+      const dataFim = to ? new Date(to) : agora;
+      const dataInicio = from ? new Date(from) : new Date(agora.getFullYear(), agora.getMonth(), 1);
+      const fromStr = dataInicio.toISOString().substring(0, 10);
+      const toStr = dataFim.toISOString().substring(0, 10);
+      const nomeArquivo = `financeiro_${tipo ?? "completo"}_${fromStr}_a_${toStr}.csv`;
+      const csv = await exportarFinanceiro(partnerContext(request), {
+        from: dataInicio,
+        to: dataFim,
+        tipo: (tipo as "resumo" | "completo") ?? "completo",
+        status,
+        metodo,
+      });
+      reply.header("Content-Type", "text/csv; charset=utf-8");
+      reply.header("Content-Disposition", `attachment; filename="${nomeArquivo}"`);
+      return reply.send(csv);
     },
   );
 
