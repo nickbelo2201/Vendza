@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem("vendza-theme") as "light" | "dark") || "dark";
-  });
+  // Valor inicial consistente entre servidor e cliente — evita hydration mismatch.
+  // Preferência salva é lida no useEffect (somente client-side, após mount).
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("vendza-theme") as "light" | "dark" | null;
+    if (saved) setTheme(saved);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
