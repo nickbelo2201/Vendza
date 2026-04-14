@@ -15,6 +15,8 @@ const ROUTE_META: Record<string, { secao: string; titulo: string }> = {
   "/clientes": { secao: "Operação", titulo: "Clientes" },
   "/relatorios": { secao: "Operação", titulo: "Relatórios" },
   "/financeiro": { secao: "Dashboard", titulo: "Financeiro" },
+  "/pdv": { secao: "Operação", titulo: "PDV" },
+  "/caixa": { secao: "Operação", titulo: "Controle de Caixa" },
   "/estoque": { secao: "Operação", titulo: "Estoque" },
   "/promocoes": { secao: "Operação", titulo: "Promoções" },
   "/documentacao": { secao: "Dashboard", titulo: "Documentação" },
