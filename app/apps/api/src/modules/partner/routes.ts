@@ -58,6 +58,14 @@ import {
   type DeliveryZoneInput,
 } from "./delivery-zones-service.js";
 import { getPromocoes } from "./promocoes-service.js";
+import { importarProdutos, type ImportProductInput } from "./import-service.js";
+import {
+  abrirCaixa,
+  fecharCaixa,
+  getCaixaAtual,
+  getResumoTurno,
+  getHistoricoCaixa,
+} from "./caixa-service.js";
 import {
   getFinanceiroKpis,
   getExtratoFinanceiro,
@@ -1081,6 +1089,143 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         .getPublicUrl(path);
 
       return ok({ signedUrl: data.signedUrl, token: data.token, path, publicUrl });
+    },
+  );
+
+  // ─── POST /partner/products/import ───────────────────────────────────────────
+  const ImportProductSchema = Type.Object({
+    name: Type.String({ minLength: 1 }),
+    listPriceCents: Type.Integer({ minimum: 1 }),
+    salePriceCents: Type.Optional(Type.Union([Type.Integer({ minimum: 0 }), Type.Null()])),
+    categoryName: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    isAvailable: Type.Optional(Type.Boolean()),
+    description: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  });
+
+  const ImportBodySchema = Type.Object({
+    products: Type.Array(ImportProductSchema, { minItems: 1, maxItems: 1000 }),
+  });
+
+  app.post(
+    "/partner/products/import",
+    {
+      schema: {
+        body: ImportBodySchema,
+        response: {
+          200: envelopeSchema(Type.Object({
+            imported: Type.Integer(),
+            errors: Type.Array(Type.Object({
+              line: Type.Integer(),
+              message: Type.String(),
+            })),
+          })),
+        },
+      },
+    },
+    async (request, reply) => {
+      const ctx = partnerContext(request);
+      const { products } = request.body as Static<typeof ImportBodySchema>;
+      const result = await importarProdutos(ctx, products as ImportProductInput[]);
+      return ok(result);
+    },
+  );
+
+  // ─── POST /partner/caixa/abrir ───────────────────────────────────────────────
+  const AbrirCaixaBodySchema = Type.Object({
+    saldoInicial: Type.Integer({ minimum: 0 }),
+    observacoes: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  });
+
+  app.post(
+    "/partner/caixa/abrir",
+    { schema: { body: AbrirCaixaBodySchema } },
+    async (request, reply) => {
+      const ctx = partnerContext(request);
+      const { saldoInicial, observacoes } = request.body as Static<typeof AbrirCaixaBodySchema>;
+      try {
+        const turno = await abrirCaixa(ctx, saldoInicial, observacoes);
+        return ok(turno);
+      } catch (err) {
+        return reply.code(409).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "CAIXA_JA_ABERTO", message: err instanceof Error ? err.message : "Erro." },
+        });
+      }
+    },
+  );
+
+  // ─── POST /partner/caixa/fechar ──────────────────────────────────────────────
+  const FecharCaixaBodySchema = Type.Object({
+    turnoId: Type.String({ minLength: 1 }),
+    saldoFinal: Type.Integer({ minimum: 0 }),
+    observacoes: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  });
+
+  app.post(
+    "/partner/caixa/fechar",
+    { schema: { body: FecharCaixaBodySchema } },
+    async (request, reply) => {
+      const ctx = partnerContext(request);
+      const { turnoId, saldoFinal, observacoes } = request.body as Static<typeof FecharCaixaBodySchema>;
+      try {
+        const turno = await fecharCaixa(ctx, turnoId, saldoFinal, observacoes);
+        return ok(turno);
+      } catch (err) {
+        return reply.code(400).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "CAIXA_ERRO", message: err instanceof Error ? err.message : "Erro." },
+        });
+      }
+    },
+  );
+
+  // ─── GET /partner/caixa/atual ────────────────────────────────────────────────
+  app.get(
+    "/partner/caixa/atual",
+    {},
+    async (request) => {
+      const ctx = partnerContext(request);
+      const turno = await getCaixaAtual(ctx);
+      return ok(turno);
+    },
+  );
+
+  // ─── GET /partner/caixa/resumo/:turnoId ─────────────────────────────────────
+  app.get(
+    "/partner/caixa/resumo/:turnoId",
+    {},
+    async (request, reply) => {
+      const ctx = partnerContext(request);
+      const { turnoId } = request.params as { turnoId: string };
+      try {
+        const resumo = await getResumoTurno(ctx, turnoId);
+        return ok(resumo);
+      } catch (err) {
+        return reply.code(404).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "TURNO_NAO_ENCONTRADO", message: err instanceof Error ? err.message : "Erro." },
+        });
+      }
+    },
+  );
+
+  // ─── GET /partner/caixa/historico ───────────────────────────────────────────
+  const CaixaHistoricoQuerySchema = Type.Object({
+    limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+    offset: Type.Optional(Type.Integer({ minimum: 0 })),
+  });
+
+  app.get(
+    "/partner/caixa/historico",
+    { schema: { querystring: CaixaHistoricoQuerySchema } },
+    async (request) => {
+      const ctx = partnerContext(request);
+      const query = request.query as Static<typeof CaixaHistoricoQuerySchema>;
+      const result = await getHistoricoCaixa(ctx, query.limit ?? 20, query.offset ?? 0);
+      return ok(result);
     },
   );
 };

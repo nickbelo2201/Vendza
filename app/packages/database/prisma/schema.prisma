@@ -102,9 +102,27 @@ model Store {
   inventoryItems     InventoryItem[]
   inventoryMovements InventoryMovement[]
   orders             Order[]
+  caixaTurnos        CaixaTurno[]
 
   @@index([tenantId])
   @@map("stores")
+}
+
+model CaixaTurno {
+  id             String    @id @default(uuid()) @db.Uuid
+  storeId        String    @map("store_id") @db.Uuid
+  abreuEm        DateTime  @default(now()) @map("abreu_em")
+  fechouEm       DateTime? @map("fechou_em")
+  abertoPor      String    @map("aberto_por") @db.Uuid
+  fechadoPor     String?   @map("fechado_por") @db.Uuid
+  saldoInicial   Int       @map("saldo_inicial")
+  saldoFinal     Int?      @map("saldo_final")
+  observacoes    String?
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@map("caixa_turnos")
 }
 
 model StoreUser {
