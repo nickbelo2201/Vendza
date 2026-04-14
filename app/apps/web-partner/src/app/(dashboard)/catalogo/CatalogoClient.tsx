@@ -6,6 +6,7 @@ import { formatCurrency } from "@vendza/utils";
 import { ProdutoModal } from "./ProdutoModal";
 import { BotaoDeletar } from "./BotaoDeletar";
 import { DisponibilidadeToggle } from "./DisponibilidadeToggle";
+import { ImportarCSVModal } from "./ImportarCSVModal";
 
 type Categoria = { id: string; name: string; slug: string };
 
@@ -37,6 +38,7 @@ type Props = {
 export function CatalogoClient({ produtos, categorias }: Props) {
   const [modalAberto, setModalAberto] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoParaEditar | null>(null);
+  const [importarCSVAberto, setImportarCSVAberto] = useState(false);
 
   function abrirCriar() {
     setProdutoEditando(null);
@@ -71,6 +73,20 @@ export function CatalogoClient({ produtos, categorias }: Props) {
             <span className="wp-badge wp-badge-blue">
               {produtos.length} produto{produtos.length !== 1 ? "s" : ""}
             </span>
+            <button
+              type="button"
+              className="wp-btn wp-btn-secondary"
+              onClick={() => setImportarCSVAberto(true)}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+              Importar CSV
+            </button>
             <button
               type="button"
               className="wp-btn wp-btn-primary"
@@ -204,6 +220,12 @@ export function CatalogoClient({ produtos, categorias }: Props) {
         onFechar={() => setModalAberto(false)}
         produto={produtoEditando}
         categorias={categorias}
+      />
+
+      <ImportarCSVModal
+        aberto={importarCSVAberto}
+        onFechar={() => setImportarCSVAberto(false)}
+        onConcluido={() => { setImportarCSVAberto(false); window.location.reload(); }}
       />
     </>
   );
