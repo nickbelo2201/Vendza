@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "../../../utils/supabase/client";
@@ -181,6 +181,12 @@ export default function PdvPage() {
   }, []);
 
   const subtotal = carrinho.reduce((s, i) => s + i.unitPriceCents * i.quantidade, 0);
+
+  const trocoInsuficiente = useMemo(() => {
+    if (metodoPagamento !== "cash" || valorRecebido === "") return false;
+    const cents = Math.round(parseFloat(valorRecebido) * 100);
+    return !isNaN(cents) && cents > 0 && cents < subtotal;
+  }, [metodoPagamento, valorRecebido, subtotal]);
 
   const handleBarcodeDetectado = useCallback(async (codigo: string) => {
     setScannerAberto(false);
@@ -642,7 +648,9 @@ export default function PdvPage() {
                     color: troco >= 0 ? "#16a34a" : "#dc2626",
                     fontFamily: "'Space Grotesk', sans-serif",
                   }}>
-                    {troco >= 0 ? `Troco: ${formatCents(troco)}` : "Valor insuficiente"}
+                    {troco >= 0
+                      ? `Troco: ${formatCents(troco)}`
+                      : `Valor insuficiente — faltam ${formatCents(subtotal - recebidoCents)}`}
                   </div>
                 );
               })()}
@@ -674,7 +682,8 @@ export default function PdvPage() {
             type="button"
             className="wp-btn wp-btn-primary"
             onClick={handleFinalizar}
-            disabled={enviando || carrinho.length === 0}
+            disabled={enviando || carrinho.length === 0 || trocoInsuficiente}
+            title={trocoInsuficiente ? "Valor recebido insuficiente" : undefined}
             style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 0" }}
           >
             {enviando ? "Criando pedido..." : carrinho.length === 0 ? "Carrinho vazio" : `Finalizar pedido · ${formatCents(subtotal)}`}

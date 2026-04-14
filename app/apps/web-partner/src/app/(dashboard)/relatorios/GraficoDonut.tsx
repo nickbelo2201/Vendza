@@ -28,12 +28,13 @@ function TooltipCustom({
   if (!item) return null;
   return (
     <div style={{
-      background: "var(--night, #0f172a)",
+      background: "#1e293b",
       color: "#fff",
       padding: "8px 12px",
       borderRadius: 8,
       fontSize: 12,
       boxShadow: "var(--shadow-md)",
+      border: "1px solid rgba(255,255,255,0.1)",
     }}>
       <strong>{item.name}</strong>: {item.value}
     </div>

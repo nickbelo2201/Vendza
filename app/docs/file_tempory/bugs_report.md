@@ -1,6 +1,7 @@
 # Bugs Report — Linear BUG Issues
 > Gerado em: 2026-04-10 | Agente: nicholas-orchestrator
-> Atualizado: 2026-04-13 — ETAPA 2 concluída
+> Atualizado: 2026-04-13 — ETAPA 2 ciclo anterior concluída
+> Atualizado: 2026-04-14 — Nova rodada iniciada (SOF-48, SOF-50, SOF-51)
 
 ---
 
@@ -64,15 +65,78 @@ Schema Prisma não foi alterado (campo `reason String` permanece non-nullable, r
 
 ---
 
-## Resumo Final
+# Nova Rodada — 2026-04-14
 
-| # | ID | Título | Status |
-|---|-----|--------|--------|
-| 1 | SOF-25 | Drawer pedidos transparente dark mode | resolvido |
-| 2 | SOF-27 | Campo motivo obrigatório no estoque | resolvido |
-| 3 | SOF-26 | Upload imagem — Bucket not found | resolvido |
+---
 
-**Total encontrados:** 3 issues Linear
-**Total resolvidos:** 3
-**Total bloqueados:** 0
+## Bug #4 — SOF-48 ✅
+
+- **Título:** Bug: [PDV] Campo de troco exibe zero ao invés de "valor insuficiente" quando valor digitado é menor que o total
+- **Link:** https://linear.app/venza-project/issue/SOF-48/bug-pdv-campo-de-troco-exibe-zero-ao-inves-de-valor-insuficiente
+- **Prioridade:** Alta
+- **Descrição:** O cálculo de troco deve exibir feedback de erro visual quando o valor digitado é menor que o total. Critérios de aceitação:
+  - Valor < total → "Valor insuficiente — faltam R$ X,XX" em vermelho
+  - Valor = total → "Troco: R$ 0,00" em verde
+  - Valor > total → "Troco: R$ X,XX" em verde
+  - Campo vazio → nada exibido
+  - Botão "Finalizar" desabilitado quando valorRecebido > 0 e < total
+  - Botão habilitado quando campo está vazio
+- **Arquivos afetados:**
+  - `app/apps/web-partner/src/app/(dashboard)/pdv/page.tsx` (linhas 635–677)
+  - `app/apps/web-partner/src/app/(dashboard)/pedidos/PedidoManualModal.tsx` (linhas 723–782)
+- **Status:** `resolvido`
+- **Fix aplicado:**
+  - Adicionado `useMemo` nos imports de ambos os arquivos
+  - Derivado `trocoInsuficiente` com `useMemo` (deps: `metodoPagamento`, `valorRecebido`, `subtotal`)
+  - Mensagem atualizada: `"Valor insuficiente — faltam ${formatCents(subtotal - recebidoCents)}"`
+  - Botão Finalizar/Criar: `disabled={enviando || trocoInsuficiente}` + `title` de tooltip
+
+---
+
+## Bug #5 — SOF-50 ✅
+
+- **Título:** Bug: Analise de Financeiro
+- **Link:** https://linear.app/venza-project/issue/SOF-50/bug-analise-de-financeiro
+- **Prioridade:** Média
+- **Descrição:** No gráfico da seção de financeiro/relatórios, ao passar o mouse nos gráficos o tooltip abre com fundo branco e letras brancas — texto invisível.
+- **Arquivos afetados:**
+  - `app/apps/web-partner/src/app/(dashboard)/relatorios/GraficoLinha.tsx` (TooltipCustom linha ~50)
+  - `app/apps/web-partner/src/app/(dashboard)/relatorios/GraficoDonut.tsx` (TooltipCustom linha ~31)
+  - `app/apps/web-partner/src/app/(dashboard)/relatorios/GraficoPicoHora.tsx` (TooltipCustom linha ~40)
+- **Status:** `resolvido`
+- **Fix aplicado:**
+  - Substituído `background: "var(--night, #0f172a)"` por `background: "#1e293b"` nos 3 arquivos
+  - Adicionado `border: "1px solid rgba(255,255,255,0.1)"` em todos os tooltips para contraste consistente
+
+---
+
+## Bug #6 — SOF-51 ✅
+
+- **Título:** Bug: Tela principal (kanban na side dark)
+- **Link:** https://linear.app/venza-project/issue/SOF-51/bug-tela-principal-kanban-na-side-dark
+- **Prioridade:** Média
+- **Descrição:** Drawer de detalhes de pedido aparece correto no tema light mas no tema dark aparece sobreposto ao kanban, menor, posicionado incorretamente — flutua no meio em vez de ocupar a lateral direita.
+- **Arquivos afetados:**
+  - `app/apps/web-partner/src/app/(dashboard)/pedidos/PedidoDetalhe.tsx` (linhas 155–fin)
+  - `app/apps/web-partner/src/app/globals.css` (dark mode section)
+- **Status:** `resolvido`
+- **Fix aplicado:**
+  - Adicionado `isDark` state com `useEffect` que observa `data-theme` via `MutationObserver`
+  - Overlay: `isDark ? "rgba(0,0,0,0.65)" : "rgba(10,10,14,0.45)"` — visível em ambos os temas
+  - Drawer shadow: `isDark ? "-8px 0 40px rgba(0,0,0,0.6)" : "-8px 0 40px rgba(15,23,42,.18)"`
+  - Drawer border: `isDark ? "1px solid var(--border)" : "none"` — delimita o painel no dark mode
+
+---
+
+## Resumo Rodada Atual (2026-04-14)
+
+| # | Issue | Prioridade | Status |
+|---|-------|-----------|--------|
+| 4 | SOF-48 — Troco PDV | Alta | pendente |
+| 5 | SOF-50 — Tooltip Financeiro | Média | pendente |
+| 6 | SOF-51 — Drawer Dark Mode | Média | pendente |
+
+**Total encontrado nesta rodada:** 3 bugs  
+**Total resolvidos:** 3  
+**Total bloqueados:** 0  
 **Typecheck:** 0 erros

@@ -37,13 +37,14 @@ function TooltipCustom({
   const d = item.payload;
   return (
     <div style={{
-      background: "var(--night, #0f172a)",
+      background: "#1e293b",
       color: "#fff",
       padding: "8px 12px",
       borderRadius: 8,
       fontSize: 12,
       lineHeight: 1.6,
       boxShadow: "var(--shadow-md)",
+      border: "1px solid rgba(255,255,255,0.1)",
     }}>
       <div style={{ fontWeight: 600 }}>{String(d.hour).padStart(2, "0")}:00h</div>
       <div>{d.count} pedido{d.count !== 1 ? "s" : ""}</div>

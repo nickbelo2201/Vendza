@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { createClient } from "../../../utils/supabase/client";
 
@@ -183,6 +183,12 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   }
 
   const subtotal = itensPedido.reduce((s, i) => s + i.unitPriceCents * i.quantidade, 0);
+
+  const trocoInsuficiente = useMemo(() => {
+    if (metodoPagamento !== "cash" || valorRecebido === "") return false;
+    const cents = Math.round(parseFloat(valorRecebido) * 100);
+    return !isNaN(cents) && cents > 0 && cents < subtotal;
+  }, [metodoPagamento, valorRecebido, subtotal]);
 
   const produtosFiltrados = buscaProduto.trim()
     ? produtos.filter((p) => p.name.toLowerCase().includes(buscaProduto.toLowerCase()))
@@ -732,7 +738,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
                       }}>
                         {troco >= 0
                           ? `Troco: ${formatCents(troco)}`
-                          : "Valor insuficiente"}
+                          : `Valor insuficiente — faltam ${formatCents(subtotal - recebidoCents)}`}
                       </div>
                     );
                   })()}
@@ -775,7 +781,8 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
                   type="button"
                   className="wp-btn wp-btn-primary"
                   onClick={handleSubmit}
-                  disabled={enviando}
+                  disabled={enviando || trocoInsuficiente}
+                  title={trocoInsuficiente ? "Valor recebido insuficiente" : undefined}
                 >
                   {enviando ? "Criando pedido..." : "Criar pedido"}
                 </button>

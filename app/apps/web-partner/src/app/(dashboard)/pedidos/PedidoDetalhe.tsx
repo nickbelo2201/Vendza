@@ -92,6 +92,15 @@ export function PedidoDetalhe({ orderId, onClose }: Props) {
   const [pedido, setPedido] = useState<OrderDetalhe | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.dataset.theme === "dark");
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!orderId) {
@@ -160,7 +169,7 @@ export function PedidoDetalhe({ orderId, onClose }: Props) {
           position: "fixed",
           inset: 0,
           zIndex: 400,
-          background: "rgba(10,10,14,0.45)",
+          background: isDark ? "rgba(0,0,0,0.65)" : "rgba(10,10,14,0.45)",
           backdropFilter: "blur(2px)",
         }}
       />
@@ -175,7 +184,8 @@ export function PedidoDetalhe({ orderId, onClose }: Props) {
           zIndex: 401,
           width: "min(480px, 100vw)",
           background: "var(--surface)",
-          boxShadow: "-8px 0 40px rgba(15,23,42,.18)",
+          boxShadow: isDark ? "-8px 0 40px rgba(0,0,0,0.6)" : "-8px 0 40px rgba(15,23,42,.18)",
+          borderLeft: isDark ? "1px solid var(--border)" : "none",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
