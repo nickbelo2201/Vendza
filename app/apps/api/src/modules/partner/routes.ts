@@ -1095,7 +1095,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
       const { data, error } = await app.supabaseAdmin.storage
         .from("product-images")
-        .createSignedUploadUrl(path);
+        .createSignedUploadUrl(path, { upsert: true });
 
       if (error || !data) {
         return reply.code(500).send({
