@@ -196,8 +196,7 @@ test("PIX é a forma de pagamento selecionada por padrão", async ({ page }) => 
   await page.goto("/checkout");
   await page.waitForLoadState("networkidle");
 
-  const radiosPagamento = page.locator("input[name='pagamento']");
-  const pixRadio = radiosPagamento.filter({ hasValue: "pix" });
+  const pixRadio = page.locator("input[name='pagamento'][value='pix']");
   await expect(pixRadio).toBeChecked();
 });
 
