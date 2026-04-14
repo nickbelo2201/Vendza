@@ -4,10 +4,10 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  cacheOnFrontEndNav: true,
+  cacheOnFrontEndNav: false,
   aggressiveFrontEndNavCaching: false,
-  reloadOnOnline: true,
-  disable: process.env.NODE_ENV === "development",
+  reloadOnOnline: false,
+  disable: true, // desabilitado até configuração correta do SW — evita quebra de Server Actions
   workboxOptions: {
     disableDevLogs: true,
   },
