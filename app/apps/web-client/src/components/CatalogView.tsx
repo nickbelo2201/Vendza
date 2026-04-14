@@ -32,15 +32,30 @@ function CategoryCarouselItem({ category, isActive, onClick }: {
   isActive: boolean;
   onClick: () => void;
 }) {
+  const [imgError, setImgError] = useState(false);
+  const imageUrl = `/images/categories/${category.slug}.png`;
+
   return (
     <button
       className={`wc-cat-item${isActive ? " wc-cat-item--active" : ""}`}
       onClick={onClick}
     >
       <div className="wc-cat-icon">
-        <span style={{ fontSize: 28, lineHeight: 1 }}>
-          {EMOJI_POR_SLUG[category.slug] ?? "🛍️"}
-        </span>
+        {!imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt={category.name}
+            width={36}
+            height={36}
+            onError={() => setImgError(true)}
+            style={{ objectFit: "contain", width: 36, height: 36 }}
+          />
+        ) : (
+          <span style={{ fontSize: 28, lineHeight: 1 }}>
+            {EMOJI_POR_SLUG[category.slug] ?? "🛍️"}
+          </span>
+        )}
       </div>
       <span className="wc-cat-label">{category.name}</span>
     </button>
