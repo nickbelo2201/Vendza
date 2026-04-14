@@ -5,36 +5,44 @@ import { formatCurrency } from "@vendza/utils";
 import { ProductImage } from "./ProductImage";
 
 import { useCarrinho } from "../context/CarrinhoContext";
-import { CATEGORIES, type Category as StaticCategory } from "../data/categories";
 import { BRANDS, type Brand } from "../data/brands";
 
+const EMOJI_POR_SLUG: Record<string, string> = {
+  cervejas: "🍺",
+  vinhos: "🍷",
+  destilados: "🥃",
+  "nao-alcoolicos": "🧃",
+  "sem-alcool": "🧃",
+  "agua-gelo": "💧",
+  "bebidas-quentes": "☕",
+  snacks: "🍟",
+  petiscos: "🥜",
+  mercearia: "🛒",
+  presentes: "🎁",
+  churrasco: "🥩",
+  hortifruti: "🥬",
+  laticinios: "🧀",
+  padaria: "🍞",
+  limpeza: "🧹",
+  higiene: "🧴",
+};
+
 function CategoryCarouselItem({ category, isActive, onClick }: {
-  category: { id: string; label: string; emoji: string; imageUrl: string | null };
+  category: Category;
   isActive: boolean;
   onClick: () => void;
 }) {
-  const [imgError, setImgError] = useState(false);
   return (
     <button
       className={`wc-cat-item${isActive ? " wc-cat-item--active" : ""}`}
       onClick={onClick}
     >
       <div className="wc-cat-icon">
-        {category.imageUrl && !imgError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={category.imageUrl}
-            alt={category.label}
-            width={36}
-            height={36}
-            onError={() => setImgError(true)}
-            style={{ objectFit: "contain", width: 36, height: 36 }}
-          />
-        ) : (
-          <span style={{ fontSize: 28, lineHeight: 1 }}>{category.emoji}</span>
-        )}
+        <span style={{ fontSize: 28, lineHeight: 1 }}>
+          {EMOJI_POR_SLUG[category.slug] ?? "🛍️"}
+        </span>
       </div>
-      <span className="wc-cat-label">{category.label}</span>
+      <span className="wc-cat-label">{category.name}</span>
     </button>
   );
 }
@@ -63,38 +71,6 @@ type Props = {
   categoriaInicial?: string | null;
   termoBusca?: string;
 };
-
-function CategoryCard({
-  category,
-  isActive,
-  onClick,
-}: {
-  category: StaticCategory;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  const [imgError, setImgError] = useState(false);
-  return (
-    <div
-      onClick={onClick}
-      className={`wc-category-card${isActive ? " active" : ""}`}
-    >
-      <div className="wc-category-icon">
-        {category.imageUrl && !imgError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={category.imageUrl}
-            alt={category.label}
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <span style={{ fontSize: 34 }}>{category.emoji}</span>
-        )}
-      </div>
-      <span className="wc-category-label">{category.label}</span>
-    </div>
-  );
-}
 
 function BrandCard({ brand }: { brand: Brand }) {
   const [imgError, setImgError] = useState(false);
@@ -232,13 +208,13 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
             <span className="wc-cat-label">Todos</span>
           </button>
 
-          {/* Categorias da API + dados estáticos */}
-          {CATEGORIES.map((cat) => (
+          {/* Categorias da API */}
+          {categories.map((cat) => (
             <CategoryCarouselItem
               key={cat.id}
               category={cat}
-              isActive={filtroCategoria === cat.id}
-              onClick={() => toggleCategoria(cat.id)}
+              isActive={filtroCategoria === cat.slug}
+              onClick={() => toggleCategoria(cat.slug)}
             />
           ))}
         </div>
