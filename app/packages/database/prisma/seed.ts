@@ -88,6 +88,20 @@ async function main() {
   console.log(`✓ Store: ${store.name} (id: ${store.id})`);
 
   // ─── StoreUser (dono) ─────────────────────────────────────────────────────
+  // Remove o authUserId de outras lojas para evitar conflito no findFirst
+  const SEED_PLACEHOLDER = "9f6d2e72-6d29-45e8-b6ff-9e9fa0000001";
+  if (OWNER_AUTH_USER_ID !== SEED_PLACEHOLDER) {
+    const vinculosAntigos = await prisma.storeUser.findMany({
+      where: { authUserId: OWNER_AUTH_USER_ID, storeId: { not: store.id } },
+    });
+    if (vinculosAntigos.length > 0) {
+      await prisma.storeUser.updateMany({
+        where: { authUserId: OWNER_AUTH_USER_ID, storeId: { not: store.id } },
+        data: { authUserId: SEED_PLACEHOLDER },
+      });
+      console.log(`⚠ Removido vínculo de ${vinculosAntigos.length} loja(s) antiga(s) para evitar conflito`);
+    }
+  }
 
   await prisma.storeUser.upsert({
     where: { storeId_email: { storeId: store.id, email: OWNER_EMAIL } },
