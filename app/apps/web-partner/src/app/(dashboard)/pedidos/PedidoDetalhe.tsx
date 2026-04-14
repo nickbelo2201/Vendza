@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { createClient } from "../../../utils/supabase/client";
 
@@ -93,8 +94,10 @@ export function PedidoDetalhe({ orderId, onClose }: Props) {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const update = () => setIsDark(document.documentElement.dataset.theme === "dark");
     update();
     const observer = new MutationObserver(update);
@@ -158,9 +161,9 @@ export function PedidoDetalhe({ orderId, onClose }: Props) {
     return () => document.removeEventListener("keydown", handleKey);
   }, [orderId, onClose]);
 
-  if (!orderId) return null;
+  if (!orderId || !mounted) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -418,6 +421,7 @@ export function PedidoDetalhe({ orderId, onClose }: Props) {
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
