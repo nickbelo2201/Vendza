@@ -460,13 +460,14 @@ function TooltipArea({
 
   return (
     <div style={{
-      background: "var(--night, #0f172a)",
+      background: "#1e293b",
       color: "#fff",
       padding: "10px 14px",
       borderRadius: 8,
       fontSize: 12,
       lineHeight: 1.7,
       boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+      border: "1px solid rgba(255,255,255,0.1)",
     }}>
       <div style={{ fontWeight: 700, marginBottom: 4 }}>{d.label}</div>
       <div>Receita paga: {formatarCentavos(d.pagoCentavos)}</div>
@@ -1273,7 +1274,17 @@ export default function FinanceiroPage() {
                           />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip
+                        contentStyle={{
+                          background: "#1e293b",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 8,
+                          color: "#fff",
+                          fontSize: 12,
+                        }}
+                        itemStyle={{ color: "#fff" }}
+                        labelStyle={{ color: "#fff", fontWeight: 700 }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                   {/* Label central */}
