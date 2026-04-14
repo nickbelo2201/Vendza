@@ -21,6 +21,7 @@ export async function criarProduto(body: {
   imageUrl?: string | null;
   isAvailable?: boolean;
   isFeatured?: boolean;
+  barcode?: string | null;
 }) {
   await fetchAPI("/partner/products", {
     method: "POST",
@@ -38,6 +39,7 @@ export async function editarProduto(id: string, body: {
   imageUrl?: string | null;
   isAvailable?: boolean;
   isFeatured?: boolean;
+  barcode?: string | null;
 }) {
   await fetchAPI(`/partner/products/${id}`, {
     method: "PATCH",

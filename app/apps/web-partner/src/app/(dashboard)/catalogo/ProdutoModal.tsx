@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 
 import { createClient } from "../../../utils/supabase/client";
 
+import { BarcodeScanner } from "../../../components/BarcodeScanner";
 import { criarProduto, editarProduto } from "./actions";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -69,6 +70,7 @@ type ProdutoForm = {
   imageUrl: string;
   isAvailable: boolean;
   isFeatured: boolean;
+  barcode?: string | null;
 };
 
 type Props = {
@@ -114,6 +116,8 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   const [imageUrl, setImageUrl] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [barcode, setBarcode] = useState("");
+  const [scannerAberto, setScannerAberto] = useState(false);
 
   useEffect(() => {
     if (!aberto) return;
@@ -127,6 +131,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       setImageUrl(produto.imageUrl ?? "");
       setIsAvailable(produto.isAvailable);
       setIsFeatured(produto.isFeatured);
+      setBarcode(produto.barcode ?? "");
     } else {
       setNome("");
       setSlug("");
@@ -137,6 +142,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       setImageUrl("");
       setIsAvailable(true);
       setIsFeatured(false);
+      setBarcode("");
     }
     setErro(null);
   }, [aberto, produto, categorias]);
@@ -207,6 +213,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       imageUrl: imageUrl.trim() || null,
       isAvailable,
       isFeatured,
+      barcode: barcode.trim() || null,
     };
 
     setSalvando(true);
@@ -408,6 +415,33 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
               </label>
             </div>
 
+            <div className="wp-form-group">
+              <label className="wp-label">Código de barras (EAN)</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  className="wp-input"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  placeholder="Ex: 7891234567890"
+                  style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 13 }}
+                />
+                <button
+                  type="button"
+                  className="wp-btn wp-btn-secondary"
+                  title="Escanear com câmera"
+                  onClick={() => setScannerAberto(true)}
+                  style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 9V5a2 2 0 0 1 2-2h4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/>
+                    <path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/>
+                    <line x1="7" y1="12" x2="7" y2="12"/><line x1="12" y1="12" x2="17" y2="12"/>
+                  </svg>
+                  Escanear
+                </button>
+              </div>
+            </div>
+
             {erro && (
               <div style={{
                 background: "#fef2f2", border: "1px solid #fecaca",
@@ -429,6 +463,16 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
           </div>
         </form>
       </div>
+
+      {scannerAberto && (
+        <BarcodeScanner
+          onDetected={(codigo) => {
+            setBarcode(codigo);
+            setScannerAberto(false);
+          }}
+          onFechar={() => setScannerAberto(false)}
+        />
+      )}
     </div>
   );
 }

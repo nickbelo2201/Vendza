@@ -16,6 +16,8 @@
     "@types/papaparse": "^5.5.2",
     "@vendza/ui": "workspace:*",
     "@vendza/utils": "workspace:*",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
     "next": "15.5.14",

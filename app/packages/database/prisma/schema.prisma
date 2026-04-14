@@ -302,6 +302,7 @@ model Product {
   salePriceCents Int?     @map("sale_price_cents")
   isAvailable    Boolean  @default(true) @map("is_available")
   isFeatured     Boolean  @default(false) @map("is_featured")
+  barcode        String?
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -314,6 +315,7 @@ model Product {
 
   @@unique([storeId, slug])
   @@index([storeId, categoryId, isAvailable])
+  @@index([storeId, barcode])
   @@map("products")
 }
 

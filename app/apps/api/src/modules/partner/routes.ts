@@ -9,6 +9,7 @@ import {
   createPartnerProduct,
   deletePartnerCategory,
   deletePartnerProduct,
+  findProductByBarcode,
   getInventory,
   listPartnerCategories,
   listPartnerProducts,
@@ -137,6 +138,7 @@ const ProductUpsertSchema = Type.Object({
   imageUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
   isAvailable: Type.Optional(Type.Boolean()),
   isFeatured: Type.Optional(Type.Boolean()),
+  barcode: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
 const AvailabilitySchema = Type.Object({
@@ -437,6 +439,25 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
   app.get("/partner/products", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async (request) =>
     ok(await listPartnerProducts(partnerContext(request))),
+  );
+
+  // ─── GET /partner/products/barcode/:barcode ───────────────────────────────────
+  app.get(
+    "/partner/products/barcode/:barcode",
+    {},
+    async (request, reply) => {
+      const ctx = partnerContext(request);
+      const { barcode } = request.params as { barcode: string };
+      const product = await findProductByBarcode(ctx, barcode);
+      if (!product) {
+        return reply.code(404).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "PRODUCT_NOT_FOUND", message: "Produto não encontrado." },
+        });
+      }
+      return ok(product);
+    },
   );
 
   app.post<{ Body: ProductUpsertBody }>(

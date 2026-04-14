@@ -115,6 +115,7 @@ type ProductUpsertInput = {
   imageUrl?: string | null;
   isAvailable?: boolean;
   isFeatured?: boolean;
+  barcode?: string | null;
 };
 
 type ProductPatchInput = Partial<ProductUpsertInput>;
@@ -136,6 +137,7 @@ function mapProduct(product: {
   salePriceCents: number | null;
   isAvailable: boolean;
   isFeatured: boolean;
+  barcode?: string | null;
   category: { slug: string } | null;
 }) {
   return {
@@ -150,6 +152,7 @@ function mapProduct(product: {
     salePriceCents: product.salePriceCents ?? product.listPriceCents,
     isAvailable: product.isAvailable,
     isFeatured: product.isFeatured,
+    barcode: product.barcode ?? null,
     offer:
       product.salePriceCents !== null && product.salePriceCents < product.listPriceCents,
   };
@@ -211,6 +214,14 @@ export async function listPartnerProducts(context: PartnerContext) {
   return products.map(mapProduct);
 }
 
+export async function findProductByBarcode(context: PartnerContext, barcode: string) {
+  const product = await prisma.product.findFirst({
+    where: { storeId: context.storeId, barcode },
+    include: { category: { select: { slug: true } } },
+  });
+  return product ? mapProduct(product) : null;
+}
+
 export async function createPartnerProduct(context: PartnerContext, input: ProductUpsertInput) {
   const product = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const created = await tx.product.create({
@@ -225,6 +236,7 @@ export async function createPartnerProduct(context: PartnerContext, input: Produ
         salePriceCents: input.salePriceCents ?? input.listPriceCents,
         isAvailable: input.isAvailable ?? true,
         isFeatured: input.isFeatured ?? false,
+        barcode: input.barcode ?? null,
       },
       include: {
         category: {
@@ -269,6 +281,7 @@ export async function updatePartnerProduct(context: PartnerContext, id: string, 
       ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
       ...(input.isAvailable !== undefined ? { isAvailable: input.isAvailable } : {}),
       ...(input.isFeatured !== undefined ? { isFeatured: input.isFeatured } : {}),
+      ...(input.barcode !== undefined ? { barcode: input.barcode } : {}),
     },
     include: {
       category: {

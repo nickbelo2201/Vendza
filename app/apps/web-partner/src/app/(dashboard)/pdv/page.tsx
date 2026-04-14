@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "../../../utils/supabase/client";
+import { BarcodeScanner } from "../../../components/BarcodeScanner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
@@ -44,6 +45,7 @@ type Produto = {
   salePriceCents: number | null;
   isAvailable: boolean;
   categoryId: string | null;
+  barcode?: string | null;
 };
 type ItemCarrinho = {
   productId: string;
@@ -112,6 +114,8 @@ export default function PdvPage() {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucessoMsg, setSucessoMsg] = useState<string | null>(null);
+  const [scannerAberto, setScannerAberto] = useState(false);
+  const [barcodeErro, setBarcodeErro] = useState<string | null>(null);
 
   // Carrega categorias + produtos ao montar
   useEffect(() => {
@@ -177,6 +181,20 @@ export default function PdvPage() {
   }, []);
 
   const subtotal = carrinho.reduce((s, i) => s + i.unitPriceCents * i.quantidade, 0);
+
+  const handleBarcodeDetectado = useCallback(async (codigo: string) => {
+    setScannerAberto(false);
+    setBarcodeErro(null);
+    try {
+      const produto = await fetchComAuth<Produto & { barcode: string | null }>(`/partner/products/barcode/${encodeURIComponent(codigo)}`);
+      if (produto) {
+        adicionarItem(produto);
+        setSucessoMsg(`"${produto.name}" adicionado ao carrinho.`);
+      }
+    } catch {
+      setBarcodeErro(`Produto com código ${codigo} não encontrado. Cadastre-o primeiro.`);
+    }
+  }, [adicionarItem]);
 
   const produtosFiltrados = categoriaSelecionada === "todas"
     ? produtos
@@ -263,6 +281,26 @@ export default function PdvPage() {
 
       {/* ── Coluna esquerda: grade de produtos (60%) ─── */}
       <div style={{ flex: "0 0 60%", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+
+        {/* Barra de scanner */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", flexShrink: 0 }}>
+          <button
+            type="button"
+            className="wp-btn wp-btn-secondary"
+            onClick={() => { setBarcodeErro(null); setScannerAberto(true); }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9V5a2 2 0 0 1 2-2h4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/>
+              <path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/>
+              <line x1="7" y1="12" x2="7" y2="12"/><line x1="12" y1="12" x2="17" y2="12"/>
+            </svg>
+            Escanear código
+          </button>
+          {barcodeErro && (
+            <span style={{ fontSize: 12, color: "#dc2626" }}>{barcodeErro}</span>
+          )}
+        </div>
 
         {/* Tabs de categoria */}
         <div style={{
@@ -643,6 +681,14 @@ export default function PdvPage() {
           </button>
         </div>
       </div>
+
+      {/* Scanner de código de barras */}
+      {scannerAberto && (
+        <BarcodeScanner
+          onDetected={handleBarcodeDetectado}
+          onFechar={() => setScannerAberto(false)}
+        />
+      )}
     </div>
   );
 }
