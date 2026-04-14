@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { moverCardKanban } from "../app/(dashboard)/kanban-actions";
 import { createClient } from "../utils/supabase/client";
 
@@ -106,6 +107,18 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
   const [avancando, setAvancando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
   const [currentColLabel, setCurrentColLabel] = useState<string | null>(colLabel);
+  const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  // Monta no cliente e observa tema dark/light
+  useEffect(() => {
+    setMounted(true);
+    const update = () => setIsDark(document.documentElement.dataset.theme === "dark");
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Sincroniza colLabel quando o drawer abre para um novo pedido
   useEffect(() => {
@@ -189,12 +202,12 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
     }
   }
 
-  if (!orderId) return null;
+  if (!orderId || !mounted) return null;
 
   const proximo = currentColLabel ? KANBAN_NEXT[currentColLabel] : null;
   const isConcluido = currentColLabel === "Entregue";
 
-  return (
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -203,7 +216,7 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
           position: "fixed",
           inset: 0,
           zIndex: 400,
-          background: "rgba(10,10,14,0.45)",
+          background: isDark ? "rgba(0,0,0,0.65)" : "rgba(10,10,14,0.45)",
           backdropFilter: "blur(2px)",
         }}
       />
@@ -218,7 +231,8 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
           zIndex: 401,
           width: "min(480px, 100vw)",
           background: "var(--surface)",
-          boxShadow: "-8px 0 40px rgba(15,23,42,.18)",
+          boxShadow: isDark ? "-8px 0 40px rgba(0,0,0,0.6)" : "-8px 0 40px rgba(15,23,42,.18)",
+          borderLeft: isDark ? "1px solid var(--border)" : "none",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -580,6 +594,7 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
