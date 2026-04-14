@@ -1,4 +1,17 @@
 import type { NextConfig } from "next";
+// @ts-ignore — @ducanh2912/next-pwa não possui declarações de tipo completas
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: false,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === "development",
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+});
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@vendza/ui", "@vendza/utils", "@vendza/types"],
@@ -9,4 +22,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
