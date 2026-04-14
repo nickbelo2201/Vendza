@@ -152,11 +152,11 @@ export function ClienteDetalhe({ clienteId, onClose }: Props) {
         setTags(tagsData);
         setNotas(notasData);
 
-        const todosOsPedidos = await fetchComAuth<PedidoResumo[]>(
+        const respPedidos = await fetchComAuth<{ orders: PedidoResumo[] }>(
           `/partner/orders?search=${encodeURIComponent(cli.phone)}`,
         );
         if (!cancelado) {
-          setPedidos(todosOsPedidos.slice(0, 10));
+          setPedidos((respPedidos.orders ?? []).slice(0, 10));
         }
       } catch (err) {
         if (!cancelado) {
