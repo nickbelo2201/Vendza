@@ -108,6 +108,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
   const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "cash" | "card_on_delivery">("pix");
+  const [valorRecebido, setValorRecebido] = useState("");
 
   // Reset ao abrir
   useEffect(() => {
@@ -120,6 +121,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
     setTipoEntrega("balcao");
     setRua(""); setNumero(""); setBairro(""); setCidade(""); setEstado("");
     setMetodoPagamento("pix");
+    setValorRecebido("");
 
     fetchComAuth<Produto[]>("/partner/products")
       .then(setProdutos)
@@ -682,6 +684,60 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
                   })}
                 </div>
               </div>
+
+              {/* Cálculo de troco — visível apenas quando Dinheiro */}
+              {metodoPagamento === "cash" && (
+                <div style={{ background: "var(--s8)", borderRadius: 10, padding: "12px 14px" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+                    Cálculo de troco
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                    {[5, 10, 20, 50, 100].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setValorRecebido(String(v))}
+                        style={{
+                          padding: "4px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+                          cursor: "pointer", background: "var(--surface)", border: "1px solid var(--s6)",
+                          color: "var(--night)",
+                        }}
+                      >
+                        R${v}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="wp-form-group" style={{ marginBottom: 8 }}>
+                    <label className="wp-label">Valor recebido pelo cliente (R$)</label>
+                    <input
+                      className="wp-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={valorRecebido}
+                      onChange={(e) => setValorRecebido(e.target.value)}
+                      placeholder="0,00"
+                      inputMode="decimal"
+                    />
+                  </div>
+                  {valorRecebido !== "" && (() => {
+                    const recebidoCents = Math.round(parseFloat(valorRecebido) * 100);
+                    if (isNaN(recebidoCents)) return null;
+                    const troco = recebidoCents - subtotal;
+                    return (
+                      <div style={{
+                        fontSize: 15, fontWeight: 700,
+                        color: troco >= 0 ? "#16a34a" : "#dc2626",
+                        fontFamily: "'Space Grotesk', sans-serif",
+                      }}>
+                        {troco >= 0
+                          ? `Troco: ${formatCents(troco)}`
+                          : "Valor insuficiente"}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* Resumo do pedido */}
               {itensPedido.length > 0 && (
