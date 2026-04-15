@@ -444,7 +444,11 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   // ─── GET /partner/products/barcode/:barcode ───────────────────────────────────
   app.get(
     "/partner/products/barcode/:barcode",
-    {},
+    {
+      schema: {
+        params: Type.Object({ barcode: Type.String({ minLength: 1 }) }),
+      },
+    },
     async (request, reply) => {
       const ctx = partnerContext(request);
       const { barcode } = request.params as { barcode: string };
@@ -1205,7 +1209,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   // ─── GET /partner/caixa/atual ────────────────────────────────────────────────
   app.get(
     "/partner/caixa/atual",
-    {},
+    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
     async (request) => {
       const ctx = partnerContext(request);
       const turno = await getCaixaAtual(ctx);
@@ -1216,7 +1220,11 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   // ─── GET /partner/caixa/resumo/:turnoId ─────────────────────────────────────
   app.get(
     "/partner/caixa/resumo/:turnoId",
-    {},
+    {
+      schema: {
+        params: Type.Object({ turnoId: Type.String({ minLength: 1 }) }),
+      },
+    },
     async (request, reply) => {
       const ctx = partnerContext(request);
       const { turnoId } = request.params as { turnoId: string };

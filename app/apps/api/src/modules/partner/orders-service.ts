@@ -312,6 +312,7 @@ export async function updatePartnerOrderStatus(
     await tx.order.update({
       where: {
         id: existingOrder.id,
+        storeId: context.storeId,
       },
       data: {
         status: input.status,

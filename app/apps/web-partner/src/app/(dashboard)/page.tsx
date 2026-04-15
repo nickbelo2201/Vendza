@@ -201,17 +201,28 @@ export default async function PartnerHomePage() {
     <div>
       {/* ── Metric Cards ── */}
       <div className="metric-grid">
-        {metricCards.map((card) => (
-          <div key={card.label} className="metric-card">
-            <div className="metric-accent" style={{ background: card.accent }} />
-            <span className="metric-label">{card.label}</span>
-            <span className="metric-value">{card.value}</span>
-            <Sparkline points={card.sparklinePoints} color={card.accent} />
-            <span className={`metric-delta${card.deltaPositivo ? "" : " metric-delta--neg"}`}>
-              {card.delta}
-            </span>
-          </div>
-        ))}
+        {summary === null
+          ? [0, 1, 2, 3].map((i) => (
+              <div key={i} className="metric-card" style={{ gap: 10 }}>
+                <div className="metric-accent" style={{ background: "#E5E7EB" }} />
+                <div style={{ height: 12, width: "60%", borderRadius: 6, background: "#E5E7EB", animation: "pulse 1.5s ease-in-out infinite" }} />
+                <div style={{ height: 28, width: "80%", borderRadius: 6, background: "#E5E7EB", animation: "pulse 1.5s ease-in-out infinite" }} />
+                <div style={{ height: 40, width: "100%", borderRadius: 6, background: "#F3F4F6", animation: "pulse 1.5s ease-in-out infinite" }} />
+                <div style={{ height: 12, width: "40%", borderRadius: 6, background: "#E5E7EB", animation: "pulse 1.5s ease-in-out infinite" }} />
+                <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+              </div>
+            ))
+          : metricCards.map((card) => (
+              <div key={card.label} className="metric-card">
+                <div className="metric-accent" style={{ background: card.accent }} />
+                <span className="metric-label">{card.label}</span>
+                <span className="metric-value">{card.value}</span>
+                <Sparkline points={card.sparklinePoints} color={card.accent} />
+                <span className={`metric-delta${card.deltaPositivo ? "" : " metric-delta--neg"}`}>
+                  {card.delta}
+                </span>
+              </div>
+            ))}
       </div>
 
       {/* ── Linha inferior ── */}

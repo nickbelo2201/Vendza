@@ -28,6 +28,8 @@ export default function CheckoutPage() {
 
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroFrete, setErroFrete] = useState<string | null>(null);
+  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
   const [pedidoCriado, setPedidoCriado] = useState(false);
 
   // Campos do form — identificação
@@ -85,6 +87,7 @@ export default function CheckoutPage() {
   async function calcularFrete() {
     if (!cep && !bairro) return;
     setCalculandoFrete(true);
+    setErroFrete(null);
     try {
       const res = await fetch(`${API_URL}/v1/storefront/calcular-frete`, {
         method: "POST",
@@ -95,6 +98,7 @@ export default function CheckoutPage() {
       setFreteInfo(json.data);
     } catch {
       setFreteInfo(null);
+      setErroFrete("Não foi possível calcular o frete. Verifique o endereço e tente novamente.");
     } finally {
       setCalculandoFrete(false);
     }
@@ -102,6 +106,7 @@ export default function CheckoutPage() {
 
   function usarLocalizacao() {
     if (!navigator.geolocation) return;
+    setErroFrete(null);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       setCalculandoFrete(true);
       try {
@@ -114,6 +119,7 @@ export default function CheckoutPage() {
         setFreteInfo(json.data);
       } catch {
         setFreteInfo(null);
+        setErroFrete("Não foi possível calcular o frete. Verifique o endereço e tente novamente.");
       } finally {
         setCalculandoFrete(false);
       }
@@ -143,6 +149,21 @@ export default function CheckoutPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
+    setErroValidacao(null);
+
+    if (nome.trim().length < 2) {
+      setErroValidacao("Informe seu nome completo (mínimo 2 caracteres).");
+      return;
+    }
+    if (telefone.replace(/\D/g, "").length < 10) {
+      setErroValidacao("Informe um telefone válido com DDD (mínimo 10 dígitos).");
+      return;
+    }
+    if (!rua.trim() || !bairro.trim() || !cidade.trim() || !estado.trim()) {
+      setErroValidacao("Preencha todos os campos obrigatórios do endereço de entrega.");
+      return;
+    }
+
     setEnviando(true);
 
     try {
@@ -198,9 +219,16 @@ export default function CheckoutPage() {
     }
   }
 
-  // Aguarda a hidratação do localStorage antes de renderizar qualquer coisa
   if (carrinhoCarregando) {
-    return null;
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: 12, color: "var(--text-muted)" }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 1s linear infinite" }}>
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+        <span style={{ fontSize: 15 }}>Carregando carrinho...</span>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
   if (items.length === 0) {
@@ -347,6 +375,30 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {/* Erro no cálculo de frete */}
+            {!calculandoFrete && erroFrete && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {erroFrete}
+              </div>
+            )}
+
             {/* Aviso fora de área */}
             {foraDeArea && (
               <div
@@ -423,6 +475,12 @@ export default function CheckoutPage() {
             ))}
           </div>
         </fieldset>
+
+        {erroValidacao && (
+          <div className="wc-note" style={{ borderLeftColor: "#dc2626", color: "#dc2626" }}>
+            {erroValidacao}
+          </div>
+        )}
 
         {erro && (
           <div className="wc-note" style={{ borderLeftColor: "var(--amber)", color: "var(--carbon)" }}>
