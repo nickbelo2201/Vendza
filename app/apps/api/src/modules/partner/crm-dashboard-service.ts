@@ -159,179 +159,127 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
   const toDate = filters.to ? new Date(filters.to) : now;
   const fromDate = filters.from ? new Date(filters.from) : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Validação de range máximo de 90 dias
-  const diffMs = toDate.getTime() - fromDate.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  if (diffDays > 90) {
-    throw new Error("Período máximo para relatórios é 90 dias.");
-  }
+  const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+  if (diffDays > 90) throw new Error("Período máximo para relatórios é 90 dias.");
 
-  type SummaryRow = { count: bigint; sum: bigint | null; avg: bigint | null };
-  type TopProductRow = { name: string; quantity: bigint; revenue_cents: bigint };
-  type RevenueByDayRow = { date: Date | string; revenue_cents: bigint };
-  type CountRow = { count: bigint };
-  type CancelledRow = { count: bigint };
-  type RepeatRow = { count: bigint };
-  type PaymentRow = { payment_method: string; count: bigint };
-  type SalesByHourRow = { hour: number | bigint; count: bigint; revenue_cents: bigint };
+  const whereAtivos = {
+    storeId: context.storeId,
+    placedAt: { gte: fromDate, lte: toDate },
+    status: { not: "cancelled" as const },
+  };
+  const whereCancelados = {
+    storeId: context.storeId,
+    placedAt: { gte: fromDate, lte: toDate },
+    status: "cancelled" as const,
+  };
 
-  // Todas as queries em paralelo para melhor performance
-  const [
-    summaryRows,
-    topProductRows,
-    revenueByDayRows,
-    newCustomerRows,
-    cancelledRows,
-    repeatRows,
-    paymentRows,
-    salesByHourRows,
-  ] = await Promise.all([
-    // Total de pedidos + faturamento + ticket médio
-    prisma.$queryRaw`
-      SELECT COUNT(*) as count, SUM(total_cents) as sum, AVG(total_cents) as avg
-      FROM orders
-      WHERE store_id = ${context.storeId}::uuid
-        AND placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND status != 'cancelled'
-    ` as Promise<SummaryRow[]>,
-
-    // Top produtos
-    prisma.$queryRaw`
-      SELECT oi.product_name as name, SUM(oi.quantity) as quantity, SUM(oi.total_price_cents) as revenue_cents
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.store_id = ${context.storeId}::uuid
-        AND o.placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND o.status != 'cancelled'
-      GROUP BY oi.product_name
-      ORDER BY SUM(oi.quantity) DESC
-      LIMIT 10
-    ` as Promise<TopProductRow[]>,
-
-    // Receita por dia
-    prisma.$queryRaw`
-      SELECT DATE(placed_at) as date, SUM(total_cents) as revenue_cents
-      FROM orders
-      WHERE store_id = ${context.storeId}::uuid
-        AND placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND status != 'cancelled'
-      GROUP BY DATE(placed_at)
-      ORDER BY date ASC
-    ` as Promise<RevenueByDayRow[]>,
-
-    // Novos clientes no período
-    prisma.$queryRaw`
-      SELECT COUNT(*) as count
-      FROM customers
-      WHERE store_id = ${context.storeId}::uuid
-        AND created_at BETWEEN ${fromDate} AND ${toDate}
-    ` as Promise<CountRow[]>,
-
-    // Pedidos cancelados no período (para taxa de cancelamento)
-    prisma.$queryRaw`
-      SELECT COUNT(*) as count
-      FROM orders
-      WHERE store_id = ${context.storeId}::uuid
-        AND placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND status = 'cancelled'
-    ` as Promise<CancelledRow[]>,
-
-    // Clientes que já compraram antes do período (taxa de recompra)
-    prisma.$queryRaw`
-      SELECT COUNT(DISTINCT customer_id) as count
-      FROM orders
-      WHERE store_id = ${context.storeId}::uuid
-        AND placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND status != 'cancelled'
-        AND customer_id IN (
-          SELECT customer_id FROM orders
-          WHERE store_id = ${context.storeId}::uuid
-            AND placed_at < ${fromDate}
-            AND status != 'cancelled'
-        )
-    ` as Promise<RepeatRow[]>,
-
-    // Distribuição de formas de pagamento
-    prisma.$queryRaw`
-      SELECT payment_method, COUNT(*) as count
-      FROM orders
-      WHERE store_id = ${context.storeId}::uuid
-        AND placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND status != 'cancelled'
-      GROUP BY payment_method
-      ORDER BY count DESC
-    ` as Promise<PaymentRow[]>,
-
-    // Vendas por hora do dia
-    prisma.$queryRaw`
-      SELECT EXTRACT(HOUR FROM placed_at) as hour, COUNT(*) as count, SUM(total_cents) as revenue_cents
-      FROM orders
-      WHERE store_id = ${context.storeId}::uuid
-        AND placed_at BETWEEN ${fromDate} AND ${toDate}
-        AND status != 'cancelled'
-      GROUP BY EXTRACT(HOUR FROM placed_at)
-      ORDER BY hour ASC
-    ` as Promise<SalesByHourRow[]>,
+  // Busca paralela
+  const [pedidosAtivos, pedidosCancelados, novosClientes] = await Promise.all([
+    prisma.order.findMany({
+      where: whereAtivos,
+      select: {
+        id: true,
+        customerId: true,
+        totalCents: true,
+        paymentMethod: true,
+        placedAt: true,
+        items: { select: { productName: true, quantity: true, totalPriceCents: true } },
+      },
+    }),
+    prisma.order.count({ where: whereCancelados }),
+    prisma.customer.count({
+      where: { storeId: context.storeId, createdAt: { gte: fromDate, lte: toDate } },
+    }),
   ]);
 
-  const summary = summaryRows[0];
-  const totalOrders = Number(summary?.count ?? 0);
-  const totalRevenueCents = Number(summary?.sum ?? 0);
-  const averageTicketCents = totalOrders > 0 ? Math.round(Number(summary?.avg ?? 0)) : 0;
-
-  const topProducts = topProductRows.map((row: TopProductRow) => ({
-    name: row.name,
-    quantity: Number(row.quantity),
-    revenueCents: Number(row.revenue_cents),
-  }));
-
-  const revenueByDay = revenueByDayRows.map((row: RevenueByDayRow) => ({
-    date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date),
-    revenueCents: Number(row.revenue_cents),
-  }));
-
-  const newCustomers = Number(newCustomerRows[0]?.count ?? 0);
+  // Métricas básicas
+  const totalOrders = pedidosAtivos.length;
+  const totalRevenueCents = pedidosAtivos.reduce((s: number, o: { totalCents: number }) => s + o.totalCents, 0);
+  const averageTicketCents = totalOrders > 0 ? Math.round(totalRevenueCents / totalOrders) : 0;
 
   // Taxa de cancelamento
-  const cancelledOrders = Number(cancelledRows[0]?.count ?? 0);
-  const totalWithCancelled = totalOrders + cancelledOrders;
+  const totalWithCancelled = totalOrders + pedidosCancelados;
   const cancellationRate =
     totalWithCancelled > 0
-      ? Math.round((cancelledOrders / totalWithCancelled) * 100 * 10) / 10
+      ? Math.round((pedidosCancelados / totalWithCancelled) * 100 * 10) / 10
       : 0;
 
-  // Taxa de recompra
-  const repeatCustomers = Number(repeatRows[0]?.count ?? 0);
+  // Taxa de recompra — clientes que já tinham pedido antes do período
+  const customerIdsNoPeriodo = [...new Set(pedidosAtivos.map((o: { customerId: string }) => o.customerId))];
+  let repeatCustomers = 0;
+  if (customerIdsNoPeriodo.length > 0) {
+    const antigos = await prisma.order.findMany({
+      where: {
+        storeId: context.storeId,
+        placedAt: { lt: fromDate },
+        status: { not: "cancelled" as const },
+        customerId: { in: customerIdsNoPeriodo },
+      },
+      select: { customerId: true },
+      distinct: ["customerId"],
+    });
+    repeatCustomers = antigos.length;
+  }
   const repeatRate =
     totalOrders > 0
       ? Math.min(100, Math.round((repeatCustomers / totalOrders) * 100 * 10) / 10)
       : 0;
 
-  // Distribuição de formas de pagamento
-  const paymentDistribution = paymentRows.map((row: PaymentRow) => ({
-    method: row.payment_method,
-    count: Number(row.count),
-  }));
+  // Receita por dia
+  const revenueByDayMap = new Map<string, number>();
+  for (const o of pedidosAtivos) {
+    const day = o.placedAt.toISOString().slice(0, 10);
+    revenueByDayMap.set(day, (revenueByDayMap.get(day) ?? 0) + o.totalCents);
+  }
+  const revenueByDay = [...revenueByDayMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, revenueCents]) => ({ date, revenueCents }));
 
-  // Vendas por hora do dia
-  const salesByHour = salesByHourRows.map((row: SalesByHourRow) => ({
-    hour: Number(row.hour),
-    count: Number(row.count),
-    revenueCents: Number(row.revenue_cents),
-  }));
+  // Top produtos
+  const prodMap = new Map<string, { quantity: number; revenueCents: number }>();
+  for (const o of pedidosAtivos) {
+    for (const item of o.items) {
+      const cur = prodMap.get(item.productName) ?? { quantity: 0, revenueCents: 0 };
+      prodMap.set(item.productName, {
+        quantity: cur.quantity + item.quantity,
+        revenueCents: cur.revenueCents + item.totalPriceCents,
+      });
+    }
+  }
+  const topProducts = [...prodMap.entries()]
+    .map(([name, v]) => ({ name, ...v }))
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10);
+
+  // Distribuição de formas de pagamento
+  const payMap = new Map<string, number>();
+  for (const o of pedidosAtivos) {
+    payMap.set(o.paymentMethod, (payMap.get(o.paymentMethod) ?? 0) + 1);
+  }
+  const paymentDistribution = [...payMap.entries()]
+    .map(([method, count]) => ({ method, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Vendas por hora
+  const hourMap = new Map<number, { count: number; revenueCents: number }>();
+  for (const o of pedidosAtivos) {
+    const h = o.placedAt.getHours();
+    const cur = hourMap.get(h) ?? { count: 0, revenueCents: 0 };
+    hourMap.set(h, { count: cur.count + 1, revenueCents: cur.revenueCents + o.totalCents });
+  }
+  const salesByHour = [...hourMap.entries()]
+    .map(([hour, v]) => ({ hour, ...v }))
+    .sort((a, b) => a.hour - b.hour);
 
   return {
-    period: {
-      from: fromDate.toISOString(),
-      to: toDate.toISOString(),
-    },
+    period: { from: fromDate.toISOString(), to: toDate.toISOString() },
     totalRevenueCents,
     totalOrders,
     averageTicketCents,
-    newCustomers,
+    newCustomers: novosClientes,
     topProducts,
     revenueByDay,
-    cancelledOrders,
+    cancelledOrders: pedidosCancelados,
     cancellationRate,
     repeatCustomers,
     repeatRate,
