@@ -266,7 +266,11 @@ export async function createOrderReal(
     const p = dbProducts.find((dp: DbProduct) => dp.id === item.productId);
     return !p || !p.isAvailable;
   });
-  if (unavailable) throw new Error(`Produto indisponível: ${unavailable.productId}`);
+  if (unavailable) {
+    const err = new Error("Produto não disponível. Atualize o carrinho e tente novamente.");
+    Object.assign(err, { statusCode: 422 });
+    throw err;
+  }
 
   const quotedItems = input.items.map((item) => {
     const p = dbProducts.find((dp: DbProduct) => dp.id === item.productId)!;

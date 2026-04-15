@@ -49,10 +49,14 @@ const CreateOrderBodySchema = Type.Object({
   address: Type.Object({
     line1: Type.String(),
     number: Type.Optional(Type.String()),
+    complement: Type.Optional(Type.String()),
     neighborhood: Type.String(),
     city: Type.String(),
     state: Type.String(),
+    postalCode: Type.Optional(Type.String()),
   }),
+  deliveryZoneId: Type.Optional(Type.String()),
+  freightCents: Type.Optional(Type.Integer()),
   payment: Type.Object({
     method: Type.Union([
       Type.Literal("pix"),
@@ -70,9 +74,17 @@ type CreateOrderBody = Static<typeof CreateOrderBodySchema>;
 
 async function resolveStoreId(): Promise<string> {
   const storeSlug = process.env.STORE_SLUG;
-  if (!storeSlug) throw new Error("STORE_SLUG não configurado.");
+  if (!storeSlug) {
+    const err = new Error("Loja não configurada. Contate o suporte.");
+    Object.assign(err, { statusCode: 503 });
+    throw err;
+  }
   const config = await getStorefrontConfig(storeSlug);
-  if (!config) throw new Error(`Loja com slug '${storeSlug}' não encontrada.`);
+  if (!config) {
+    const err = new Error("Loja não encontrada. Contate o suporte.");
+    Object.assign(err, { statusCode: 503 });
+    throw err;
+  }
   return config.id;
 }
 
