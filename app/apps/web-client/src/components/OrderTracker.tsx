@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+const POLLING_INTERVAL_MS = 15_000;
+const STATUS_FINAIS = new Set(["delivered", "cancelled"]);
 
 type TimelineEvent = {
   type: string;
@@ -40,7 +42,13 @@ const STATUS_COLORS: Record<string, string> = {
 export function OrderTracker({ publicId, initialTimeline, initialStatus }: Props) {
   const [timeline, setTimeline] = useState<TimelineEvent[]>(initialTimeline);
   const [status, setStatus] = useState(initialStatus);
+  const [atualizando, setAtualizando] = useState(false);
   const socketRef = useRef<ReturnType<typeof io> | null>(null);
+  const statusRef = useRef(initialStatus);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
     const socket = io(API_URL, { transports: ["websocket", "polling"] });
@@ -68,8 +76,35 @@ export function OrderTracker({ publicId, initialTimeline, initialStatus }: Props
     };
   }, [publicId]);
 
+  useEffect(() => {
+    if (STATUS_FINAIS.has(initialStatus)) return;
+
+    const poll = async () => {
+      if (STATUS_FINAIS.has(statusRef.current)) return;
+
+      setAtualizando(true);
+      try {
+        const res = await fetch(`${API_URL}/v1/orders/${publicId}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        const order = json.data as { status: string; timeline: TimelineEvent[] };
+        setStatus(order.status);
+        setTimeline(order.timeline);
+      } catch {
+        // falha silenciosa — próximo ciclo tenta novamente
+      } finally {
+        setAtualizando(false);
+      }
+    };
+
+    const intervalId = setInterval(poll, POLLING_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [publicId, initialStatus]);
+
   const statusColor = STATUS_COLORS[status] ?? "var(--text-muted)";
   const statusLabel = STATUS_LABELS[status] ?? status;
+  const isFinal = STATUS_FINAIS.has(status);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -96,7 +131,7 @@ export function OrderTracker({ publicId, initialTimeline, initialStatus }: Props
         />
         <span style={{ fontWeight: 700, color: statusColor }}>{statusLabel}</span>
         <span style={{ color: "var(--text-muted)", fontSize: 13, marginLeft: "auto" }}>
-          (atualiza em tempo real)
+          {isFinal ? "Status final" : atualizando ? "Atualizando..." : "Atualiza automaticamente"}
         </span>
       </div>
 

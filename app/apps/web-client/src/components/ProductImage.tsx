@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { CATEGORIES } from "../data/categories";
 
@@ -67,18 +68,15 @@ export function ProductImage({
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={imgSrc}
-      alt={alt}
-      onError={handleError}
-      style={{
-        maxHeight: 140,
-        maxWidth: "100%",
-        objectFit: "contain",
-        display: "block",
-        margin: "0 auto",
-      }}
-    />
+    <div style={{ position: "relative", width: "100%", height: 140 }}>
+      <Image
+        src={imgSrc}
+        alt={alt}
+        fill
+        onError={handleError}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        style={{ objectFit: "contain" }}
+      />
+    </div>
   );
 }
