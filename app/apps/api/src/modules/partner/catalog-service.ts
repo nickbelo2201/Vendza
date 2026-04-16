@@ -155,6 +155,14 @@ type InventoryMovementInput = {
   reason: string;
 };
 
+type CategoryWithParent = {
+  id: string;
+  slug: string;
+  name: string;
+  parentCategoryId: string | null;
+  parent: { id: string; name: string; slug: string } | null;
+} | null;
+
 function mapProduct(product: {
   id: string;
   categoryId: string | null;
@@ -167,12 +175,16 @@ function mapProduct(product: {
   isAvailable: boolean;
   isFeatured: boolean;
   barcode?: string | null;
-  category: { slug: string } | null;
+  category: CategoryWithParent;
 }) {
   return {
     id: product.id,
     categoryId: product.categoryId,
     categorySlug: product.category?.slug ?? null,
+    categoryName: product.category?.name ?? null,
+    parentCategoryId: product.category?.parent?.id ?? null,
+    parentCategoryName: product.category?.parent?.name ?? null,
+    parentCategorySlug: product.category?.parent?.slug ?? null,
     name: product.name,
     slug: product.slug,
     description: product.description ?? "",
@@ -203,7 +215,7 @@ function mapInventoryItem(item: {
     salePriceCents: number | null;
     isAvailable: boolean;
     isFeatured: boolean;
-    category: { slug: string } | null;
+    category: CategoryWithParent;
   };
 }) {
   return {
@@ -215,6 +227,16 @@ function mapInventoryItem(item: {
   };
 }
 
+const categoryFullSelect = {
+  select: {
+    id: true,
+    name: true,
+    slug: true,
+    parentCategoryId: true,
+    parent: { select: { id: true, name: true, slug: true } },
+  },
+} as const;
+
 async function findStoreProduct(context: PartnerContext, id: string) {
   return prisma.product.findFirst({
     where: {
@@ -222,9 +244,7 @@ async function findStoreProduct(context: PartnerContext, id: string) {
       OR: [{ id }, { slug: id }],
     },
     include: {
-      category: {
-        select: { slug: true },
-      },
+      category: categoryFullSelect,
     },
   });
 }
@@ -270,7 +290,13 @@ export async function listPartnerProducts(context: PartnerContext, filters?: Lis
       take: limite,
       include: {
         category: {
-          select: { slug: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentCategoryId: true,
+            parent: { select: { id: true, name: true, slug: true } },
+          },
         },
       },
     }),
@@ -289,7 +315,7 @@ export async function listPartnerProducts(context: PartnerContext, filters?: Lis
 export async function findProductByBarcode(context: PartnerContext, barcode: string) {
   const product = await prisma.product.findFirst({
     where: { storeId: context.storeId, barcode },
-    include: { category: { select: { slug: true } } },
+    include: { category: categoryFullSelect },
   });
   return product ? mapProduct(product) : null;
 }
@@ -312,7 +338,13 @@ export async function createPartnerProduct(context: PartnerContext, input: Produ
       },
       include: {
         category: {
-          select: { slug: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentCategoryId: true,
+            parent: { select: { id: true, name: true, slug: true } },
+          },
         },
       },
     });
@@ -356,9 +388,7 @@ export async function updatePartnerProduct(context: PartnerContext, id: string, 
       ...(input.barcode !== undefined ? { barcode: input.barcode } : {}),
     },
     include: {
-      category: {
-        select: { slug: true },
-      },
+      category: categoryFullSelect,
     },
   });
 
@@ -375,9 +405,7 @@ export async function updateProductAvailability(context: PartnerContext, id: str
     where: { id: existing.id },
     data: { isAvailable },
     include: {
-      category: {
-        select: { slug: true },
-      },
+      category: categoryFullSelect,
     },
   });
 
@@ -392,7 +420,13 @@ export async function getInventory(context: PartnerContext) {
       product: {
         include: {
           category: {
-            select: { slug: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              parentCategoryId: true,
+              parent: { select: { id: true, name: true, slug: true } },
+            },
           },
         },
       },
@@ -414,9 +448,7 @@ export async function deletePartnerProduct(context: PartnerContext, productId: s
     where: { id: existing.id },
     data: { isAvailable: false },
     include: {
-      category: {
-        select: { slug: true },
-      },
+      category: categoryFullSelect,
     },
   });
 
