@@ -35,7 +35,13 @@ function formatCents(cents: number): string {
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type Categoria = { id: string; name: string; slug: string; isActive: boolean; sortOrder: number };
+type CategoriaFilha = { id: string; name: string; slug: string };
+type Categoria = {
+  id: string; name: string; slug: string;
+  isActive: boolean; sortOrder: number;
+  parentCategoryId: string | null;
+  children?: CategoriaFilha[];
+};
 type Produto = {
   id: string;
   name: string;
@@ -98,7 +104,9 @@ export default function PdvPage() {
   const [carregando, setCarregando] = useState(true);
   const [erroCarregar, setErroCarregar] = useState<string | null>(null);
 
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("todas");
+  const [busca, setBusca] = useState("");
+  const [categoriaId, setCategoriaId] = useState("");
+  const [subcategoriaId, setSubcategoriaId] = useState("");
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
 
   const [tipoEntrega, setTipoEntrega] = useState<TipoEntrega>("balcao");
@@ -127,7 +135,11 @@ export default function PdvPage() {
           fetchComAuth<Categoria[]>("/partner/categories"),
           fetchComAuth<{ produtos: Produto[] }>("/partner/products?limite=500"),
         ]);
-        setCategorias(cats.filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder));
+        setCategorias(
+          (cats as Categoria[])
+            .filter((c) => c.isActive)
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+        );
         setProdutos(prodsResp.produtos);
       } catch (err) {
         setErroCarregar(err instanceof Error ? err.message : "Erro ao carregar dados.");
@@ -202,9 +214,30 @@ export default function PdvPage() {
     }
   }, [adicionarItem]);
 
-  const produtosFiltrados = categoriaSelecionada === "todas"
-    ? produtos
-    : produtos.filter((p) => p.categoryId === categoriaSelecionada);
+  // Hierarquia: apenas raízes e subcategorias da raiz selecionada
+  const categoriasPai = categorias.filter((c) => !c.parentCategoryId);
+  const subcategorias = categoriaId
+    ? categoriasPai.find((c) => c.id === categoriaId)?.children ?? []
+    : [];
+
+  const produtosFiltrados = useMemo(() => {
+    let lista = produtos;
+    // Busca por nome
+    if (busca.trim()) {
+      const termo = busca.trim().toLowerCase();
+      lista = lista.filter((p) => p.name.toLowerCase().includes(termo));
+    }
+    // Filtro por subcategoria
+    if (subcategoriaId) {
+      lista = lista.filter((p) => p.categoryId === subcategoriaId);
+    } else if (categoriaId) {
+      // Inclui a própria categoria pai + todas as filhas
+      const idsFilhas = (categoriasPai.find((c) => c.id === categoriaId)?.children ?? []).map((c) => c.id);
+      const ids = new Set([categoriaId, ...idsFilhas]);
+      lista = lista.filter((p) => p.categoryId !== null && ids.has(p.categoryId));
+    }
+    return lista;
+  }, [produtos, busca, categoriaId, subcategoriaId, categoriasPai]);
 
   async function handleFinalizar() {
     setErro(null);
@@ -288,61 +321,73 @@ export default function PdvPage() {
       {/* ── Coluna esquerda: grade de produtos (60%) ─── */}
       <div style={{ flex: "0 0 60%", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
 
-        {/* Barra de scanner */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", flexShrink: 0 }}>
+        {/* Barra de filtros: scanner + pesquisa + categorias + subcategorias */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", flexShrink: 0, flexWrap: "wrap" }}>
+          {/* Botão scanner */}
           <button
             type="button"
             className="wp-btn wp-btn-secondary"
             onClick={() => { setBarcodeErro(null); setScannerAberto(true); }}
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, flexShrink: 0 }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 9V5a2 2 0 0 1 2-2h4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/>
               <path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/>
               <line x1="7" y1="12" x2="7" y2="12"/><line x1="12" y1="12" x2="17" y2="12"/>
             </svg>
-            Escanear código
+            Escanear
           </button>
-          {barcodeErro && (
-            <span style={{ fontSize: 12, color: "#dc2626" }}>{barcodeErro}</span>
-          )}
-        </div>
 
-        {/* Tabs de categoria */}
-        <div style={{
-          display: "flex", gap: 0, overflowX: "auto",
-          borderBottom: "1px solid var(--s6)",
-          flexShrink: 0, paddingBottom: 0,
-        }}>
-          <button
-            type="button"
-            onClick={() => setCategoriaSelecionada("todas")}
-            style={{
-              padding: "9px 16px", background: "none", border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: categoriaSelecionada === "todas" ? 700 : 500,
-              color: categoriaSelecionada === "todas" ? "var(--g)" : "var(--text-muted)",
-              borderBottom: categoriaSelecionada === "todas" ? "2px solid var(--g)" : "2px solid transparent",
-              marginBottom: -1, whiteSpace: "nowrap", transition: "all 0.15s",
-            }}
-          >
-            Todos
-          </button>
-          {categorias.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setCategoriaSelecionada(cat.id)}
-              style={{
-                padding: "9px 16px", background: "none", border: "none", cursor: "pointer",
-                fontSize: 13, fontWeight: categoriaSelecionada === cat.id ? 700 : 500,
-                color: categoriaSelecionada === cat.id ? "var(--g)" : "var(--text-muted)",
-                borderBottom: categoriaSelecionada === cat.id ? "2px solid var(--g)" : "2px solid transparent",
-                marginBottom: -1, whiteSpace: "nowrap", transition: "all 0.15s",
-              }}
+          {/* Campo de pesquisa */}
+          <div style={{ position: "relative", flex: "1 1 160px", minWidth: 140 }}>
+            <svg
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}
             >
-              {cat.name}
-            </button>
-          ))}
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              className="wp-input"
+              placeholder="Pesquisar produto..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              style={{ paddingLeft: 30, fontSize: 13, width: "100%" }}
+            />
+          </div>
+
+          {/* Select de categoria pai */}
+          <select
+            className="wp-input"
+            value={categoriaId}
+            onChange={(e) => { setCategoriaId(e.target.value); setSubcategoriaId(""); }}
+            style={{ flex: "0 1 160px", minWidth: 130, fontSize: 13 }}
+          >
+            <option value="">Categorias</option>
+            {categoriasPai.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          {/* Select de subcategoria — só aparece quando há filhas */}
+          {subcategorias.length > 0 && (
+            <select
+              className="wp-input"
+              value={subcategoriaId}
+              onChange={(e) => setSubcategoriaId(e.target.value)}
+              style={{ flex: "0 1 160px", minWidth: 130, fontSize: 13 }}
+            >
+              <option value="">Subcategorias</option>
+              {subcategorias.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Erro de barcode */}
+          {barcodeErro && (
+            <span style={{ fontSize: 12, color: "#dc2626", flexBasis: "100%" }}>{barcodeErro}</span>
+          )}
         </div>
 
         {/* Grade de produtos */}
