@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { IMaskInput } from "react-imask";
 import { formatCurrency } from "@vendza/utils";
 
 import { useCarrinho } from "../../context/CarrinhoContext";
@@ -267,13 +268,14 @@ export default function CheckoutPage() {
               <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
                 Telefone (com DDD) *
               </label>
-              <input
+              <IMaskInput
+                mask="(00) 00000-0000"
+                value={telefone}
+                unmask={true}
+                onAccept={(value: string) => setTelefone(value)}
                 className="wc-input"
                 required
-                minLength={8}
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-                placeholder="5511999999999"
+                placeholder="(11) 99999-9999"
               />
             </div>
             <div>
