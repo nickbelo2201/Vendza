@@ -12,6 +12,7 @@ import { supabasePlugin } from "./plugins/supabase.js";
 import { socketPlugin } from "./plugins/socketio.js";
 import { redisPlugin_ } from "./plugins/redis.js";
 import { initQueues } from "./jobs/queues.js";
+import { getRedis } from "./plugins/redis.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -64,18 +65,33 @@ export async function buildApp() {
 
   app.register(sensible);
 
-  app.get("/health", async () => ({
-    data: {
-      status: "ok",
-      service: "vendza-api",
-      socket: "active",
-    },
-    meta: {
-      requestedAt: new Date().toISOString(),
-      stub: false
-    },
-    error: null
-  }));
+  app.get("/health", async () => {
+    const redis = getRedis();
+    let redisStatus = "not_configured";
+    if (redis) {
+      try {
+        await redis.ping();
+        redisStatus = "ok";
+      } catch {
+        redisStatus = "error";
+      }
+    }
+    const zapiConfigured = Boolean(process.env.ZAPI_INSTANCE_ID && process.env.ZAPI_TOKEN);
+    return {
+      data: {
+        status: "ok",
+        service: "vendza-api",
+        socket: "active",
+        redis: redisStatus,
+        zapi: zapiConfigured ? "configured" : "not_configured",
+      },
+      meta: {
+        requestedAt: new Date().toISOString(),
+        stub: false
+      },
+      error: null
+    };
+  });
 
   app.register(
     async (v1) => {
