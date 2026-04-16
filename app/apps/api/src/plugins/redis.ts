@@ -12,7 +12,7 @@ const redisPlugin: FastifyPluginAsync = async (app) => {
   const redisUrl = process.env.REDIS_URL;
 
   if (!redisUrl) {
-    app.log.warn("[redis] REDIS_URL não definida — filas BullMQ desabilitadas.");
+    app.log.warn("[redis] REDIS_URL não definida — cache do catálogo e filas BullMQ desabilitados.");
     return;
   }
 
