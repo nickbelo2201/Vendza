@@ -1,17 +1,21 @@
-// Cliente WhatsApp via Evolution API
-// Docs: https://doc.evolution-api.com/
+// Cliente WhatsApp via Z-API
+// Docs: https://developer.z-api.io/
 //
 // Variáveis de ambiente necessárias:
-//   WHATSAPP_API_URL      — URL base da sua instância Evolution API (ex: https://evo.suaempresa.com)
-//   WHATSAPP_API_KEY      — API key configurada na instância
-//   WHATSAPP_INSTANCE     — Nome da instância (ex: "adega-central")
+//   ZAPI_INSTANCE_ID   — ID da instância (ex: "3F1C1404D5B7918D29AB0E8BC9274D54")
+//   ZAPI_TOKEN         — Token da instância
+//   ZAPI_CLIENT_TOKEN  — Client-Token (opcional, para segurança de webhooks)
 
-const API_URL = process.env.WHATSAPP_API_URL?.replace(/\/$/, "");
-const API_KEY = process.env.WHATSAPP_API_KEY;
-const INSTANCE = process.env.WHATSAPP_INSTANCE;
+const INSTANCE_ID = process.env.ZAPI_INSTANCE_ID;
+const TOKEN = process.env.ZAPI_TOKEN;
+const CLIENT_TOKEN = process.env.ZAPI_CLIENT_TOKEN;
+
+const BASE_URL = INSTANCE_ID && TOKEN
+  ? `https://api.z-api.io/instances/${INSTANCE_ID}/token/${TOKEN}`
+  : null;
 
 export function whatsappConfigurado(): boolean {
-  return Boolean(API_URL && API_KEY && INSTANCE);
+  return Boolean(BASE_URL);
 }
 
 function isPhoneValido(phone: string): boolean {
@@ -34,7 +38,7 @@ export async function enviarMensagem(params: {
   mensagem: string;
 }): Promise<void> {
   if (!whatsappConfigurado()) {
-    console.warn("[whatsapp] Variáveis de ambiente não configuradas — mensagem ignorada");
+    console.warn("[whatsapp] Variáveis Z-API não configuradas — mensagem ignorada");
     return;
   }
 
@@ -45,15 +49,19 @@ export async function enviarMensagem(params: {
 
   const numero = normalizarTelefone(params.telefone);
 
-  const res = await fetch(`${API_URL}/message/sendText/${INSTANCE}`, {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (CLIENT_TOKEN) {
+    headers["Client-Token"] = CLIENT_TOKEN;
+  }
+
+  const res = await fetch(`${BASE_URL}/send-text`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: API_KEY!,
-    },
+    headers,
     body: JSON.stringify({
-      number: numero,
-      text: params.mensagem,
+      phone: numero,
+      message: params.mensagem,
     }),
   });
 
