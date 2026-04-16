@@ -394,11 +394,13 @@ export default function CaixaPage() {
   const [historico, setHistorico] = useState<CaixaTurno[]>([]);
   const [historicoTotal, setHistoricoTotal] = useState(0);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
   const [modalAbrir, setModalAbrir] = useState(false);
   const [modalFechar, setModalFechar] = useState(false);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
+    setErro(null);
     try {
       const [atual, hist] = await Promise.all([
         fetchComAuth<CaixaTurno | null>("/partner/caixa/atual"),
@@ -413,7 +415,11 @@ export default function CaixaPage() {
       } else {
         setResumo(null);
       }
-    } catch { /* silencioso */ } finally { setCarregando(false); }
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível carregar os dados do caixa.");
+    } finally {
+      setCarregando(false);
+    }
   }, []);
 
   useEffect(() => { void carregar(); }, [carregar]);
@@ -424,6 +430,20 @@ export default function CaixaPage() {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite", color: "var(--text-muted)" }}>
           <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
         </svg>
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 16 }}>
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{erro}</p>
+        <button
+          onClick={() => void carregar()}
+          style={{ padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: 14 }}
+        >
+          Tentar novamente
+        </button>
       </div>
     );
   }

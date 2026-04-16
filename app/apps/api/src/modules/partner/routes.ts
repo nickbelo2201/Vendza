@@ -604,12 +604,18 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request, reply) => {
-      const resultado = await registrarMovimentacao(partnerContext(request), request.body);
-      if (!resultado) {
-        return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+      try {
+        const resultado = await registrarMovimentacao(partnerContext(request), request.body);
+        if (!resultado) {
+          return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+        }
+        reply.code(201);
+        return ok(resultado);
+      } catch (e) {
+        const status = (e as { statusCode?: number }).statusCode ?? 500;
+        const message = e instanceof Error ? e.message : "Erro ao registrar movimentação.";
+        return reply.code(status).send(ok({ message }));
       }
-      reply.code(201);
-      return ok(resultado);
     },
   );
 

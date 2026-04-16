@@ -139,6 +139,23 @@ export async function registrarMovimentacao(context: PartnerContext, input: Movi
 
   const tipoMapeado = mapTipoMovimentacao(input.tipo);
 
+  // Calcula o delta real baseado no tipo de movimentação:
+  // - replenishment (Entrada): soma ao estoque
+  // - cancellation (Saída): subtrai do estoque
+  // - manual_adjustment (Ajuste): define o valor absoluto do estoque
+  if (tipoMapeado === InventoryMovementType.cancellation) {
+    if (inventoryItem.currentStock - input.quantidade < 0) {
+      throw Object.assign(new Error("Estoque insuficiente para registrar saída."), { statusCode: 400 });
+    }
+  }
+
+  const quantityDelta =
+    tipoMapeado === InventoryMovementType.replenishment
+      ? input.quantidade
+      : tipoMapeado === InventoryMovementType.cancellation
+        ? -input.quantidade
+        : input.quantidade; // manual_adjustment: delta absoluto positivo (ajuste de saldo)
+
   const resultado = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // APPEND-ONLY: apenas cria o movimento, nunca atualiza/deleta
     const movimento = await tx.inventoryMovement.create({
@@ -146,22 +163,25 @@ export async function registrarMovimentacao(context: PartnerContext, input: Movi
         inventoryItemId: inventoryItem.id,
         storeId: context.storeId,
         type: tipoMapeado,
-        quantityDelta: input.quantidade,
+        quantityDelta,
         reason: input.motivo ?? "",
         createdByUserId: context.storeUserId,
         ...(input.dataHora ? { createdAt: new Date(input.dataHora) } : {}),
       },
     });
 
-    // Atualiza o estoque atual no mesmo transaction
-    const itemAtualizado = await tx.inventoryItem.update({
-      where: { id: inventoryItem.id },
-      data: {
-        currentStock: {
-          increment: input.quantidade,
-        },
-      },
-    });
+    // Atualiza o estoque com o delta correto por tipo:
+    // manual_adjustment define o valor absoluto; os demais aplicam delta incremental
+    const itemAtualizado =
+      tipoMapeado === InventoryMovementType.manual_adjustment
+        ? await tx.inventoryItem.update({
+            where: { id: inventoryItem.id },
+            data: { currentStock: { set: input.quantidade } },
+          })
+        : await tx.inventoryItem.update({
+            where: { id: inventoryItem.id },
+            data: { currentStock: { increment: quantityDelta } },
+          });
 
     return {
       id: movimento.id,

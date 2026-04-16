@@ -159,7 +159,7 @@ export async function getFinanceiroKpis(context: PartnerContext, from: Date, to:
     // 9. Receita por dia
     prisma.$queryRaw`
       SELECT
-        DATE(placed_at) AS data,
+        DATE(placed_at AT TIME ZONE 'America/Sao_Paulo') AS data,
         COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN total_cents ELSE 0 END), 0) AS pago_cents,
         COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_cents ELSE 0 END), 0) AS total_cents,
         COUNT(CASE WHEN status != 'cancelled' THEN 1 END) AS pedidos
@@ -429,7 +429,7 @@ export async function exportarFinanceiro(context: PartnerContext, params: Export
 
     const rows = await (prisma.$queryRaw`
       SELECT
-        DATE(placed_at) AS data,
+        DATE(placed_at AT TIME ZONE 'America/Sao_Paulo') AS data,
         COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_cents ELSE 0 END), 0) AS receita_bruta,
         COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_cents - delivery_fee_cents ELSE 0 END), 0) AS receita_liquida,
         COUNT(CASE WHEN payment_status = 'paid' THEN 1 END) AS pedidos_pagos,

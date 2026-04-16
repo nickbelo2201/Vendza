@@ -289,8 +289,12 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
 }
 
 export async function getDashboardSummary(context: PartnerContext) {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  // "Pedido do dia" = criado entre 00:00 e 23:59 no horário de Brasília (America/Sao_Paulo, UTC-3).
+  // Usamos toLocaleDateString com o timezone correto para obter a data local e construir
+  // a meia-noite equivalente em UTC. Brasil não usa mais horário de verão desde 2019 (fixo UTC-3).
+  const agora = new Date();
+  const dataHoje = agora.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }); // "YYYY-MM-DD"
+  const startOfToday = new Date(`${dataHoje}T03:00:00.000Z`); // 00:00 Brasília = 03:00 UTC
 
   const [todayOrders, newCustomers] = await Promise.all([
     prisma.order.findMany({
