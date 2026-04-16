@@ -1,4 +1,5 @@
 import { buildApp } from "./app.js";
+import { closeScheduledJobs, initScheduledJobs } from "./jobs/crons.js";
 import { getOrderPlacedQueue, getOrderStatusChangedQueue } from "./jobs/queues.js";
 import { closeWorkers, startWorkers } from "./jobs/workers.js";
 
@@ -11,6 +12,7 @@ async function start() {
   async function shutdown() {
     app.log.info("Encerrando servidor graciosamente...");
     try {
+      await closeScheduledJobs();
       await closeWorkers();
       await getOrderPlacedQueue()?.close();
       await getOrderStatusChangedQueue()?.close();
@@ -32,6 +34,7 @@ async function start() {
   try {
     await app.listen({ port, host });
     startWorkers();
+    initScheduledJobs();
   } catch (error) {
     app.log.error(error);
     process.exit(1);
