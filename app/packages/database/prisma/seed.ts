@@ -121,33 +121,105 @@ async function main() {
 
   console.log(`✓ StoreUser: ${OWNER_NAME} <${OWNER_EMAIL}>`);
 
-  // ─── Categorias ───────────────────────────────────────────────────────────
+  // ─── Categorias (hierarquia completa para adega) ───────────────────────────
 
+  // Categorias pai
   const catVinhos = await prisma.category.upsert({
     where: { storeId_slug: { storeId: store.id, slug: "vinhos" } },
-    update: { name: "Vinhos", sortOrder: 1, isActive: true },
+    update: { name: "Vinhos", sortOrder: 1, isActive: true, parentCategoryId: null },
     create: { storeId: store.id, name: "Vinhos", slug: "vinhos", sortOrder: 1, isActive: true },
+  });
+
+  const catEspumantes = await prisma.category.upsert({
+    where: { storeId_slug: { storeId: store.id, slug: "espumantes" } },
+    update: { name: "Espumantes", sortOrder: 2, isActive: true, parentCategoryId: null },
+    create: { storeId: store.id, name: "Espumantes", slug: "espumantes", sortOrder: 2, isActive: true },
   });
 
   const catCervejas = await prisma.category.upsert({
     where: { storeId_slug: { storeId: store.id, slug: "cervejas" } },
-    update: { name: "Cervejas", sortOrder: 2, isActive: true },
-    create: { storeId: store.id, name: "Cervejas", slug: "cervejas", sortOrder: 2, isActive: true },
+    update: { name: "Cervejas", sortOrder: 3, isActive: true, parentCategoryId: null },
+    create: { storeId: store.id, name: "Cervejas", slug: "cervejas", sortOrder: 3, isActive: true },
   });
 
   const catDestilados = await prisma.category.upsert({
     where: { storeId_slug: { storeId: store.id, slug: "destilados" } },
-    update: { name: "Destilados", sortOrder: 3, isActive: true },
-    create: { storeId: store.id, name: "Destilados", slug: "destilados", sortOrder: 3, isActive: true },
+    update: { name: "Destilados", sortOrder: 4, isActive: true, parentCategoryId: null },
+    create: { storeId: store.id, name: "Destilados", slug: "destilados", sortOrder: 4, isActive: true },
+  });
+
+  const catLicores = await prisma.category.upsert({
+    where: { storeId_slug: { storeId: store.id, slug: "licores-aperitivos" } },
+    update: { name: "Licores e Aperitivos", sortOrder: 5, isActive: true, parentCategoryId: null },
+    create: { storeId: store.id, name: "Licores e Aperitivos", slug: "licores-aperitivos", sortOrder: 5, isActive: true },
   });
 
   const catNaoAlcoolicos = await prisma.category.upsert({
-    where: { storeId_slug: { storeId: store.id, slug: "nao-alcoolicos" } },
-    update: { name: "Não Alcoólicos", sortOrder: 4, isActive: true },
-    create: { storeId: store.id, name: "Não Alcoólicos", slug: "nao-alcoolicos", sortOrder: 4, isActive: true },
+    where: { storeId_slug: { storeId: store.id, slug: "bebidas-sem-alcool" } },
+    update: { name: "Bebidas sem Álcool", sortOrder: 6, isActive: true, parentCategoryId: null },
+    create: { storeId: store.id, name: "Bebidas sem Álcool", slug: "bebidas-sem-alcool", sortOrder: 6, isActive: true },
   });
 
-  console.log(`✓ Categorias: Vinhos, Cervejas, Destilados, Não Alcoólicos`);
+  const catAcessorios = await prisma.category.upsert({
+    where: { storeId_slug: { storeId: store.id, slug: "acessorios" } },
+    update: { name: "Acessórios", sortOrder: 7, isActive: true, parentCategoryId: null },
+    create: { storeId: store.id, name: "Acessórios", slug: "acessorios", sortOrder: 7, isActive: true },
+  });
+
+  // Subcategorias — Vinhos
+  const subcategorias: Array<{ parentId: string; name: string; slug: string; sortOrder: number }> = [
+    { parentId: catVinhos.id, name: "Vinho Tinto", slug: "vinho-tinto", sortOrder: 1 },
+    { parentId: catVinhos.id, name: "Vinho Branco", slug: "vinho-branco", sortOrder: 2 },
+    { parentId: catVinhos.id, name: "Vinho Rosé", slug: "vinho-rose", sortOrder: 3 },
+    { parentId: catVinhos.id, name: "Vinho Laranja", slug: "vinho-laranja", sortOrder: 4 },
+    // Espumantes
+    { parentId: catEspumantes.id, name: "Champagne", slug: "champagne", sortOrder: 1 },
+    { parentId: catEspumantes.id, name: "Prosecco", slug: "prosecco", sortOrder: 2 },
+    { parentId: catEspumantes.id, name: "Cava", slug: "cava", sortOrder: 3 },
+    { parentId: catEspumantes.id, name: "Espumante Nacional", slug: "espumante-nacional", sortOrder: 4 },
+    // Cervejas
+    { parentId: catCervejas.id, name: "Lager / Pilsen", slug: "lager-pilsen", sortOrder: 1 },
+    { parentId: catCervejas.id, name: "IPA", slug: "ipa", sortOrder: 2 },
+    { parentId: catCervejas.id, name: "Stout", slug: "stout", sortOrder: 3 },
+    { parentId: catCervejas.id, name: "Weiss / Trigo", slug: "weiss-trigo", sortOrder: 4 },
+    { parentId: catCervejas.id, name: "Artesanal", slug: "artesanal", sortOrder: 5 },
+    // Destilados
+    { parentId: catDestilados.id, name: "Whisky", slug: "whisky", sortOrder: 1 },
+    { parentId: catDestilados.id, name: "Vodka", slug: "vodka", sortOrder: 2 },
+    { parentId: catDestilados.id, name: "Gin", slug: "gin", sortOrder: 3 },
+    { parentId: catDestilados.id, name: "Rum", slug: "rum", sortOrder: 4 },
+    { parentId: catDestilados.id, name: "Cachaça", slug: "cachaca", sortOrder: 5 },
+    { parentId: catDestilados.id, name: "Tequila / Mezcal", slug: "tequila-mezcal", sortOrder: 6 },
+    // Licores e Aperitivos
+    { parentId: catLicores.id, name: "Licor", slug: "licor", sortOrder: 1 },
+    { parentId: catLicores.id, name: "Aperitivo / Bitter", slug: "aperitivo-bitter", sortOrder: 2 },
+    // Bebidas sem Álcool
+    { parentId: catNaoAlcoolicos.id, name: "Sucos e Néctares", slug: "sucos-nectares", sortOrder: 1 },
+    { parentId: catNaoAlcoolicos.id, name: "Refrigerantes", slug: "refrigerantes", sortOrder: 2 },
+    { parentId: catNaoAlcoolicos.id, name: "Água", slug: "agua", sortOrder: 3 },
+    { parentId: catNaoAlcoolicos.id, name: "Energéticos", slug: "energeticos", sortOrder: 4 },
+    // Acessórios
+    { parentId: catAcessorios.id, name: "Taças e Copos", slug: "tacas-copos", sortOrder: 1 },
+    { parentId: catAcessorios.id, name: "Abridor / Saca-rolha", slug: "abridor-saca-rolha", sortOrder: 2 },
+    { parentId: catAcessorios.id, name: "Embalagem para Presente", slug: "embalagem-presente", sortOrder: 3 },
+  ];
+
+  for (const sub of subcategorias) {
+    await prisma.category.upsert({
+      where: { storeId_slug: { storeId: store.id, slug: sub.slug } },
+      update: { name: sub.name, sortOrder: sub.sortOrder, isActive: true, parentCategoryId: sub.parentId },
+      create: {
+        storeId: store.id,
+        parentCategoryId: sub.parentId,
+        name: sub.name,
+        slug: sub.slug,
+        sortOrder: sub.sortOrder,
+        isActive: true,
+      },
+    });
+  }
+
+  console.log(`✓ Categorias: 7 categorias pai + ${subcategorias.length} subcategorias`);
 
   // ─── Produtos ────────────────────────────────────────────────────────────
   // Cada produto criado automaticamente ganha um InventoryItem via upsert

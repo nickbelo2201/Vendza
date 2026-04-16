@@ -4,6 +4,43 @@ import { revalidatePath } from "next/cache";
 
 import { fetchAPI } from "../../../lib/api";
 
+type Produto = {
+  id: string; name: string; slug: string;
+  categoryId: string; categorySlug: string;
+  listPriceCents: number; salePriceCents: number | null;
+  imageUrl: string | null;
+  isAvailable: boolean; isFeatured: boolean;
+};
+
+type ProdutosResponse = {
+  produtos: Produto[];
+  total: number;
+  pagina: number;
+  limite: number;
+  totalPaginas: number;
+};
+
+export async function buscarProdutos(params: {
+  busca?: string;
+  categoriaId?: string;
+  subcategoriaId?: string;
+  pagina?: number;
+  limite?: number;
+}): Promise<ProdutosResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.busca) searchParams.set("busca", params.busca);
+  if (params.categoriaId) searchParams.set("categoriaId", params.categoriaId);
+  if (params.subcategoriaId) searchParams.set("subcategoriaId", params.subcategoriaId);
+  searchParams.set("pagina", String(params.pagina ?? 1));
+  searchParams.set("limite", String(params.limite ?? 20));
+
+  try {
+    return await fetchAPI<ProdutosResponse>(`/partner/products?${searchParams.toString()}`);
+  } catch {
+    return { produtos: [], total: 0, pagina: 1, limite: 20, totalPaginas: 0 };
+  }
+}
+
 export async function alterarDisponibilidade(id: string, isAvailable: boolean) {
   await fetchAPI(`/partner/products/${id}/availability`, {
     method: "PATCH",

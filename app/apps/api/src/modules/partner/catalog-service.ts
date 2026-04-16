@@ -19,22 +19,46 @@ type CategoryPatchInput = Partial<{
 function mapCategory(category: {
   id: string;
   storeId: string;
+  parentCategoryId: string | null;
   name: string;
   slug: string;
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  children?: Array<{
+    id: string;
+    storeId: string;
+    parentCategoryId: string | null;
+    name: string;
+    slug: string;
+    sortOrder: number;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
 }) {
   return {
     id: category.id,
     storeId: category.storeId,
+    parentCategoryId: category.parentCategoryId,
     name: category.name,
     slug: category.slug,
     sortOrder: category.sortOrder,
     isActive: category.isActive,
     createdAt: category.createdAt.toISOString(),
     updatedAt: category.updatedAt.toISOString(),
+    children: category.children?.map((c) => ({
+      id: c.id,
+      storeId: c.storeId,
+      parentCategoryId: c.parentCategoryId,
+      name: c.name,
+      slug: c.slug,
+      sortOrder: c.sortOrder,
+      isActive: c.isActive,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+    })),
   };
 }
 
@@ -42,6 +66,11 @@ export async function listPartnerCategories(context: PartnerContext) {
   const categories = await prisma.category.findMany({
     where: { storeId: context.storeId },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    include: {
+      children: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      },
+    },
   });
 
   return categories.map(mapCategory);
@@ -200,18 +229,61 @@ async function findStoreProduct(context: PartnerContext, id: string) {
   });
 }
 
-export async function listPartnerProducts(context: PartnerContext) {
-  const products = await prisma.product.findMany({
-    where: { storeId: context.storeId },
-    orderBy: { createdAt: "desc" },
-    include: {
-      category: {
-        select: { slug: true },
-      },
-    },
-  });
+export type ListProductsFilters = {
+  busca?: string;
+  categoriaId?: string;
+  subcategoriaId?: string;
+  pagina?: number;
+  limite?: number;
+};
 
-  return products.map(mapProduct);
+export async function listPartnerProducts(context: PartnerContext, filters?: ListProductsFilters) {
+  const pagina = filters?.pagina ?? 1;
+  const limite = filters?.limite ?? 20;
+  const skip = (pagina - 1) * limite;
+
+  const where: Record<string, unknown> = { storeId: context.storeId };
+
+  // Busca por nome (ILIKE)
+  if (filters?.busca) {
+    where.name = { contains: filters.busca, mode: "insensitive" };
+  }
+
+  // Filtro por subcategoria (direto)
+  if (filters?.subcategoriaId) {
+    where.categoryId = filters.subcategoriaId;
+  } else if (filters?.categoriaId) {
+    // Filtro por categoria pai: inclui a própria categoria + filhas
+    const filhas = await prisma.category.findMany({
+      where: { storeId: context.storeId, parentCategoryId: filters.categoriaId },
+      select: { id: true },
+    });
+    const ids = [filters.categoriaId, ...filhas.map((f: { id: string }) => f.id)];
+    where.categoryId = { in: ids };
+  }
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limite,
+      include: {
+        category: {
+          select: { slug: true },
+        },
+      },
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  return {
+    produtos: products.map(mapProduct),
+    total,
+    pagina,
+    limite,
+    totalPaginas: Math.ceil(total / limite),
+  };
 }
 
 export async function findProductByBarcode(context: PartnerContext, barcode: string) {

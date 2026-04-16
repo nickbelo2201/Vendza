@@ -16,6 +16,7 @@ import {
   updatePartnerCategory,
   updatePartnerProduct,
   updateProductAvailability,
+  type ListProductsFilters,
 } from "./catalog-service.js";
 import { type PartnerContext } from "./context.js";
 import {
@@ -437,8 +438,23 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  app.get("/partner/products", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async (request) =>
-    ok(await listPartnerProducts(partnerContext(request))),
+  const ProductFiltersSchema = Type.Object({
+    busca: Type.Optional(Type.String()),
+    categoriaId: Type.Optional(Type.String()),
+    subcategoriaId: Type.Optional(Type.String()),
+    pagina: Type.Optional(Type.Integer({ minimum: 1 })),
+    limite: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+  });
+
+  app.get<{ Querystring: ListProductsFilters }>(
+    "/partner/products",
+    {
+      schema: {
+        querystring: ProductFiltersSchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) => ok(await listPartnerProducts(partnerContext(request), request.query)),
   );
 
   // ─── GET /partner/products/barcode/:barcode ───────────────────────────────────
