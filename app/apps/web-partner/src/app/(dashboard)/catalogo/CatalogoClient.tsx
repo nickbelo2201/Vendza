@@ -283,6 +283,7 @@ export function CatalogoClient({ produtosIniciais, totalIniciais, totalPaginasIn
               <tr>
                 <th>Produto</th>
                 <th>Categoria</th>
+                <th>Subcategoria</th>
                 <th>Preco lista</th>
                 <th>Preco venda</th>
                 <th>Destaque</th>
@@ -332,13 +333,17 @@ export function CatalogoClient({ produtosIniciais, totalIniciais, totalPaginasIn
                     </div>
                   </td>
                   <td>
-                    {p.parentCategoryName ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span className="wp-badge wp-badge-muted" style={{ fontSize: 11 }}>{p.parentCategoryName}</span>
-                        <span className="wp-badge wp-badge-blue" style={{ fontSize: 11 }}>{p.categoryName}</span>
-                      </div>
-                    ) : p.categoryName ? (
-                      <span className="wp-badge wp-badge-muted">{p.categoryName}</span>
+                    {(p.parentCategoryName ?? p.categoryName) ? (
+                      <span className="wp-badge wp-badge-muted">
+                        {p.parentCategoryName ?? p.categoryName}
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{"\u2014"}</span>
+                    )}
+                  </td>
+                  <td>
+                    {p.parentCategoryName && p.categoryName ? (
+                      <span className="wp-badge wp-badge-blue">{p.categoryName}</span>
                     ) : (
                       <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{"\u2014"}</span>
                     )}
