@@ -6,7 +6,8 @@ import { fetchAPI } from "../../../lib/api";
 
 type Produto = {
   id: string; name: string; slug: string;
-  categoryId: string; categorySlug: string;
+  categoryId: string | null; categorySlug: string | null; categoryName: string | null;
+  parentCategoryId: string | null; parentCategoryName: string | null; parentCategorySlug: string | null;
   listPriceCents: number; salePriceCents: number | null;
   imageUrl: string | null;
   isAvailable: boolean; isFeatured: boolean;

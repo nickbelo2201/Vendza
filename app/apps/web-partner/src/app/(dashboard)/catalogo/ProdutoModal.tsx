@@ -58,13 +58,22 @@ async function comprimirImagem(file: File, maxWidthPx = 1200, qualidade = 0.82):
   });
 }
 
-type Categoria = { id: string; name: string; slug: string };
+type CategoriaFilha = { id: string; name: string; slug: string; parentCategoryId: string | null };
+
+type Categoria = {
+  id: string;
+  name: string;
+  slug: string;
+  parentCategoryId: string | null;
+  children?: CategoriaFilha[];
+};
 
 type ProdutoForm = {
   id?: string;
   name: string;
   slug: string;
   categoryId: string;
+  parentCategoryId?: string | null;
   listPriceCents: number;
   salePriceCents: number | null;
   imageUrl: string;
@@ -110,8 +119,16 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
   const [slugManual, setSlugManual] = useState(false);
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryId, setCategoryId] = useState("");     // ID da categoria pai selecionada
+  const [subcategoryId, setSubcategoryId] = useState(""); // ID da subcategoria selecionada
   const [listPrice, setListPrice] = useState("");
+
+  // Apenas categorias raiz (sem pai)
+  const categoriasPai = categorias.filter((c) => !c.parentCategoryId);
+  // Subcategorias da categoria pai selecionada
+  const subcategorias = categoryId
+    ? (categoriasPai.find((c) => c.id === categoryId)?.children ?? [])
+    : [];
   const [salePrice, setSalePrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
@@ -125,7 +142,14 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       setNome(produto.name);
       setSlug(produto.slug);
       setSlugManual(true);
-      setCategoryId(produto.categoryId ?? "");
+      // Se o produto está numa subcategoria, parentCategoryId vem preenchido
+      if (produto.parentCategoryId) {
+        setCategoryId(produto.parentCategoryId);
+        setSubcategoryId(produto.categoryId ?? "");
+      } else {
+        setCategoryId(produto.categoryId ?? "");
+        setSubcategoryId("");
+      }
       setListPrice(centavosParaReais(produto.listPriceCents));
       setSalePrice(centavosParaReais(produto.salePriceCents));
       setImageUrl(produto.imageUrl ?? "");
@@ -136,7 +160,8 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       setNome("");
       setSlug("");
       setSlugManual(false);
-      setCategoryId(categorias[0]?.id ?? "");
+      setCategoryId("");
+      setSubcategoryId("");
       setListPrice("");
       setSalePrice("");
       setImageUrl("");
@@ -207,7 +232,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
     const body = {
       name: nome.trim(),
       slug: slug || gerarSlug(nome.trim()),
-      categoryId: categoryId || undefined,
+      categoryId: subcategoryId || categoryId || undefined,
       listPriceCents,
       salePriceCents: salePrice ? reaisParaCentavos(salePrice) : null,
       imageUrl: imageUrl.trim() || null,
@@ -295,18 +320,34 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
               />
             </div>
 
-            <div className="wp-form-group">
-              <label className="wp-label">Categoria</label>
-              <select
-                className="wp-select"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">Sem categoria</option>
-                {categorias.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div className="wp-form-group">
+                <label className="wp-label">Categoria</label>
+                <select
+                  className="wp-select"
+                  value={categoryId}
+                  onChange={(e) => { setCategoryId(e.target.value); setSubcategoryId(""); }}
+                >
+                  <option value="">Sem categoria</option>
+                  {categoriasPai.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="wp-form-group">
+                <label className="wp-label">Subcategoria</label>
+                <select
+                  className="wp-select"
+                  value={subcategoryId}
+                  onChange={(e) => setSubcategoryId(e.target.value)}
+                  disabled={subcategorias.length === 0}
+                >
+                  <option value="">Nenhuma</option>
+                  {subcategorias.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

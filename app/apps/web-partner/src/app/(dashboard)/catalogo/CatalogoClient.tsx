@@ -26,7 +26,8 @@ type Categoria = {
 
 type Produto = {
   id: string; name: string; slug: string;
-  categoryId: string; categorySlug: string;
+  categoryId: string | null; categorySlug: string | null; categoryName: string | null;
+  parentCategoryId: string | null; parentCategoryName: string | null; parentCategorySlug: string | null;
   listPriceCents: number; salePriceCents: number | null;
   imageUrl: string | null;
   isAvailable: boolean; isFeatured: boolean;
@@ -37,6 +38,7 @@ type ProdutoParaEditar = {
   name: string;
   slug: string;
   categoryId: string;
+  parentCategoryId?: string | null;
   listPriceCents: number;
   salePriceCents: number | null;
   imageUrl: string;
@@ -145,6 +147,7 @@ export function CatalogoClient({ produtosIniciais, totalIniciais, totalPaginasIn
       name: p.name,
       slug: p.slug,
       categoryId: p.categoryId ?? "",
+      parentCategoryId: p.parentCategoryId ?? null,
       listPriceCents: p.listPriceCents,
       salePriceCents: p.salePriceCents,
       imageUrl: p.imageUrl ?? "",
@@ -329,7 +332,16 @@ export function CatalogoClient({ produtosIniciais, totalIniciais, totalPaginasIn
                     </div>
                   </td>
                   <td>
-                    <span className="wp-badge wp-badge-muted">{p.categorySlug ?? "\u2014"}</span>
+                    {p.parentCategoryName ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span className="wp-badge wp-badge-muted" style={{ fontSize: 11 }}>{p.parentCategoryName}</span>
+                        <span className="wp-badge wp-badge-blue" style={{ fontSize: 11 }}>{p.categoryName}</span>
+                      </div>
+                    ) : p.categoryName ? (
+                      <span className="wp-badge wp-badge-muted">{p.categoryName}</span>
+                    ) : (
+                      <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{"\u2014"}</span>
+                    )}
                   </td>
                   <td style={{ color: "var(--text-muted)", fontSize: 13 }}>
                     {formatCurrency(p.listPriceCents)}
