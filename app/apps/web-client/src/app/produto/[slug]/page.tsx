@@ -59,11 +59,19 @@ export default async function ProductPage({
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <a href="/" className="wc-btn wc-btn-secondary" style={{ display: "inline-flex" }}>
-          ← Voltar ao catálogo
-        </a>
-      </div>
+      <nav style={{ marginBottom: 16, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <a href="/" style={{ color: 'var(--green)', textDecoration: 'none' }}>Início</a>
+        {produto.category && (
+          <>
+            <span style={{ color: 'var(--text-muted)' }}>›</span>
+            <a href={`/?categoria=${produto.category.slug}`} style={{ color: 'var(--green)', textDecoration: 'none' }}>
+              {produto.category.name}
+            </a>
+          </>
+        )}
+        <span style={{ color: 'var(--text-muted)' }}>›</span>
+        <span style={{ color: 'var(--text-muted)' }}>{produto.name}</span>
+      </nav>
 
       <div
         style={{
