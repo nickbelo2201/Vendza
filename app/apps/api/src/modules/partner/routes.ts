@@ -443,7 +443,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     categoriaId: Type.Optional(Type.String()),
     subcategoriaId: Type.Optional(Type.String()),
     pagina: Type.Optional(Type.Integer({ minimum: 1 })),
-    limite: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+    limite: Type.Optional(Type.Integer({ minimum: 1, maximum: 1000 })),
   });
 
   app.get<{ Querystring: ListProductsFilters }>(

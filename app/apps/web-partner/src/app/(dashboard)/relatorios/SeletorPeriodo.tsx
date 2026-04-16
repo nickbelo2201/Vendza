@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Opcao = { label: string; dias: number };
@@ -21,7 +21,6 @@ function formatarDataBR(iso: string): string {
 
 export function SeletorPeriodo({ from, to }: { from: string; to: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const hoje = formatarData(new Date());
   const isHoje = from === hoje && to === hoje;
@@ -35,21 +34,15 @@ export function SeletorPeriodo({ from, to }: { from: string; to: string }) {
 
   function selecionar(dias: number) {
     setModoCustom(false);
-    const params = new URLSearchParams(searchParams.toString());
     const agora = new Date();
     const toDate = formatarData(agora);
     const fromDate = dias === 0 ? toDate : formatarData(new Date(agora.getTime() - dias * 86400000));
-    params.set("from", fromDate);
-    params.set("to", toDate);
-    router.push(`/relatorios?${params.toString()}`);
+    router.push(`/relatorios?from=${fromDate}&to=${toDate}`);
   }
 
   function aplicarCustom() {
     if (!customFrom || !customTo) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("from", customFrom);
-    params.set("to", customTo);
-    router.push(`/relatorios?${params.toString()}`);
+    router.push(`/relatorios?from=${customFrom}&to=${customTo}`);
   }
 
   function isAtivo(dias: number): boolean {

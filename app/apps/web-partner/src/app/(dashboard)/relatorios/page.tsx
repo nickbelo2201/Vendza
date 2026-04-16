@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { formatCurrency } from "@vendza/utils";
 
 import { ApiError, fetchAPI } from "../../../lib/api";
@@ -231,9 +230,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
               <h1>Relatórios</h1>
               <p>Análises de vendas e desempenho da sua loja.</p>
             </div>
-            <Suspense fallback={null}>
-              <SeletorPeriodo from={from} to={to} />
-            </Suspense>
+            <SeletorPeriodo from={from} to={to} />
           </div>
         </div>
 

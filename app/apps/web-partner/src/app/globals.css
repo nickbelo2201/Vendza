@@ -445,6 +445,11 @@ select {
   color: var(--text-muted);
 }
 
+.wp-badge-muted {
+  background: var(--s7, rgba(107, 114, 128, 0.1));
+  color: var(--text-muted, #6B7280);
+}
+
 /* ─────────────────────────────────────────
    BOTÕES
 ───────────────────────────────────────── */
@@ -1800,6 +1805,11 @@ html[data-theme="dark"] body {
 [data-theme="dark"] .wp-badge-blue {
   background: rgba(51, 65, 85, 0.6);
   color: #93C5FD;
+}
+
+[data-theme="dark"] .wp-badge-muted {
+  background: rgba(51, 65, 85, 0.4);
+  color: #94A3B8;
 }
 
 [data-theme="dark"] .wp-page-title {
