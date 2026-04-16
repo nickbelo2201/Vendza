@@ -123,12 +123,12 @@ export default function PdvPage() {
       setCarregando(true);
       setErroCarregar(null);
       try {
-        const [cats, prods] = await Promise.all([
+        const [cats, prodsResp] = await Promise.all([
           fetchComAuth<Categoria[]>("/partner/categories"),
-          fetchComAuth<Produto[]>("/partner/products"),
+          fetchComAuth<{ produtos: Produto[] }>("/partner/products?limite=500"),
         ]);
         setCategorias(cats.filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder));
-        setProdutos(prods);
+        setProdutos(prodsResp.produtos);
       } catch (err) {
         setErroCarregar(err instanceof Error ? err.message : "Erro ao carregar dados.");
       } finally {
