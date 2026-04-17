@@ -156,8 +156,14 @@ export type ReportFilters = {
 
 export async function getPartnerReports(context: PartnerContext, filters: ReportFilters) {
   const now = new Date();
-  const toDate = filters.to ? new Date(filters.to) : now;
-  const fromDate = filters.from ? new Date(filters.from) : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+  // Ao receber só a data (ex: "2026-04-16"), new Date() cria meia-noite UTC.
+  // Para o "to", precisamos cobrir o dia inteiro até 23:59:59.999Z.
+  const toDate = filters.to
+    ? (() => { const d = new Date(filters.to); d.setUTCHours(23, 59, 59, 999); return d; })()
+    : now;
+  const fromDate = filters.from
+    ? new Date(filters.from + "T00:00:00.000Z")
+    : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
   if (diffDays > 90) throw new Error("Período máximo para relatórios é 90 dias.");

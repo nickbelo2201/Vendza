@@ -69,6 +69,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
 
   const from = params.from ?? trintaDiasAtras;
   const to = params.to ?? hoje;
+  const isUmDia = from === to;
 
   const relatorio = await getRelatorio(from, to);
 
@@ -252,12 +253,12 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
           topProducts={topProducts}
         />
 
-        {/* Linha 1: Gráfico 60% + Donut Clientes 40% */}
+        {/* Linha 1: Evolução por dia (oculto em visão de um único dia) + Donut Clientes */}
         <div
           className="relatorio-grid-2col"
-          style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 16 }}
+          style={{ display: "grid", gridTemplateColumns: isUmDia ? "1fr" : "3fr 2fr", gap: 16 }}
         >
-          <GraficoLinha dados={relatorio?.revenueByDay ?? []} />
+          {!isUmDia && <GraficoLinha dados={relatorio?.revenueByDay ?? []} />}
           <GraficoDonut
             dados={clientesData}
             titulo="Clientes"
@@ -281,13 +282,13 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
           />
         </div>
 
-        {/* Linha 3: Pagamentos 50% + Pico por Hora 50% */}
+        {/* Linha 3: Pagamentos + Pico por Hora (oculto em visão de um único dia) */}
         <div
           className="relatorio-grid-2col"
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+          style={{ display: "grid", gridTemplateColumns: isUmDia ? "1fr" : "1fr 1fr", gap: 16 }}
         >
           <GraficoPagamentos dados={relatorio?.paymentDistribution ?? []} />
-          <GraficoPicoHora dados={relatorio?.salesByHour ?? []} />
+          {!isUmDia && <GraficoPicoHora dados={relatorio?.salesByHour ?? []} />}
         </div>
 
         {/* Análise de Clientes — accordion */}
