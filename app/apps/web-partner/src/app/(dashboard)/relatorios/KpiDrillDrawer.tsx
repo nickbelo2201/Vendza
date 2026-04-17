@@ -39,19 +39,26 @@ type PedidoResumo = {
   cancellationReason?: string | null;
 };
 
+type ApiOrderItem = {
+  id: string;
+  publicId: string;
+  customerName?: string;
+  customer?: { name: string };
+  status: string;
+  totalCents?: number;
+  totalPriceCents?: number;
+  placedAt: string;
+  paymentMethod: string;
+  cancellationReason?: string | null;
+};
+
 type ApiOrdersResponse = {
   data: {
-    id: string;
-    publicId: string;
-    customerName?: string;
-    customer?: { name: string };
-    status: string;
-    totalCents?: number;
-    totalPriceCents?: number;
-    placedAt: string;
-    paymentMethod: string;
-    cancellationReason?: string | null;
-  }[];
+    orders: ApiOrderItem[];
+    total: number;
+    page: number;
+    pageSize: number;
+  };
 };
 
 // --- Constantes de labels ---
@@ -208,7 +215,7 @@ export function KpiDrillDrawer({ tipo, from, to, onClose, topProducts = [] }: Pr
         if (!res.ok) throw new Error(`Erro ao buscar dados (HTTP ${res.status})`);
         const json = (await res.json()) as ApiOrdersResponse;
 
-        const pedidos: PedidoResumo[] = (json.data ?? []).map((p) => ({
+        const pedidos: PedidoResumo[] = (json.data?.orders ?? []).map((p) => ({
           id: p.id,
           publicId: p.publicId,
           customerName: p.customerName ?? p.customer?.name ?? "—",

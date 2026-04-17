@@ -186,6 +186,7 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
       select: {
         id: true,
         customerId: true,
+        customerName: true,
         totalCents: true,
         paymentMethod: true,
         placedAt: true,
@@ -277,6 +278,42 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
     .map(([hour, v]) => ({ hour, ...v }))
     .sort((a, b) => a.hour - b.hour);
 
+  // Top clientes por faturamento no período
+  const clienteMap = new Map<string, {
+    name: string;
+    totalOrders: number;
+    totalRevenueCents: number;
+    firstOrderDate: Date;
+    lastOrderDate: Date;
+  }>();
+  for (const o of pedidosAtivos) {
+    const cur = clienteMap.get(o.customerId);
+    if (cur) {
+      cur.totalOrders += 1;
+      cur.totalRevenueCents += o.totalCents;
+      if (o.placedAt < cur.firstOrderDate) cur.firstOrderDate = o.placedAt;
+      if (o.placedAt > cur.lastOrderDate) cur.lastOrderDate = o.placedAt;
+    } else {
+      clienteMap.set(o.customerId, {
+        name: o.customerName ?? "—",
+        totalOrders: 1,
+        totalRevenueCents: o.totalCents,
+        firstOrderDate: o.placedAt,
+        lastOrderDate: o.placedAt,
+      });
+    }
+  }
+  const topClientes = [...clienteMap.values()]
+    .sort((a, b) => b.totalRevenueCents - a.totalRevenueCents)
+    .slice(0, 20)
+    .map((c) => ({
+      name: c.name,
+      totalOrders: c.totalOrders,
+      totalRevenueCents: c.totalRevenueCents,
+      firstOrderDate: c.firstOrderDate.toISOString(),
+      lastOrderDate: c.lastOrderDate.toISOString(),
+    }));
+
   return {
     period: { from: fromDate.toISOString(), to: toDate.toISOString() },
     totalRevenueCents,
@@ -291,6 +328,7 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
     repeatRate,
     paymentDistribution,
     salesByHour,
+    topClientes,
   };
 }
 
