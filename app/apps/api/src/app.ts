@@ -8,11 +8,13 @@ import { coverageRoutes } from "./modules/cobertura/routes.js";
 import { partnerRoutes } from "./modules/partner/routes.js";
 import { onboardingRoutes } from "./modules/onboarding/routes.js";
 import { storefrontRoutes } from "./modules/storefront/routes.js";
+import { telegramRoutes } from "./modules/telegram/routes.js";
 import { supabasePlugin } from "./plugins/supabase.js";
 import { socketPlugin } from "./plugins/socketio.js";
 import { redisPlugin_ } from "./plugins/redis.js";
 import { initQueues } from "./jobs/queues.js";
 import { getRedis } from "./plugins/redis.js";
+import { setTelegramWebhook } from "./lib/telegram.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -25,6 +27,12 @@ export async function buildApp() {
 
   app.addHook("onReady", async () => {
     initQueues();
+
+    // Registrar webhook do Telegram automaticamente no startup
+    const apiUrl = process.env.API_PUBLIC_URL;
+    if (apiUrl && process.env.TELEGRAM_BOT_TOKEN) {
+      void setTelegramWebhook(`${apiUrl}/v1/telegram/webhook`);
+    }
   });
 
   await app.register(rateLimit, {
@@ -103,6 +111,7 @@ export async function buildApp() {
       // O hook authenticate já está declarado dentro de partnerRoutes
       // Caminhos em routes.ts já incluem prefixo "/partner/" nos paths
       v1.register(partnerRoutes);
+      v1.register(telegramRoutes);
     },
     { prefix: "/v1" }
   );
