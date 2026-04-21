@@ -66,6 +66,9 @@ export function OnboardingWizard() {
   // Passo 2
   const [nomeResponsavel, setNomeResponsavel] = useState("");
 
+  // Passo 3
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+
   // Global
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -123,6 +126,39 @@ export function OnboardingWizard() {
     };
   }, [slug]);
 
+  /* ── Validação de combo de templates ── */
+  function isComboValido(templates: string[]): boolean {
+    if (templates.length > 2) return false;
+
+    // Restaurante é standalone
+    if (templates.includes("restaurante") && templates.length > 1) return false;
+
+    // Validar combos
+    const hasAdega = templates.includes("adega");
+    const hasMercado = templates.includes("mercado");
+    const hasRestaurante = templates.includes("restaurante");
+
+    // Não permitir: Restaurante + Adega, Restaurante + Mercado
+    if (hasRestaurante && (hasAdega || hasMercado)) return false;
+
+    // Adega + Mercado é OK
+    return true;
+  }
+
+  /* ── Handler de seleção de template ── */
+  function handleTemplateToggle(templateId: string) {
+    const novo = selecionados.includes(templateId)
+      ? selecionados.filter((t) => t !== templateId)
+      : [...selecionados, templateId];
+
+    if (isComboValido(novo)) {
+      setSelecionados(novo);
+      setErro(null);
+    } else {
+      setErro("Combinação inválida. Restaurante é exclusivo e não pode ser combinado com outros tipos.");
+    }
+  }
+
   /* ── Submit final ── */
   async function handleCriarLoja() {
     setErro(null);
@@ -143,6 +179,7 @@ export function OnboardingWizard() {
           storeSlug: slug,
           whatsappPhone: whatsapp,
           ownerName: nomeResponsavel,
+          templateIds: selecionados,
         }),
       });
 
@@ -169,6 +206,8 @@ export function OnboardingWizard() {
     whatsapp.trim().length >= 8;
 
   const passo2Valido = nomeResponsavel.trim().length >= 2;
+
+  const passo3Valido = selecionados.length > 0 && isComboValido(selecionados);
 
   /* ── Feedback do slug ── */
   function FeedbackSlug() {
@@ -201,7 +240,7 @@ export function OnboardingWizard() {
   function IndicadorPasso() {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-        {[1, 2, 3].map((n) => (
+        {[1, 2, 3, 4].map((n) => (
           <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div
               style={{
@@ -220,7 +259,7 @@ export function OnboardingWizard() {
             >
               {n}
             </div>
-            {n < 3 && (
+            {n < 4 && (
               <div
                 style={{
                   width: 32,
@@ -233,7 +272,7 @@ export function OnboardingWizard() {
           </div>
         ))}
         <span style={{ marginLeft: 8, fontSize: 12, color: "var(--text-muted)" }}>
-          Passo {passo} de 3
+          Passo {passo} de 4
         </span>
       </div>
     );
@@ -361,7 +400,135 @@ export function OnboardingWizard() {
     );
   }
 
-  /* ── Passo 3: Confirmação ── */
+  /* ── Passo 3: Selecionar templates ── */
+  if (passo === 3) {
+    const templates = [
+      {
+        id: "restaurante",
+        nome: "Restaurante",
+        descricao: "Comida, bebidas, sobremesas",
+        categorias: 8,
+      },
+      {
+        id: "adega",
+        nome: "Adega",
+        descricao: "Bebidas alcoólicas e acessórios",
+        categorias: 7,
+      },
+      {
+        id: "mercado",
+        nome: "Mercado",
+        descricao: "Alimentos, higiene, limpeza",
+        categorias: 10,
+      },
+    ];
+
+    return (
+      <div className="wp-auth-card">
+        <IndicadorPasso />
+        <h1 className="wp-auth-title">Escolha o tipo da sua loja</h1>
+        <p className="wp-auth-subtitle">
+          Você pode selecionar até 2 tipos. Restaurante é exclusivo.
+        </p>
+
+        <div className="wp-stack">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {templates.map((template) => (
+              <label
+                key={template.id}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  padding: 12,
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                  border: "1px solid var(--s5)",
+                  transition: "background 0.2s, border-color 0.2s",
+                  backgroundColor: selecionados.includes(template.id)
+                    ? "rgba(45, 106, 79, 0.05)"
+                    : "transparent",
+                  borderColor: selecionados.includes(template.id)
+                    ? "var(--green)"
+                    : "var(--s5)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selecionados.includes(template.id)}
+                  onChange={() => handleTemplateToggle(template.id)}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    accentColor: "var(--green)",
+                    cursor: "pointer",
+                    marginTop: 2,
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--night)",
+                      fontSize: 14,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {template.nome}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "var(--text-muted)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {template.descricao}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    {template.categorias} categorias
+                  </div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {erro && <div className="wp-error-box">{erro}</div>}
+
+          <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+            <button
+              type="button"
+              className="wp-button-secondary"
+              onClick={() => {
+                setPasso(2);
+                setErro(null);
+              }}
+              style={{ flex: 1 }}
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              className="wp-button"
+              disabled={!passo3Valido}
+              onClick={() => setPasso(4)}
+              style={{ flex: 2 }}
+            >
+              Proximo
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Passo 4: Confirmação ── */
   return (
     <div className="wp-auth-card">
       <IndicadorPasso />
@@ -383,6 +550,17 @@ export function OnboardingWizard() {
           <ResumoLinha rotulo="Slug / URL" valor={`vendza.com/${slug}`} />
           <ResumoLinha rotulo="WhatsApp" valor={whatsapp} />
           <ResumoLinha rotulo="Responsavel" valor={nomeResponsavel} />
+          <ResumoLinha
+            rotulo="Tipo de loja"
+            valor={
+              selecionados.length === 1 && selecionados[0]
+                ? selecionados[0].charAt(0).toUpperCase() +
+                  selecionados[0].slice(1)
+                : selecionados
+                    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+                    .join(" + ")
+            }
+          />
         </div>
 
         {erro && <div className="wp-error-box">{erro}</div>}
@@ -391,7 +569,7 @@ export function OnboardingWizard() {
           <button
             type="button"
             className="wp-button-secondary"
-            onClick={() => { setPasso(2); setErro(null); }}
+            onClick={() => { setPasso(3); setErro(null); }}
             disabled={carregando}
             style={{ flex: 1 }}
           >

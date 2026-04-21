@@ -1,0 +1,476 @@
+[
+  {
+    "templateId": "adega",
+    "name": "Adega / Wine Shop",
+    "description": "Especializado em bebidas alcoólicas e acessórios para apreciadores. Inclui vinhos, cervejas, destilados, espumantes e bebidas sem álcool.",
+    "icon": "🍷",
+    "categories": [
+      {
+        "name": "Vinhos",
+        "slug": "vinhos",
+        "sortOrder": 1,
+        "subcategories": [
+          { "name": "Vinho Tinto", "slug": "vinho-tinto", "sortOrder": 1 },
+          { "name": "Vinho Branco", "slug": "vinho-branco", "sortOrder": 2 },
+          { "name": "Vinho Rosé", "slug": "vinho-rose", "sortOrder": 3 },
+          { "name": "Vinho Natural / Orange", "slug": "vinho-natural", "sortOrder": 4 },
+          { "name": "Vinho Fortificado (Porto, Xerez)", "slug": "vinho-fortificado", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Espumantes e Champagne",
+        "slug": "espumantes",
+        "sortOrder": 2,
+        "subcategories": [
+          { "name": "Champagne", "slug": "champagne", "sortOrder": 1 },
+          { "name": "Prosecco", "slug": "prosecco", "sortOrder": 2 },
+          { "name": "Cava e Espanhol", "slug": "cava", "sortOrder": 3 },
+          { "name": "Espumante Brasileiro", "slug": "espumante-nacional", "sortOrder": 4 },
+          { "name": "Espumantes Naturais / Ancestral", "slug": "espumante-natural", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Cervejas",
+        "slug": "cervejas",
+        "sortOrder": 3,
+        "subcategories": [
+          { "name": "Lager / Pilsen", "slug": "lager-pilsen", "sortOrder": 1 },
+          { "name": "IPA / American Ale", "slug": "ipa", "sortOrder": 2 },
+          { "name": "Stout / Porter", "slug": "stout-porter", "sortOrder": 3 },
+          { "name": "Trigo / Weiss", "slug": "weiss", "sortOrder": 4 },
+          { "name": "Pale Ale / Blonde", "slug": "pale-ale", "sortOrder": 5 },
+          { "name": "Sour / Frutas", "slug": "sour-frutas", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Destilados e Aguardentes",
+        "slug": "destilados",
+        "sortOrder": 4,
+        "subcategories": [
+          { "name": "Whisky (Escocês, Irlandês, Bourbon)", "slug": "whisky", "sortOrder": 1 },
+          { "name": "Vodka", "slug": "vodka", "sortOrder": 2 },
+          { "name": "Gin e Genebra", "slug": "gin", "sortOrder": 3 },
+          { "name": "Rum", "slug": "rum", "sortOrder": 4 },
+          { "name": "Cachaça e Aguardente", "slug": "cachaca", "sortOrder": 5 },
+          { "name": "Tequila e Mezcal", "slug": "tequila-mezcal", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Licores e Aperitivos",
+        "slug": "licores",
+        "sortOrder": 5,
+        "subcategories": [
+          { "name": "Licor Doce", "slug": "licor-doce", "sortOrder": 1 },
+          { "name": "Aperitivo / Bitter", "slug": "aperitivo-bitter", "sortOrder": 2 },
+          { "name": "Vermouth", "slug": "vermouth", "sortOrder": 3 },
+          { "name": "Licor de Ervas / Digestivo", "slug": "licor-ervas", "sortOrder": 4 }
+        ]
+      },
+      {
+        "name": "Bebidas Sem Álcool",
+        "slug": "bebidas-sem-alcool",
+        "sortOrder": 6,
+        "subcategories": [
+          { "name": "Sucos e Néctares", "slug": "sucos-nectares", "sortOrder": 1 },
+          { "name": "Água Mineral e Água com Gás", "slug": "agua", "sortOrder": 2 },
+          { "name": "Refrigerantes", "slug": "refrigerantes", "sortOrder": 3 },
+          { "name": "Energéticos", "slug": "energeticos", "sortOrder": 4 },
+          { "name": "Bebidas Vegetais e Funcionais", "slug": "bebidas-vegetais", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Acessórios e Presentes",
+        "slug": "acessorios",
+        "sortOrder": 7,
+        "subcategories": [
+          { "name": "Taças, Copos e Cálices", "slug": "tacas-copos", "sortOrder": 1 },
+          { "name": "Abridores, Saca-rolhas e Garfos", "slug": "abridor-saca-rolha", "sortOrder": 2 },
+          { "name": "Decantadores e Aeradores", "slug": "decantadores", "sortOrder": 3 },
+          { "name": "Embalagem para Presente", "slug": "embalagem-presente", "sortOrder": 4 },
+          { "name": "Adornos e Decoração", "slug": "decoracao", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Alimentos Harmonizados",
+        "slug": "alimentos-harmonizados",
+        "sortOrder": 8,
+        "subcategories": [
+          { "name": "Queijos e Tábuas", "slug": "queijos", "sortOrder": 1 },
+          { "name": "Embutidos e Presunto", "slug": "embutidos", "sortOrder": 2 },
+          { "name": "Frutas Secas e Castanhas", "slug": "frutas-secas", "sortOrder": 3 },
+          { "name": "Chocolates e Doces", "slug": "chocolates", "sortOrder": 4 }
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "mercado",
+    "name": "Mercado / Supermercado",
+    "description": "Para supermercados e mercados de bairro. Categorias essenciais: alimentos, bebidas, higiene, limpeza e laticínios.",
+    "icon": "🛒",
+    "categories": [
+      {
+        "name": "Frutas e Verduras",
+        "slug": "frutas-verduras",
+        "sortOrder": 1,
+        "subcategories": [
+          { "name": "Frutas Frescas", "slug": "frutas-frescas", "sortOrder": 1 },
+          { "name": "Verduras Folhosas", "slug": "verduras-folhosas", "sortOrder": 2 },
+          { "name": "Legumes", "slug": "legumes", "sortOrder": 3 },
+          { "name": "Frutas Secas e Congeladas", "slug": "frutas-congeladas", "sortOrder": 4 }
+        ]
+      },
+      {
+        "name": "Carnes e Peixes",
+        "slug": "carnes-peixes",
+        "sortOrder": 2,
+        "subcategories": [
+          { "name": "Carnes Vermelhas", "slug": "carnes-vermelhas", "sortOrder": 1 },
+          { "name": "Frango e Aves", "slug": "frango-aves", "sortOrder": 2 },
+          { "name": "Peixes Frescos", "slug": "peixes-frescos", "sortOrder": 3 },
+          { "name": "Frutos do Mar", "slug": "frutos-do-mar", "sortOrder": 4 },
+          { "name": "Embutidos e Carnes Processadas", "slug": "embutidos-processados", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Laticínios",
+        "slug": "laticinios",
+        "sortOrder": 3,
+        "subcategories": [
+          { "name": "Queijos", "slug": "queijos", "sortOrder": 1 },
+          { "name": "Leite e Bebidas Lácteas", "slug": "leite", "sortOrder": 2 },
+          { "name": "Iogurtes", "slug": "iogurtes", "sortOrder": 3 },
+          { "name": "Manteigas e Margarinas", "slug": "manteiga", "sortOrder": 4 },
+          { "name": "Requeijão e Creme de Leite", "slug": "requeijao", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Cereais, Grãos e Pães",
+        "slug": "cereais-graos",
+        "sortOrder": 4,
+        "subcategories": [
+          { "name": "Arroz, Feijão e Leguminosas", "slug": "arroz-feijao", "sortOrder": 1 },
+          { "name": "Trigo, Milho e Cereais", "slug": "trigo-milho", "sortOrder": 2 },
+          { "name": "Pães Frescos", "slug": "paes-frescos", "sortOrder": 3 },
+          { "name": "Biscoitos e Bolinhos", "slug": "biscoitos", "sortOrder": 4 },
+          { "name": "Massas", "slug": "massas", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Bebidas",
+        "slug": "bebidas",
+        "sortOrder": 5,
+        "subcategories": [
+          { "name": "Leites e Bebidas Vegetais", "slug": "bebidas-vegetais", "sortOrder": 1 },
+          { "name": "Sucos e Néctares", "slug": "sucos-nectares", "sortOrder": 2 },
+          { "name": "Refrigerantes e Água", "slug": "refrigerantes-agua", "sortOrder": 3 },
+          { "name": "Bebidas Quentes (Café, Chá)", "slug": "bebidas-quentes", "sortOrder": 4 },
+          { "name": "Bebidas Alcoólicas", "slug": "bebidas-alcoolicas", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Alimentos Congelados",
+        "slug": "congelados",
+        "sortOrder": 6,
+        "subcategories": [
+          { "name": "Carnes Congeladas", "slug": "carnes-congeladas", "sortOrder": 1 },
+          { "name": "Frutos do Mar Congelados", "slug": "frutos-congelados", "sortOrder": 2 },
+          { "name": "Alimentos Prontos", "slug": "alimentos-prontos", "sortOrder": 3 },
+          { "name": "Vegetais Congelados", "slug": "vegetais-congelados", "sortOrder": 4 }
+        ]
+      },
+      {
+        "name": "Mercearia e Alimentos Enlatados",
+        "slug": "mercearia",
+        "sortOrder": 7,
+        "subcategories": [
+          { "name": "Azeites e Óleos", "slug": "azeites-oleos", "sortOrder": 1 },
+          { "name": "Molhos e Temperos", "slug": "molhos-temperos", "sortOrder": 2 },
+          { "name": "Enlatados e Conservas", "slug": "enlatados", "sortOrder": 3 },
+          { "name": "Doces e Geleias", "slug": "doces-geleias", "sortOrder": 4 },
+          { "name": "Chocolates e Sobremesas", "slug": "chocolates", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Higiene e Cuidado Pessoal",
+        "slug": "higiene-pessoal",
+        "sortOrder": 8,
+        "subcategories": [
+          { "name": "Sabonete e Banho", "slug": "sabonete-banho", "sortOrder": 1 },
+          { "name": "Xampus e Condicionadores", "slug": "xampus", "sortOrder": 2 },
+          { "name": "Desodorantes e Antitranspirantes", "slug": "desodorantes", "sortOrder": 3 },
+          { "name": "Higiene Bucal", "slug": "higiene-bucal", "sortOrder": 4 },
+          { "name": "Depilatórios e Barbear", "slug": "depilatórios", "sortOrder": 5 },
+          { "name": "Absorventes e Higiene Íntima", "slug": "higiene-intima", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Produtos de Limpeza",
+        "slug": "limpeza",
+        "sortOrder": 9,
+        "subcategories": [
+          { "name": "Limpadores Multiusos", "slug": "limpadores-multiuso", "sortOrder": 1 },
+          { "name": "Detergentes e Amaciantes", "slug": "detergentes", "sortOrder": 2 },
+          { "name": "Desinfetantes", "slug": "desinfetantes", "sortOrder": 3 },
+          { "name": "Limpadores para Pisos", "slug": "limpadores-pisos", "sortOrder": 4 },
+          { "name": "Esponjas, Panos e Acessórios", "slug": "acessorios-limpeza", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Saúde e Farmácia",
+        "slug": "saude-farmacia",
+        "sortOrder": 10,
+        "subcategories": [
+          { "name": "Vitaminas e Suplementos", "slug": "vitaminas", "sortOrder": 1 },
+          { "name": "Analgésicos e Anti-inflamatórios", "slug": "analgesicos", "sortOrder": 2 },
+          { "name": "Antácidos e Digestivos", "slug": "antacidos", "sortOrder": 3 },
+          { "name": "Primeira Socorros", "slug": "primeira-socorros", "sortOrder": 4 },
+          { "name": "Termômetros e Medidores", "slug": "termometros", "sortOrder": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "livraria",
+    "name": "Livraria",
+    "description": "Para livrarias e sebos. Categorias por gênero, formato e público-alvo.",
+    "icon": "📚",
+    "categories": [
+      {
+        "name": "Ficção",
+        "slug": "ficcao",
+        "sortOrder": 1,
+        "subcategories": [
+          { "name": "Romance", "slug": "romance", "sortOrder": 1 },
+          { "name": "Ficção Científica", "slug": "ficcao-cientifica", "sortOrder": 2 },
+          { "name": "Fantasia e Ficção Fantástica", "slug": "fantasia", "sortOrder": 3 },
+          { "name": "Mistério e Suspense", "slug": "suspense", "sortOrder": 4 },
+          { "name": "Terror e Horror", "slug": "terror", "sortOrder": 5 },
+          { "name": "Novelas e Contos", "slug": "contos", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Não-Ficção",
+        "slug": "nao-ficcao",
+        "sortOrder": 2,
+        "subcategories": [
+          { "name": "Autoajuda e Desenvolvimento Pessoal", "slug": "autoajuda", "sortOrder": 1 },
+          { "name": "Negócios e Empreendedorismo", "slug": "negocios", "sortOrder": 2 },
+          { "name": "Biografias e Memórias", "slug": "biografias", "sortOrder": 3 },
+          { "name": "História e Documentário", "slug": "historia", "sortOrder": 4 },
+          { "name": "Crônicas e Ensaios", "slug": "cronicas-ensaios", "sortOrder": 5 },
+          { "name": "Poesia", "slug": "poesia", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Técnico e Educativo",
+        "slug": "tecnico-educativo",
+        "sortOrder": 3,
+        "subcategories": [
+          { "name": "Programação e Tecnologia", "slug": "programacao", "sortOrder": 1 },
+          { "name": "Design e Artes Visuais", "slug": "design-artes", "sortOrder": 2 },
+          { "name": "Culinária", "slug": "culinaria", "sortOrder": 3 },
+          { "name": "Viagem e Guias", "slug": "viagem-guias", "sortOrder": 4 },
+          { "name": "Cuidados e Beleza", "slug": "cuidados-beleza", "sortOrder": 5 },
+          { "name": "Educação e Didática", "slug": "educacao", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Infantil e Juvenil",
+        "slug": "infantil-juvenil",
+        "sortOrder": 4,
+        "subcategories": [
+          { "name": "Bebês e Primeiros Anos", "slug": "bebes", "sortOrder": 1 },
+          { "name": "Infantil (3-8 anos)", "slug": "infantil", "sortOrder": 2 },
+          { "name": "Infanto-juvenil (8-12 anos)", "slug": "infanto-juvenil", "sortOrder": 3 },
+          { "name": "Young Adult / Adolescente", "slug": "young-adult", "sortOrder": 4 },
+          { "name": "Contos de Fadas e Clássicos", "slug": "contos-classicos", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Cultura Pop e Entretenimento",
+        "slug": "cultura-pop",
+        "sortOrder": 5,
+        "subcategories": [
+          { "name": "Mangá e Quadrinhos", "slug": "manga-quadrinhos", "sortOrder": 1 },
+          { "name": "Livros Baseados em Filmes/Séries", "slug": "filme-serie", "sortOrder": 2 },
+          { "name": "Jogos e Entretenimento", "slug": "jogos", "sortOrder": 3 },
+          { "name": "Fãs de Franchises (Harry Potter, etc)", "slug": "franchises", "sortOrder": 4 }
+        ]
+      },
+      {
+        "name": "Audiobooks e Ebooks",
+        "slug": "audiobooks-ebooks",
+        "sortOrder": 6,
+        "subcategories": [
+          { "name": "Audiobooks", "slug": "audiobooks", "sortOrder": 1 },
+          { "name": "E-books em PDF", "slug": "ebooks-pdf", "sortOrder": 2 },
+          { "name": "E-books em EPUB", "slug": "ebooks-epub", "sortOrder": 3 },
+          { "name": "E-books Kindle", "slug": "ebooks-kindle", "sortOrder": 4 }
+        ]
+      },
+      {
+        "name": "Acessórios e Suplementos",
+        "slug": "acessorios-livros",
+        "sortOrder": 7,
+        "subcategories": [
+          { "name": "Marcadores e Suportes de Livro", "slug": "marcadores", "sortOrder": 1 },
+          { "name": "Mochilas e Capas", "slug": "mochilas-capas", "sortOrder": 2 },
+          { "name": "Lâmpadas de Leitura", "slug": "lampadas-leitura", "sortOrder": 3 },
+          { "name": "Camisetas e Merchandise", "slug": "merchandise", "sortOrder": 4 },
+          { "name": "Canetas e Papelaria", "slug": "canetas-papelaria", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Coleções Especiais",
+        "slug": "colecoes-especiais",
+        "sortOrder": 8,
+        "subcategories": [
+          { "name": "Edições Limitadas", "slug": "edicoes-limitadas", "sortOrder": 1 },
+          { "name": "Box Sets", "slug": "box-sets", "sortOrder": 2 },
+          { "name": "Livros Raros e Antigos", "slug": "raros-antigos", "sortOrder": 3 },
+          { "name": "Livros Autografados", "slug": "autografados", "sortOrder": 4 },
+          { "name": "Livros Ilustrados e Arte", "slug": "ilustrados", "sortOrder": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "generico",
+    "name": "Genérico / Loja Multi-Propósito",
+    "description": "Categorias flexíveis e neutras para qualquer tipo de varejo. Pode ser customizado conforme necessário.",
+    "icon": "🏪",
+    "categories": [
+      {
+        "name": "Eletrônicos e Tecnologia",
+        "slug": "eletronicos",
+        "sortOrder": 1,
+        "subcategories": [
+          { "name": "Smartphones e Acessórios", "slug": "smartphones", "sortOrder": 1 },
+          { "name": "Computadores e Laptops", "slug": "computadores", "sortOrder": 2 },
+          { "name": "Tablets e E-readers", "slug": "tablets", "sortOrder": 3 },
+          { "name": "Fones e Áudio", "slug": "audio", "sortOrder": 4 },
+          { "name": "Câmeras e Fotografia", "slug": "cameras", "sortOrder": 5 },
+          { "name": "Periféricos e Cabos", "slug": "perifericos", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Moda e Acessórios",
+        "slug": "moda",
+        "sortOrder": 2,
+        "subcategories": [
+          { "name": "Camisetas e Camisas", "slug": "camisetas", "sortOrder": 1 },
+          { "name": "Calças e Shorts", "slug": "calcas", "sortOrder": 2 },
+          { "name": "Vestidos e Saias", "slug": "vestidos", "sortOrder": 3 },
+          { "name": "Jaquetas e Casacos", "slug": "jaquetas", "sortOrder": 4 },
+          { "name": "Sapatos e Botas", "slug": "sapatos", "sortOrder": 5 },
+          { "name": "Bolsas e Mochilas", "slug": "bolsas", "sortOrder": 6 },
+          { "name": "Acessórios (Colares, Pulseiras, Etc)", "slug": "acessorios-moda", "sortOrder": 7 }
+        ]
+      },
+      {
+        "name": "Casa e Decoração",
+        "slug": "casa-decoracao",
+        "sortOrder": 3,
+        "subcategories": [
+          { "name": "Móveis", "slug": "moveis", "sortOrder": 1 },
+          { "name": "Cozinha e Louça", "slug": "cozinha", "sortOrder": 2 },
+          { "name": "Cama, Mesa e Banho", "slug": "cama-mesa-banho", "sortOrder": 3 },
+          { "name": "Decoração e Quadros", "slug": "decoracao", "sortOrder": 4 },
+          { "name": "Iluminação", "slug": "iluminacao", "sortOrder": 5 },
+          { "name": "Plantas e Jardinagem", "slug": "jardinagem", "sortOrder": 6 },
+          { "name": "Organização e Armazenamento", "slug": "organizacao", "sortOrder": 7 }
+        ]
+      },
+      {
+        "name": "Esportes e Outdoors",
+        "slug": "esportes",
+        "sortOrder": 4,
+        "subcategories": [
+          { "name": "Roupas Esportivas", "slug": "roupas-esporte", "sortOrder": 1 },
+          { "name": "Calçados Esportivos", "slug": "calcados-esporte", "sortOrder": 2 },
+          { "name": "Equipamentos de Fitness", "slug": "fitness", "sortOrder": 3 },
+          { "name": "Esportes Radicais e Outdoor", "slug": "outdoor", "sortOrder": 4 },
+          { "name": "Bicicletas e Acessórios", "slug": "bicicletas", "sortOrder": 5 },
+          { "name": "Suplementos Esportivos", "slug": "suplementos", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Alimentos e Bebidas",
+        "slug": "alimentos-bebidas",
+        "sortOrder": 5,
+        "subcategories": [
+          { "name": "Alimentos Frescos", "slug": "alimentos-frescos", "sortOrder": 1 },
+          { "name": "Alimentos Congelados", "slug": "congelados", "sortOrder": 2 },
+          { "name": "Alimentos Enlatados e Mercearia", "slug": "mercearia", "sortOrder": 3 },
+          { "name": "Bebidas Quentes", "slug": "bebidas-quentes", "sortOrder": 4 },
+          { "name": "Bebidas Frias", "slug": "bebidas-frias", "sortOrder": 5 },
+          { "name": "Doces e Sobremesas", "slug": "doces", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Beleza e Cuidados Pessoais",
+        "slug": "beleza-cuidados",
+        "sortOrder": 6,
+        "subcategories": [
+          { "name": "Cuidados com o Rosto", "slug": "cuidados-rosto", "sortOrder": 1 },
+          { "name": "Cuidados com Cabelos", "slug": "cuidados-cabelos", "sortOrder": 2 },
+          { "name": "Maquiagem", "slug": "maquiagem", "sortOrder": 3 },
+          { "name": "Cuidados Corporais", "slug": "cuidados-corpo", "sortOrder": 4 },
+          { "name": "Perfumes e Fragrâncias", "slug": "perfumes", "sortOrder": 5 },
+          { "name": "Higiene Pessoal", "slug": "higiene-pessoal", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Saúde e Bem-Estar",
+        "slug": "saude-bem-estar",
+        "sortOrder": 7,
+        "subcategories": [
+          { "name": "Vitaminas e Suplementos", "slug": "vitaminas", "sortOrder": 1 },
+          { "name": "Medicamentos OTC", "slug": "medicamentos", "sortOrder": 2 },
+          { "name": "Equipamentos de Saúde", "slug": "equipamentos-saude", "sortOrder": 3 },
+          { "name": "Aromaterapia e Óleos Essenciais", "slug": "aromaterapia", "sortOrder": 4 },
+          { "name": "Produtos Naturais e Orgânicos", "slug": "naturais-organicos", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Lazer e Entretenimento",
+        "slug": "lazer",
+        "sortOrder": 8,
+        "subcategories": [
+          { "name": "Livros", "slug": "livros", "sortOrder": 1 },
+          { "name": "Jogos de Mesa", "slug": "jogos-mesa", "sortOrder": 2 },
+          { "name": "Brinquedos", "slug": "brinquedos", "sortOrder": 3 },
+          { "name": "Consoles e Videogames", "slug": "consoles-games", "sortOrder": 4 },
+          { "name": "Filmes e Séries", "slug": "filmes-series", "sortOrder": 5 },
+          { "name": "Música e Instrumentos", "slug": "musica-instrumentos", "sortOrder": 6 }
+        ]
+      },
+      {
+        "name": "Limpeza e Higiene",
+        "slug": "limpeza-higiene",
+        "sortOrder": 9,
+        "subcategories": [
+          { "name": "Produtos de Limpeza", "slug": "produtos-limpeza", "sortOrder": 1 },
+          { "name": "Desinfetantes e Sanitizantes", "slug": "desinfetantes", "sortOrder": 2 },
+          { "name": "Papel e Descartáveis", "slug": "papel-descartaveis", "sortOrder": 3 },
+          { "name": "Detergentes e Amaciantes", "slug": "detergentes", "sortOrder": 4 },
+          { "name": "Acessórios de Limpeza", "slug": "acessorios-limpeza", "sortOrder": 5 }
+        ]
+      },
+      {
+        "name": "Diversos",
+        "slug": "diversos",
+        "sortOrder": 10,
+        "subcategories": [
+          { "name": "Presentes e Sovenires", "slug": "presentes", "sortOrder": 1 },
+          { "name": "Artesanato e DIY", "slug": "artesanato", "sortOrder": 2 },
+          { "name": "Ferramentas", "slug": "ferramentas", "sortOrder": 3 },
+          { "name": "Animais de Estimação", "slug": "animais-estimacao", "sortOrder": 4 },
+          { "name": "Produtos Importados", "slug": "importados", "sortOrder": 5 },
+          { "name": "Outlet e Ofertas", "slug": "outlet-ofertas", "sortOrder": 6 }
+        ]
+      }
+    ]
+  }
+]
