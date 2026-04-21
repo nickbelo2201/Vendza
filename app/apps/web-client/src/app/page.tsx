@@ -27,6 +27,11 @@ type Product = {
   category: { id: string; name: string; slug: string } | null;
 };
 
+type ProductsResponse = {
+  items: Product[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+};
+
 export async function generateMetadata() {
   try {
     const config = await fetchStorefrontConfig<{ branding: { name: string } }>("/storefront/config");
@@ -67,11 +72,14 @@ export default async function HomePage({
   let products: Product[] = [];
 
   try {
-    [config, categories, products] = await Promise.all([
+    const [configResult, categoriesResult, productsResult] = await Promise.all([
       fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
       fetchStorefrontCatalog<Category[]>("/catalog/categories"),
-      fetchStorefrontCatalog<Product[]>(produtosUrl),
+      fetchStorefrontCatalog<ProductsResponse>(produtosUrl),
     ]);
+    config = configResult;
+    categories = categoriesResult;
+    products = productsResult.items;
   } catch {
     // API indisponível — exibe estado vazio
   }
