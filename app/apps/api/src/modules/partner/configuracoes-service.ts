@@ -245,8 +245,10 @@ export async function convidarUsuario(
   let supabaseUserId: string | null = null;
 
   try {
+    // C-03: Armazenar storeId nos metadados do convite para validação de tenant na aceitação
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(emailNormalizado, {
       redirectTo: `${process.env.NEXT_PUBLIC_PARTNER_URL ?? "http://localhost:3001"}/onboarding/aceitar-convite`,
+      data: { storeId: context.storeId },
     });
 
     if (error) {
@@ -342,13 +344,33 @@ export async function aceitarConviteUsuario(token: string, supabaseAdmin: any, a
   const authUserId = data.user.id;
   const userEmail = data.user.email;
 
-  appLog.info({ authUserId, userEmail }, "Token validado com sucesso");
+  // C-03: Extrair storeId dos metadados do token Supabase
+  // O storeId foi armazenado como user_metadata ao convidar o usuário
+  // Isso previne cross-tenant leak quando procuramos o StoreUser
+  const storeIdFromToken = data.user.user_metadata?.storeId as string | undefined;
 
-  // C-03: Encontrar StoreUser pelo email
-  // IMPORTANTE: Schema garante @@unique([storeId, email]), então não há possibilidade
-  // de cross-tenant leak. Cada email é único dentro de uma loja.
+  if (!storeIdFromToken) {
+    appLog.warn(
+      { authUserId, userEmail },
+      "storeId ausente nos metadados do token — convite de versão anterior?",
+    );
+    throw new Error("Convite inválido: storeId ausente. Solicite um novo convite.");
+  }
+
+  appLog.info({ authUserId, userEmail, storeId: storeIdFromToken }, "Token validado com sucesso");
+
+  // C-03: Encontrar StoreUser pelo email E storeId
+  // CRÍTICO: Schema garante @@unique([storeId, email]), então um email é único por loja.
+  // Sem filtrar por storeId, findFirst pode retornar o StoreUser ERRADO se o mesmo email
+  // existir em múltiplas lojas.
+  // Exemplo: João é convidado por Loja A e Loja B. Se Loja B foi criada primeiro,
+  // findFirst({ where: { email } }) retorna o StoreUser de Loja B mesmo que João
+  // está aceitando o convite de Loja A.
   const storeUser = await prisma.storeUser.findFirst({
-    where: { email: userEmail },
+    where: {
+      email: userEmail,
+      storeId: storeIdFromToken,
+    },
     select: { id: true, storeId: true, email: true },
   });
 
