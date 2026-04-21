@@ -224,11 +224,29 @@
 
 ---
 
-## Próximos Passos
+## ETAPA 2 — Validação Sequencial
 
-1. Usuário confirma ordem de execução
-2. Para cada issue:
-   - ETAPA 2: Validação sequencial (verificar código)
-   - ETAPA 3: Implementação
-   - ETAPA 4: Testing
-   - ETAPA 5: Deploy
+### SOF-60: Implementar CDN para imagens (APROVADO)
+
+**Data:** 2026-04-21
+**Status:** Aprovado
+
+**O que foi validado:**
+1. Adicionados remotePatterns para `/storage/v1/render/image/public/**` em `next.config.ts`
+2. Implementado hook `transformSupabaseImageUrl()` que:
+   - Converte URLs de `/storage/v1/object/public/` para `/storage/v1/render/image/public/`
+   - Adiciona parâmetros `?width=400&quality=80` automaticamente
+   - Evita transformações duplas (idempotente)
+3. Atualizado `ProductImage.tsx` para usar transformação CDN
+4. Fallback emoji ainda funciona caso imagem falhe
+5. TypeScript: 0 erros
+6. Lint: 0 erros
+
+**Arquivos alterados:**
+- `apps/web-client/next.config.ts` — adicionados remotePatterns para render/image
+- `apps/web-client/src/components/ProductImage.tsx` — adicionado transformSupabaseImageUrl hook
+
+**Próximos Passos:**
+1. SOF-62 — Adicionar Suspense em rotas pesadas
+2. SOF-59 — Forçar paginação catálogo
+3. SOF-61 — Criar endpoint /bootstrap
