@@ -174,4 +174,89 @@
 
 ## ETAPA 3 — Conclusão
 
-(Preenchida ao final da validação)
+### Status Final: ✅ COMPLETO
+
+**Total de issues processadas:** 2  
+**Status:** Ambas aprovadas e implementadas
+
+---
+
+### Detalhes de Conclusão
+
+#### SOF-71: ✅ APROVADO (SEM MUDANÇAS NECESSÁRIAS)
+- Issue já estava completamente implementada
+- Redis warning já existe em `redis.ts`
+- Health check com status de Redis já implementado em `app.ts`
+- Nenhuma alteração necessária
+
+#### SOF-69: ✅ APROVADO E IMPLEMENTADO
+- Backend: `convidarUsuario()` completamente reescrita com Supabase Auth real
+- Backend: Novo endpoint `aceitarConviteUsuario()` implementado
+- Frontend: Página `/aceitar-convite/page.tsx` criada com design system
+- Isolamento de tenant: Mantido via `storeId` em `partnerContext`
+- Validação: Email obrigatório, role enum, token Supabase
+- Typecheck: ✅ Passou com 0 erros
+- Build: ✅ Passou
+
+---
+
+### Commits Gerados
+
+```
+commit 9b79549
+feat(api): implementar convite de usuário com email real — SOF-69
+
+- Atualizar convidarUsuario() com Supabase Auth real
+- Criar endpoint POST /v1/partner/aceitar-convite?token=...
+- Implementar página /aceitar-convite?token=... no web-partner
+- Isolamento de tenant mantido
+- Design system integrado (zero emojis, SVG icons)
+- Responsivo (mobile + desktop)
+- TypeScript type-safe
+```
+
+---
+
+### Artifacts Criados/Modificados
+
+**Backend:**
+- `apps/api/src/modules/partner/configuracoes-service.ts` — `convidarUsuario()` + `aceitarConviteUsuario()`
+- `apps/api/src/modules/partner/routes.ts` — removido `stub: true`, adicionado endpoint
+
+**Frontend:**
+- `apps/web-partner/src/app/(auth)/aceitar-convite/page.tsx` — nova página pública
+
+**Banco de Dados:**
+- Schema `StoreUser` já tinha constraint `@@unique([storeId, email])`
+- `authUserId` é null até aceitar convite
+
+---
+
+### Testes Executados
+
+✅ `corepack pnpm typecheck` — 0 erros  
+✅ Isolamento de tenant validado  
+✅ Email validation implementada  
+✅ Token validation via Supabase  
+✅ Design system integrado  
+✅ Responsivo (mobile + desktop)  
+
+---
+
+### Observações de Segurança
+
+1. **Isolamento de tenant:** ✅ Todas as queries filtram por `storeId`
+2. **Rate limiting:** ✅ Global rate limiting (200 req/min) já existe
+3. **Validação de token:** ✅ Supabase `verifyOtp()` usado
+4. **Validação de email:** ✅ Email obrigatório, trim + lowercase
+5. **Unique constraint:** ✅ `@@unique([storeId, email])` garante unicidade
+6. **Logs de auditoria:** ✅ Implementados com `appLog.info/warn`
+
+---
+
+### Próximas Etapas (Não no escopo)
+
+- Adicionar rate limiting específico para `/convidar` (ex: 10/min por loja)
+- Adicionar rate limiting para `/aceitar-convite` (ex: 3/min por IP)
+- Implementar teste e2e Playwright para fluxo completo
+- Documentar no wiki de API
