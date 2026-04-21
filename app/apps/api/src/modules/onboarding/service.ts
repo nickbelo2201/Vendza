@@ -155,11 +155,12 @@ async function createCategoriesFromTemplates(
   templateIds: string[],
 ): Promise<number> {
   const categories: TemplateCategory[] = combineTemplates(templateIds);
-  let totalCreated = 0;
 
   // Usar transação com timeout maior
-  await db.$transaction(
+  const totalCreated = await db.$transaction(
     async (tx: Prisma.TransactionClient) => {
+      let count = 0;
+
       for (const cat of categories) {
         // Criar ou encontrar categoria pai
         const existingParent = await tx.category.findUnique({
@@ -177,7 +178,7 @@ async function createCategoriesFromTemplates(
               isActive: true,
             },
           });
-          totalCreated++;
+          count++;
         }
 
         // Criar subcategorias
@@ -197,10 +198,12 @@ async function createCategoriesFromTemplates(
                 isActive: true,
               },
             });
-            totalCreated++;
+            count++;
           }
         }
       }
+
+      return count;
     },
     { timeout: 60000 }
   );
