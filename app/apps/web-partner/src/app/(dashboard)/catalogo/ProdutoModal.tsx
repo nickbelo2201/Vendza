@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 import { createClient } from "../../../utils/supabase/client";
 
@@ -245,13 +246,17 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
     try {
       if (produto?.id) {
         await editarProduto(produto.id, body);
+        toast.success("Produto salvo");
       } else {
         await criarProduto(body);
+        toast.success("Produto criado");
       }
       router.refresh();
       onFechar();
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao salvar produto.");
+      const msg = err instanceof Error ? err.message : "Erro ao salvar produto.";
+      setErro(msg);
+      toast.error(msg);
     } finally {
       setSalvando(false);
     }

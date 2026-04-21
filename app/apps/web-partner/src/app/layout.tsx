@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Vendza Partner",
@@ -34,6 +35,16 @@ export default function RootLayout({
       <body>
         <OfflineBanner />
         {children}
+        <Toaster
+          position="top-right"
+          richColors
+          toastOptions={{
+            style: {
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+            },
+          }}
+        />
       </body>
     </html>
   );

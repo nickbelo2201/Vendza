@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { deletarProduto } from "./actions";
 
@@ -17,10 +18,13 @@ export function BotaoDeletar({ produtoId, nomeProduto }: Props) {
     setErroDelete(null);
     try {
       await deletarProduto(produtoId);
+      toast.success("Produto removido");
       router.refresh();
     } catch (err) {
       console.error("Erro ao deletar produto:", err);
-      setErroDelete("Não foi possível deletar. Tente novamente.");
+      const msg = "Não foi possível deletar. Tente novamente.";
+      setErroDelete(msg);
+      toast.error(msg);
       setFase("idle");
     }
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { salvarConfiguracoes } from "./actions";
 
@@ -112,12 +113,12 @@ export function FormConfiguracoes({ settings }: Props) {
           minimumOrderValueCents: minimumCents,
         });
         setFeedback({ ok: true, msg: "Configurações salvas com sucesso." });
+        toast.success("Dados salvos com sucesso");
         setHasChanges(false);
       } catch (err) {
-        setFeedback({
-          ok: false,
-          msg: err instanceof Error ? err.message : "Erro ao salvar configurações.",
-        });
+        const msg = err instanceof Error ? err.message : "Erro ao salvar configurações.";
+        setFeedback({ ok: false, msg });
+        toast.error(msg);
       }
     });
   }
