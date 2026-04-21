@@ -279,8 +279,17 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request, reply) => {
-      reply.code(201);
-      return ok(await createPartnerCategory(partnerContext(request), request.body));
+      try {
+        reply.code(201);
+        return ok(await createPartnerCategory(partnerContext(request), request.body));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao criar categoria.";
+        return reply.code(400).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "INVALID_PARENT_CATEGORY", message },
+        });
+      }
     },
   );
 

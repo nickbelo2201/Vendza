@@ -117,7 +117,7 @@ export default function AceitarConvitePage() {
 
     try {
       const result = await fetchAPI<InviteResponse>(
-        "/partner/aceitar-convite",
+        "/v1/partner/aceitar-convite",
         {
           method: "POST",
           body: JSON.stringify({ token }),
