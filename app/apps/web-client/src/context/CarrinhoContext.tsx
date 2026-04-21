@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { encryptData, decryptData, looksEncrypted } from "@/lib/crypto";
 
 const STORAGE_KEY = "vendza_carrinho";
 
@@ -27,28 +28,70 @@ type CarrinhoContextType = {
 
 const CarrinhoContext = createContext<CarrinhoContextType | null>(null);
 
-function carregarDoLocalStorage(): CarrinhoItem[] {
+async function carregarDoLocalStorage(): Promise<CarrinhoItem[]> {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as CarrinhoItem[]) : [];
+    if (!raw) return [];
+
+    // Se parece criptografado, descriptografa
+    if (looksEncrypted(raw)) {
+      try {
+        return (await decryptData<CarrinhoItem[]>(raw)) ?? [];
+      } catch (error) {
+        console.error("Erro ao descriptografar carrinho, usando fallback:", error);
+        return [];
+      }
+    }
+
+    // Caso contrário, trata como JSON puro (compatibilidade com dados antigos)
+    return (JSON.parse(raw) as CarrinhoItem[]) ?? [];
   } catch {
     return [];
   }
 }
 
 export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CarrinhoItem[]>(() => carregarDoLocalStorage());
+  const [items, setItems] = useState<CarrinhoItem[]>([]);
   // Impede redirect prematuro no SSR: só false após montar no cliente
   const [carregando, setCarregando] = useState(true);
 
+  // Carrega itens ao montar o componente
   useEffect(() => {
-    setCarregando(false);
+    let isMounted = true;
+    carregarDoLocalStorage().then((itemsCarregados) => {
+      if (isMounted) {
+        setItems(itemsCarregados);
+        setCarregando(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  // Salva itens quando há mudança
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    if (!carregando) {
+      salvarCarrinhoNoStorage(items);
+    }
+  }, [items, carregando]);
+
+  // Função auxiliar para salvar com criptografia
+  async function salvarCarrinhoNoStorage(carrinho: CarrinhoItem[]): Promise<void> {
+    try {
+      const encrypted = await encryptData(carrinho);
+      localStorage.setItem(STORAGE_KEY, encrypted);
+    } catch (error) {
+      console.error("Erro ao criptografar carrinho:", error);
+      // Fallback: salvar como JSON puro
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(carrinho));
+      } catch {
+        // localStorage cheio ou desabilitado — silenciar
+      }
+    }
+  }
 
   const adicionarItem = useCallback(
     (item: Omit<CarrinhoItem, "id" | "quantity"> & { quantity?: number }) => {

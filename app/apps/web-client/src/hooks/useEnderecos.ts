@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { encryptData, decryptData, looksEncrypted } from "../lib/crypto";
 
 export type Endereco = {
   id: string;
@@ -22,33 +23,76 @@ const CHAVE_ENDERECOS = "vendza-enderecos";
 const CHAVE_PERFIL = "vendza-perfil";
 const MAX_ENDERECOS = 3;
 
-function lerDoStorage<T>(chave: string, padrao: T): T {
+/**
+ * Lê dados do localStorage com suporte a criptografia
+ * Compatível com dados antigos (JSON puro) — descriptografa se necessário
+ */
+async function lerDoStorage<T>(chave: string, padrao: T): Promise<T> {
   if (typeof window === "undefined") return padrao;
   try {
     const raw = localStorage.getItem(chave);
-    return raw ? (JSON.parse(raw) as T) : padrao;
+    if (!raw) return padrao;
+
+    // Se parece criptografado, descriptografa
+    if (looksEncrypted(raw)) {
+      try {
+        return (await decryptData<T>(raw)) ?? padrao;
+      } catch (error) {
+        console.error(`Erro ao descriptografar ${chave}, usando fallback:`, error);
+        return padrao;
+      }
+    }
+
+    // Caso contrário, trata como JSON puro (compatibilidade com dados antigos)
+    return (JSON.parse(raw) as T) ?? padrao;
   } catch {
     return padrao;
   }
 }
 
-function salvarNoStorage<T>(chave: string, valor: T): void {
+/**
+ * Salva dados no localStorage com criptografia
+ */
+async function salvarNoStorage<T>(chave: string, valor: T): Promise<void> {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(chave, JSON.stringify(valor));
-  } catch {
-    // localStorage cheio ou desabilitado — silenciar
+    const encrypted = await encryptData(valor);
+    localStorage.setItem(chave, encrypted);
+  } catch (error) {
+    console.error(`Erro ao criptografar e salvar ${chave}:`, error);
+    // Fallback: salvar como JSON puro se criptografia falhar
+    try {
+      localStorage.setItem(chave, JSON.stringify(valor));
+    } catch {
+      // localStorage cheio ou desabilitado — silenciar
+    }
   }
 }
 
 export function useEnderecos() {
-  const [enderecos, setEnderecos] = useState<Endereco[]>(() =>
-    lerDoStorage<Endereco[]>(CHAVE_ENDERECOS, [])
-  );
+  const [enderecos, setEnderecos] = useState<Endereco[]>([]);
+  const [carregando, setCarregando] = useState(true);
 
+  // Carrega endereços ao montar o componente
   useEffect(() => {
-    salvarNoStorage(CHAVE_ENDERECOS, enderecos);
-  }, [enderecos]);
+    let isMounted = true;
+    lerDoStorage<Endereco[]>(CHAVE_ENDERECOS, []).then((dados) => {
+      if (isMounted) {
+        setEnderecos(dados);
+        setCarregando(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Salva endereços quando há mudança
+  useEffect(() => {
+    if (!carregando) {
+      salvarNoStorage(CHAVE_ENDERECOS, enderecos);
+    }
+  }, [enderecos, carregando]);
 
   const salvar = useCallback((endereco: Omit<Endereco, "id">) => {
     setEnderecos((prev) => {
@@ -66,14 +110,27 @@ export function useEnderecos() {
 }
 
 export function usePerfil() {
-  const [perfil, setPerfil] = useState<PerfilCliente>(() =>
-    lerDoStorage<PerfilCliente>(CHAVE_PERFIL, { nome: "", telefone: "", email: "" })
-  );
+  const [perfil, setPerfil] = useState<PerfilCliente>({ nome: "", telefone: "", email: "" });
+  const [carregando, setCarregando] = useState(true);
+
+  // Carrega perfil ao montar o componente
+  useEffect(() => {
+    let isMounted = true;
+    lerDoStorage<PerfilCliente>(CHAVE_PERFIL, { nome: "", telefone: "", email: "" }).then((dados) => {
+      if (isMounted) {
+        setPerfil(dados);
+        setCarregando(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const salvarPerfil = useCallback((dados: PerfilCliente) => {
     setPerfil(dados);
     salvarNoStorage(CHAVE_PERFIL, dados);
   }, []);
 
-  return { perfil, salvarPerfil };
+  return { perfil, salvarPerfil, carregando };
 }
