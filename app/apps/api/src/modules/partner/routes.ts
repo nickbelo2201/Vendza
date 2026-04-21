@@ -2,7 +2,7 @@ import { Type, type Static } from "@sinclair/typebox";
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 import { prisma } from "@vendza/database";
-import { envelopeSchema, ok } from "../../lib/http.js";
+import { envelopeSchema, ok, notFound, badRequest } from "../../lib/http.js";
 import {
   createInventoryMovement,
   createPartnerCategory,
@@ -62,6 +62,7 @@ import {
 } from "./delivery-zones-service.js";
 import { getPromocoes } from "./promocoes-service.js";
 import { importarProdutos, type ImportProductInput } from "./import-service.js";
+import { requireRole } from "./require-role.js";
 import {
   abrirCaixa,
   fecharCaixa,
@@ -305,7 +306,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const category = await updatePartnerCategory(partnerContext(request), request.params.id, request.body);
       if (!category) {
-        return reply.code(404).send(ok({ message: "Categoria nao encontrada." }));
+        return reply.code(404).send(notFound("Categoria nao encontrada."));
       }
       return ok(category);
     },
@@ -314,6 +315,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.delete<{ Params: { id: string } }>(
     "/partner/categories/:id",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(Type.Any()) },
@@ -322,7 +324,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const result = await deletePartnerCategory(partnerContext(request), request.params.id);
       if ("error" in result) {
-        return reply.code(400).send(ok({ message: result.error }));
+        return reply.code(400).send(badRequest(result.error));
       }
       return ok(result);
     },
@@ -392,7 +394,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const order = await getPartnerOrderById(partnerContext(request), request.params.id);
       if (!order) {
-        return reply.code(404).send(ok({ message: "Pedido nao encontrado." }));
+        return reply.code(404).send(notFound("Pedido nao encontrado."));
       }
       return ok(order);
     },
@@ -410,7 +412,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const order = await updatePartnerOrderStatus(partnerContext(request), request.params.id, request.body);
       if (!order) {
-        return reply.code(404).send(ok({ message: "Pedido nao encontrado." }));
+        return reply.code(404).send(notFound("Pedido nao encontrado."));
       }
       return ok(order);
     },
@@ -442,7 +444,11 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request, reply) => {
-      const csv = await exportPartnerOrdersCSV(partnerContext(request), request.query);
+      const { from, to, status } = request.query;
+      if (!from || !to) {
+        return reply.code(400).send({ error: "Os parâmetros 'from' e 'to' são obrigatórios para exportação." });
+      }
+      const csv = await exportPartnerOrdersCSV(partnerContext(request), { from: from!, to: to!, status });
       reply.header("Content-Type", "text/csv");
       reply.header("Content-Disposition", 'attachment; filename="pedidos.csv"');
       return reply.send(csv);
@@ -517,7 +523,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const product = await updatePartnerProduct(partnerContext(request), request.params.id, request.body);
       if (!product) {
-        return reply.code(404).send(ok({ message: "Produto nao encontrado." }));
+        return reply.code(404).send(notFound("Produto nao encontrado."));
       }
       return ok(product);
     },
@@ -539,7 +545,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         request.body.isAvailable,
       );
       if (!product) {
-        return reply.code(404).send(ok({ message: "Produto nao encontrado." }));
+        return reply.code(404).send(notFound("Produto nao encontrado."));
       }
       return ok(product);
     },
@@ -548,6 +554,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.delete<{ Params: { id: string } }>(
     "/partner/products/:id",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(Type.Any()) },
@@ -556,14 +563,27 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const product = await deletePartnerProduct(partnerContext(request), request.params.id);
       if (!product) {
-        return reply.code(404).send(ok({ message: "Produto nao encontrado." }));
+        return reply.code(404).send(notFound("Produto nao encontrado."));
       }
       return ok(product);
     },
   );
 
-  app.get("/partner/inventory", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async (request) =>
-    ok(await getInventory(partnerContext(request))),
+  const InventoryQuerySchema = Type.Object({
+    page: Type.Optional(Type.Integer({ minimum: 1, default: 1 })),
+    pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 200, default: 50 })),
+  });
+
+  app.get<{ Querystring: { page?: number; pageSize?: number } }>(
+    "/partner/inventory",
+    {
+      schema: {
+        querystring: InventoryQuerySchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) =>
+      ok(await getInventory(partnerContext(request), request.query)),
   );
 
   app.post<{ Body: InventoryMovementBody }>(
@@ -577,7 +597,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const movement = await createInventoryMovement(partnerContext(request), request.body);
       if (!movement) {
-        return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+        return reply.code(404).send(notFound("Item de estoque nao encontrado."));
       }
       reply.code(201);
       return ok(movement);
@@ -618,14 +638,14 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       try {
         const resultado = await registrarMovimentacao(partnerContext(request), request.body);
         if (!resultado) {
-          return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+          return reply.code(404).send(notFound("Item de estoque nao encontrado."));
         }
         reply.code(201);
         return ok(resultado);
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode ?? 500;
         const message = e instanceof Error ? e.message : "Erro ao registrar movimentação.";
-        return reply.code(status).send(ok({ message }));
+        return reply.code(status).send(badRequest(message));
       }
     },
   );
@@ -652,14 +672,28 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         pageSize ?? 20,
       );
       if (!historico) {
-        return reply.code(404).send(ok({ message: "Item de estoque nao encontrado." }));
+        return reply.code(404).send(notFound("Item de estoque nao encontrado."));
       }
       return ok(historico);
     },
   );
 
-  app.get("/partner/customers", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async (request) =>
-    ok(await listCustomers(partnerContext(request))),
+  const CustomerListQuerySchema = Type.Object({
+    page: Type.Optional(Type.Integer({ minimum: 1, default: 1 })),
+    pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 200, default: 50 })),
+    search: Type.Optional(Type.String()),
+  });
+
+  app.get<{ Querystring: { page?: number; pageSize?: number; search?: string } }>(
+    "/partner/customers",
+    {
+      schema: {
+        querystring: CustomerListQuerySchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request) =>
+      ok(await listCustomers(partnerContext(request), request.query)),
   );
 
   app.get<{ Params: { id: string } }>(
@@ -673,7 +707,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const customer = await getCustomerById(partnerContext(request), request.params.id);
       if (!customer) {
-        return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+        return reply.code(404).send(notFound("Cliente nao encontrado."));
       }
       return ok(customer);
     },
@@ -691,7 +725,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const customer = await updateCustomer(partnerContext(request), request.params.id, request.body);
       if (!customer) {
-        return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+        return reply.code(404).send(notFound("Cliente nao encontrado."));
       }
       return ok(customer);
     },
@@ -703,7 +737,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
     async (request, reply) => {
       const tags = await listCustomerTags(partnerContext(request), request.params.id);
-      if (tags === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      if (tags === null) return reply.code(404).send(notFound("Cliente nao encontrado."));
       return ok(tags);
     },
   );
@@ -719,7 +753,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
     async (request, reply) => {
       const tag = await addCustomerTag(partnerContext(request), request.params.id, request.body.label.trim());
-      if (tag === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      if (tag === null) return reply.code(404).send(notFound("Cliente nao encontrado."));
       return ok(tag);
     },
   );
@@ -733,7 +767,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
         request.params.id,
         decodeURIComponent(request.params.label),
       );
-      if (!removed) return reply.code(404).send(ok({ message: "Tag nao encontrada." }));
+      if (!removed) return reply.code(404).send(notFound("Tag nao encontrada."));
       return ok({ removed: true });
     },
   );
@@ -744,7 +778,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
     async (request, reply) => {
       const notas = await listCustomerNotes(partnerContext(request), request.params.id);
-      if (notas === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      if (notas === null) return reply.code(404).send(notFound("Cliente nao encontrado."));
       return ok(notas);
     },
   );
@@ -760,7 +794,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
     async (request, reply) => {
       const nota = await addCustomerNote(partnerContext(request), request.params.id, request.body.body.trim());
-      if (nota === null) return reply.code(404).send(ok({ message: "Cliente nao encontrado." }));
+      if (nota === null) return reply.code(404).send(notFound("Cliente nao encontrado."));
       return reply.code(201).send(ok(nota));
     },
   );
@@ -772,6 +806,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.patch<{ Body: StoreSettingsBody }>(
     "/partner/store/settings",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         body: StoreSettingsSchema,
         response: { 200: envelopeSchema(Type.Any()) },
@@ -788,7 +823,10 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch<{ Body: StoreHourBody[] }>(
     "/partner/store/hours",
-    { schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } } },
+    {
+      preHandler: requireRole("owner", "manager"),
+      schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } },
+    },
     async (request) => ok(await updateStoreHours(partnerContext(request), request.body)),
   );
 
@@ -801,6 +839,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.patch<{ Body: DeliveryZoneInputBody[] }>(
     "/partner/store/delivery-zones",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         body: DeliveryZonesBodySchema,
         response: { 200: envelopeSchema(Type.Array(Type.Any())) },
@@ -820,6 +859,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: DeliveryZoneBody }>(
     "/partner/configuracoes/zonas-entrega",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         body: DeliveryZoneBodySchema,
         response: { 201: envelopeSchema(Type.Any()) },
@@ -846,6 +886,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.put<{ Params: { id: string }; Body: Partial<DeliveryZoneBody> }>(
     "/partner/configuracoes/zonas-entrega/:id",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: Type.Partial(DeliveryZoneBodySchema),
@@ -855,7 +896,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const zona = await updateDeliveryZone(partnerContext(request), request.params.id, request.body as Partial<DeliveryZoneInput>);
       if (!zona) {
-        return reply.code(404).send(ok({ message: "Zona de entrega nao encontrada." }));
+        return reply.code(404).send(notFound("Zona de entrega nao encontrada."));
       }
       return ok(zona);
     },
@@ -864,6 +905,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.delete<{ Params: { id: string } }>(
     "/partner/configuracoes/zonas-entrega/:id",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(Type.Any()) },
@@ -872,7 +914,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const zona = await deleteDeliveryZone(partnerContext(request), request.params.id);
       if (!zona) {
-        return reply.code(404).send(ok({ message: "Zona de entrega nao encontrada." }));
+        return reply.code(404).send(notFound("Zona de entrega nao encontrada."));
       }
       return ok(zona);
     },
@@ -897,6 +939,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.put<{ Body: LojaUpdateBody }>(
     "/partner/configuracoes/loja",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         body: LojaUpdateSchema,
         response: { 200: envelopeSchema(Type.Any()) },
@@ -913,7 +956,10 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
   app.put<{ Body: StoreHourBody[] }>(
     "/partner/configuracoes/horarios",
-    { schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } } },
+    {
+      preHandler: requireRole("owner", "manager"),
+      schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } },
+    },
     async (request) => ok(await updateStoreHours(partnerContext(request), request.body)),
   );
 
@@ -926,6 +972,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.put<{ Body: ContaBancariaUpdateBody }>(
     "/partner/configuracoes/conta-bancaria",
     {
+      preHandler: requireRole("owner"),
       schema: {
         body: ContaBancariaUpdateSchema,
         response: { 200: envelopeSchema(Type.Any()) },
@@ -952,6 +999,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: ConviteBody }>(
     "/partner/configuracoes/usuarios/convidar",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         body: ConviteSchema,
         response: { 201: envelopeSchema(Type.Any()) },
@@ -972,6 +1020,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.delete<{ Params: { id: string } }>(
     "/partner/configuracoes/usuarios/:id",
     {
+      preHandler: requireRole("owner"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(Type.Any()) },
@@ -980,7 +1029,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const resultado = await revogarUsuario(partnerContext(request), request.params.id);
       if (!resultado) {
-        return reply.code(400).send(ok({ message: "Nao foi possivel revogar o usuario." }));
+        return reply.code(400).send(badRequest("Nao foi possivel revogar o usuario."));
       }
       return ok(resultado);
     },
@@ -1059,6 +1108,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: { from?: string; to?: string; tipo?: string; status?: string; metodo?: string } }>(
     "/partner/financeiro/exportar",
     {
+      preHandler: requireRole("owner", "manager"),
       schema: {
         querystring: Type.Object({
           from: Type.Optional(Type.String()),
@@ -1201,7 +1251,10 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/partner/caixa/abrir",
-    { schema: { body: AbrirCaixaBodySchema } },
+    {
+      preHandler: requireRole("owner", "manager"),
+      schema: { body: AbrirCaixaBodySchema },
+    },
     async (request, reply) => {
       const ctx = partnerContext(request);
       const { saldoInicial, observacoes } = request.body as Static<typeof AbrirCaixaBodySchema>;
@@ -1227,7 +1280,10 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/partner/caixa/fechar",
-    { schema: { body: FecharCaixaBodySchema } },
+    {
+      preHandler: requireRole("owner", "manager"),
+      schema: { body: FecharCaixaBodySchema },
+    },
     async (request, reply) => {
       const ctx = partnerContext(request);
       const { turnoId, saldoFinal, observacoes } = request.body as Static<typeof FecharCaixaBodySchema>;
