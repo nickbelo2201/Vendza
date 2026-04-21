@@ -81,7 +81,9 @@ async function getDashboardData() {
     const [summary, ordersResp, inventory] = await Promise.all([
       fetchAPI<DashboardSummary>("/partner/dashboard/summary"),
       fetchAPI<OrdersResponse>("/partner/orders"),
-      fetchAPI<InventoryItem[]>("/partner/inventory").catch(() => [] as InventoryItem[]),
+      fetchAPI<{ items: InventoryItem[] } | InventoryItem[]>("/partner/inventory")
+        .then(r => (!Array.isArray(r) && "items" in r ? r.items : r as InventoryItem[]))
+        .catch(() => [] as InventoryItem[]),
     ]);
     const orders = ordersResp?.orders ?? [];
     return { summary, orders, inventory };

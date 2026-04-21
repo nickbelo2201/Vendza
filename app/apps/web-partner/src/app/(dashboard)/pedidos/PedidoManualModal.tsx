@@ -143,8 +143,10 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
     if (tel.replace(/\D/g, "").length < 8) return;
     setBuscandoCliente(true);
     try {
-      type ClienteResp = { id: string; name: string; phone: string; email: string | null }[];
-      const lista = await fetchComAuth<ClienteResp>(`/partner/customers?search=${encodeURIComponent(tel)}`);
+      type ClienteItem = { id: string; name: string; phone: string; email: string | null };
+      type ClienteResp = ClienteItem[] | { items: ClienteItem[] };
+      const resp = await fetchComAuth<ClienteResp>(`/partner/customers?search=${encodeURIComponent(tel)}`);
+      const lista = !Array.isArray(resp) && "items" in resp ? resp.items : resp as ClienteItem[];
       const primeiro = lista[0];
       if (primeiro) {
         setNome(primeiro.name);

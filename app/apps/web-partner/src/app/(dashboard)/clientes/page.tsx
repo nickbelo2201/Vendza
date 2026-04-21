@@ -6,8 +6,15 @@ type Cliente = {
   totalSpentCents: number; isInactive: boolean; lastOrderAt: string | null;
 };
 
+type ClientesResponse = { items: Cliente[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+
 async function getClientes(): Promise<Cliente[]> {
-  try { return await fetchAPI<Cliente[]>("/partner/customers"); }
+  try {
+    const res = await fetchAPI<ClientesResponse | Cliente[]>("/partner/customers");
+    // Suporte ao novo formato paginado { items, pagination }
+    if (res && !Array.isArray(res) && "items" in res) return res.items;
+    return res as Cliente[];
+  }
   catch (err) { if (err instanceof ApiError) return []; return []; }
 }
 
