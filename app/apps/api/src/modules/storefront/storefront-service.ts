@@ -78,8 +78,18 @@ async function _getStorefrontConfig(storeSlug: string) {
 export function getCategories(storeId: string) {
   return withCache(`sf:cat:${storeId}`, 60, () =>
     prisma.category.findMany({
-      where: { storeId, isActive: true },
-      select: { id: true, name: true, slug: true, sortOrder: true },
+      where: { storeId, isActive: true, parentCategoryId: null },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        sortOrder: true,
+        children: {
+          where: { isActive: true },
+          select: { id: true, name: true, slug: true, sortOrder: true },
+          orderBy: { sortOrder: "asc" },
+        },
+      },
       orderBy: { sortOrder: "asc" },
     }),
   );
@@ -104,15 +114,36 @@ async function _getProducts(
   storeId: string,
   filters?: { category?: string; search?: string; featured?: boolean; offer?: boolean },
 ) {
+  // Resolver filtro de categoria: se for categoria pai, incluir filhas
+  let categoryFilter: Record<string, unknown> = {};
+  if (filters?.category) {
+    const category = await prisma.category.findFirst({
+      where: {
+        storeId,
+        OR: [{ id: filters.category }, { slug: filters.category }],
+      },
+    });
+    if (category) {
+      const categoryIds = [category.id];
+      // Se for categoria raiz, adicionar todas as filhas
+      if (!category.parentCategoryId) {
+        const children = await prisma.category.findMany({
+          where: { storeId, parentCategoryId: category.id },
+          select: { id: true },
+        });
+        categoryIds.push(...children.map((c: { id: string }) => c.id));
+      }
+      categoryFilter = { categoryId: { in: categoryIds } };
+    }
+  }
+
   const products = await prisma.product.findMany({
     where: {
       storeId,
       isAvailable: true,
       ...(filters?.featured ? { isFeatured: true } : {}),
       ...(filters?.offer ? { salePriceCents: { not: null } } : {}),
-      ...(filters?.category
-        ? { category: { OR: [{ id: filters.category }, { slug: filters.category }] } }
-        : {}),
+      ...categoryFilter,
       ...(filters?.search
         ? {
             OR: [

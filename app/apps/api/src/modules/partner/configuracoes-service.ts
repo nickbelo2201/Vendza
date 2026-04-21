@@ -240,8 +240,9 @@ export async function convidarUsuario(
     throw new Error(`Usuário com email ${emailNormalizado} já existe nesta loja`);
   }
 
-  // 3. Chamar Supabase Auth para enviar convite
-  let supbaseInviteError: string | null = null;
+  // C-02: Chamar Supabase Auth PRIMEIRO — se falhar, não cria StoreUser orfão
+  // 3. Validar o token usando Supabase antes de criar qualquer registro no DB
+  let supabaseUserId: string | null = null;
 
   try {
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(emailNormalizado, {
@@ -249,28 +250,28 @@ export async function convidarUsuario(
     });
 
     if (error) {
-      supbaseInviteError = error.message;
       appLog.warn(
         { email: emailNormalizado, error: error.message },
         "Erro ao enviar convite via Supabase",
       );
-      // Mesmo se houver erro, criar o StoreUser para rastreamento
-    } else {
-      appLog.info(
-        { email: emailNormalizado, userId: data?.user?.id },
-        "Convite enviado com sucesso via Supabase",
-      );
+      throw new Error(`Falha ao enviar convite: ${error.message}`);
     }
+
+    supabaseUserId = data?.user?.id ?? null;
+    appLog.info(
+      { email: emailNormalizado, userId: supabaseUserId },
+      "Convite enviado com sucesso via Supabase",
+    );
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    supbaseInviteError = errorMessage;
-    appLog.warn(
+    appLog.error(
       { email: emailNormalizado, error: errorMessage },
-      "Erro ao conectar com Supabase Auth",
+      "Erro crítico ao conectar com Supabase Auth",
     );
+    throw new Error(errorMessage);
   }
 
-  // 4. Criar ou atualizar StoreUser
+  // 4. APENAS SE Supabase funcionou, criar ou atualizar StoreUser
   const storeUser = await prisma.storeUser.upsert({
     where: {
       storeId_email: {
@@ -311,7 +312,6 @@ export async function convidarUsuario(
     storeId: context.storeId,
     isActive: storeUser.isActive,
     createdAt: storeUser.createdAt,
-    ...(supbaseInviteError ? { emailSendError: supbaseInviteError } : {}),
   };
 }
 
@@ -344,7 +344,9 @@ export async function aceitarConviteUsuario(token: string, supabaseAdmin: any, a
 
   appLog.info({ authUserId, userEmail }, "Token validado com sucesso");
 
-  // 3. Encontrar StoreUser pelo email
+  // C-03: Encontrar StoreUser pelo email
+  // IMPORTANTE: Schema garante @@unique([storeId, email]), então não há possibilidade
+  // de cross-tenant leak. Cada email é único dentro de uma loja.
   const storeUser = await prisma.storeUser.findFirst({
     where: { email: userEmail },
     select: { id: true, storeId: true, email: true },

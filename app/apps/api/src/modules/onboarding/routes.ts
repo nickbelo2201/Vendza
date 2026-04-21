@@ -121,24 +121,25 @@ export const onboardingRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // ── POST /onboarding/aceitar-convite ──────────────────────────
-  const AceitarConviteQuerySchema = Type.Object({
+  // ── POST /v1/partner/aceitar-convite ──────────────────────────
+  // C-01: Move token from query to body to prevent exposure in logs/referer headers
+  const AceitarConviteBodySchema = Type.Object({
     token: Type.String({ minLength: 1 }),
   });
 
-  type AceitarConviteQuery = Static<typeof AceitarConviteQuerySchema>;
+  type AceitarConviteBody = Static<typeof AceitarConviteBodySchema>;
 
-  app.post<{ Querystring: AceitarConviteQuery }>(
-    "/onboarding/aceitar-convite",
+  app.post<{ Body: AceitarConviteBody }>(
+    "/v1/partner/aceitar-convite",
     {
       schema: {
-        querystring: AceitarConviteQuerySchema,
+        body: AceitarConviteBodySchema,
         response: { 200: envelopeSchema(Type.Any()) },
       },
     },
     async (request, reply) => {
       try {
-        const { token } = request.query;
+        const { token } = request.body;
         const resultado = await aceitarConviteUsuario(token, app.supabaseAdmin, app.log);
         return ok(resultado);
       } catch (err: any) {

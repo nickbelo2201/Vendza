@@ -8,7 +8,7 @@ import { fetchAPI, ApiError } from "../../../lib/api";
 /* ══════════════════════════════════════════════════════════════
    TIPOS
 ══════════════════════════════════════════════════════════════ */
-type StatusInvite = "loading" | "success" | "error";
+type StatusInvite = "idle" | "processing" | "success" | "error";
 
 interface InviteResponse {
   message?: string;
@@ -88,52 +88,69 @@ export default function AceitarConvitePage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const [status, setStatus] = useState<StatusInvite>("loading");
-  const [message, setMessage] = useState("Processando seu convite...");
+  const [status, setStatus] = useState<StatusInvite>("idle");
+  const [message, setMessage] = useState("");
 
+  /* ─────────────────────────────────────────────────────────────
+     Validar token ao carregar a página
+  ───────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!token) {
       setStatus("error");
       setMessage("Token não fornecido. Verifique o link do convite.");
+    }
+  }, [token]);
+
+  /* ─────────────────────────────────────────────────────────────
+     Handler para o botão "Aceitar Convite"
+     POST com token no body para evitar exposição em logs/referer
+  ───────────────────────────────────────────────────────────── */
+  const handleAcceptInvite = async () => {
+    if (!token) {
+      setStatus("error");
+      setMessage("Token não disponível. Recarregue a página.");
       return;
     }
 
-    /* ─────────────────────────────────────────────────────────
-       Chamar endpoint de aceitar convite
-    ───────────────────────────────────────────────────────────── */
-    const acceptInvite = async () => {
-      try {
-        const result = await fetchAPI<InviteResponse>(
-          `/partner/aceitar-convite?token=${encodeURIComponent(token)}`,
-        );
+    setStatus("processing");
+    setMessage("Processando seu convite...");
 
-        setStatus("success");
-        setMessage("Convite aceito com sucesso! Redirecionando para login...");
+    try {
+      const result = await fetchAPI<InviteResponse>(
+        "/partner/aceitar-convite",
+        {
+          method: "POST",
+          body: JSON.stringify({ token }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-        /* Redirecionar após 2 segundos */
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
-      } catch (err) {
-        let errorMessage = "Erro ao processar convite. Tente novamente.";
+      setStatus("success");
+      setMessage("Convite aceito com sucesso! Redirecionando para login...");
 
-        if (err instanceof ApiError) {
-          if (err.status === 400) {
-            errorMessage = "Token inválido ou expirado.";
-          } else if (err.status === 404) {
-            errorMessage = "Convite não encontrado.";
-          } else if (err.status === 410) {
-            errorMessage = "Este convite já foi utilizado.";
-          }
+      /* Redirecionar após 2 segundos */
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (err) {
+      let errorMessage = "Erro ao processar convite. Tente novamente.";
+
+      if (err instanceof ApiError) {
+        if (err.status === 400) {
+          errorMessage = "Token inválido ou expirado.";
+        } else if (err.status === 404) {
+          errorMessage = "Convite não encontrado.";
+        } else if (err.status === 410) {
+          errorMessage = "Este convite já foi utilizado.";
         }
-
-        setStatus("error");
-        setMessage(errorMessage);
       }
-    };
 
-    acceptInvite();
-  }, [token, router]);
+      setStatus("error");
+      setMessage(errorMessage);
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "var(--cream)", padding: "20px" }}>
@@ -172,7 +189,7 @@ export default function AceitarConvitePage() {
           color: var(--amber);
         }
 
-        .wp-invite-icon-container.loading {
+        .wp-invite-icon-container.processing {
           color: var(--text-muted);
         }
 
@@ -181,7 +198,7 @@ export default function AceitarConvitePage() {
           font-weight: 600;
           color: var(--carbon);
           margin-bottom: 12px;
-          font-family: "Plus Jakarta Sans", sans-serif;
+          font-family: "Inter", sans-serif;
         }
 
         .wp-invite-message {
@@ -202,16 +219,21 @@ export default function AceitarConvitePage() {
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: background 0.2s ease;
+          transition: background 0.2s ease, opacity 0.2s ease;
           font-family: "Inter", sans-serif;
         }
 
-        .wp-invite-button:hover {
-          background: var(--green-hover);
+        .wp-invite-button:hover:not(:disabled) {
+          background: var(--green-hover, #245a45);
         }
 
-        .wp-invite-button:active {
+        .wp-invite-button:active:not(:disabled) {
           transform: scale(0.98);
+        }
+
+        .wp-invite-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         .wp-invite-button-secondary {
@@ -261,10 +283,43 @@ export default function AceitarConvitePage() {
       `}</style>
 
       <div className="wp-invite-card">
-        {/* CARREGANDO */}
-        {status === "loading" && (
+        {/* ESTADO OCIOSO - Aguardando ação do usuário */}
+        {status === "idle" && token && (
           <>
-            <div className="wp-invite-icon-container loading">
+            <div className="wp-invite-icon-container">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h1 className="wp-invite-title">Aceitar convite</h1>
+            <p className="wp-invite-message">
+              Clique no botão abaixo para aceitar o convite e criar sua conta.
+            </p>
+            <div className="wp-invite-button-group">
+              <button
+                className="wp-invite-button"
+                onClick={handleAcceptInvite}
+                disabled={status !== "idle"}
+              >
+                Aceitar convite
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* PROCESSANDO */}
+        {status === "processing" && (
+          <>
+            <div className="wp-invite-icon-container processing">
               <LoadingIcon />
             </div>
             <h1 className="wp-invite-title">Processando convite</h1>
@@ -292,11 +347,17 @@ export default function AceitarConvitePage() {
             <h1 className="wp-invite-title">Algo deu errado</h1>
             <p className="wp-invite-message">{message}</p>
             <div className="wp-invite-button-group">
-              <button className="wp-invite-button" onClick={() => router.push("/login")}>
+              {token && (
+                <button
+                  className="wp-invite-button"
+                  onClick={handleAcceptInvite}
+                  disabled={status !== "error"}
+                >
+                  Tentar novamente
+                </button>
+              )}
+              <button className="wp-invite-button-secondary" onClick={() => router.push("/login")}>
                 Ir para login
-              </button>
-              <button className="wp-invite-button-secondary" onClick={() => router.push("/")}>
-                Voltar ao início
               </button>
             </div>
           </>

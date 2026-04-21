@@ -8,6 +8,7 @@ type CategoryCreateInput = {
   name: string;
   slug: string;
   isActive?: boolean;
+  parentCategoryId?: string;
 };
 
 type CategoryPatchInput = Partial<{
@@ -64,10 +65,11 @@ function mapCategory(category: {
 
 export async function listPartnerCategories(context: PartnerContext) {
   const categories = await prisma.category.findMany({
-    where: { storeId: context.storeId },
+    where: { storeId: context.storeId, parentCategoryId: null },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     include: {
       children: {
+        where: { isActive: true },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
     },
@@ -77,12 +79,23 @@ export async function listPartnerCategories(context: PartnerContext) {
 }
 
 export async function createPartnerCategory(context: PartnerContext, input: CategoryCreateInput) {
+  // Validar que a categoria pai existe e pertence à mesma loja
+  if (input.parentCategoryId) {
+    const parent = await prisma.category.findUnique({
+      where: { id: input.parentCategoryId },
+    });
+    if (!parent || parent.storeId !== context.storeId) {
+      throw new Error("Categoria pai não encontrada ou não pertence a esta loja.");
+    }
+  }
+
   const category = await prisma.category.create({
     data: {
       storeId: context.storeId,
       name: input.name,
       slug: input.slug,
       isActive: input.isActive ?? true,
+      parentCategoryId: input.parentCategoryId ?? null,
       sortOrder: 0,
     },
   });

@@ -167,6 +167,9 @@ async function main() {
   });
 
   // Subcategorias — Vinhos
+  // Mapa para referenciar subcategorias por slug nos produtos
+  const subMap: Record<string, { id: string }> = {};
+
   const subcategorias: Array<{ parentId: string; name: string; slug: string; sortOrder: number }> = [
     { parentId: catVinhos.id, name: "Vinho Tinto", slug: "vinho-tinto", sortOrder: 1 },
     { parentId: catVinhos.id, name: "Vinho Branco", slug: "vinho-branco", sortOrder: 2 },
@@ -177,12 +180,11 @@ async function main() {
     { parentId: catEspumantes.id, name: "Prosecco", slug: "prosecco", sortOrder: 2 },
     { parentId: catEspumantes.id, name: "Cava", slug: "cava", sortOrder: 3 },
     { parentId: catEspumantes.id, name: "Espumante Nacional", slug: "espumante-nacional", sortOrder: 4 },
-    // Cervejas
+    // Cervejas (sem "Artesanal" — cervejas artesanais vão por estilo: IPA, Stout, Weiss, etc.)
     { parentId: catCervejas.id, name: "Lager / Pilsen", slug: "lager-pilsen", sortOrder: 1 },
     { parentId: catCervejas.id, name: "IPA", slug: "ipa", sortOrder: 2 },
     { parentId: catCervejas.id, name: "Stout", slug: "stout", sortOrder: 3 },
     { parentId: catCervejas.id, name: "Weiss / Trigo", slug: "weiss-trigo", sortOrder: 4 },
-    { parentId: catCervejas.id, name: "Artesanal", slug: "artesanal", sortOrder: 5 },
     // Destilados
     { parentId: catDestilados.id, name: "Whisky", slug: "whisky", sortOrder: 1 },
     { parentId: catDestilados.id, name: "Vodka", slug: "vodka", sortOrder: 2 },
@@ -204,8 +206,20 @@ async function main() {
     { parentId: catAcessorios.id, name: "Embalagem para Presente", slug: "embalagem-presente", sortOrder: 3 },
   ];
 
+  // Remover subcategoria "Artesanal" órfã (se existir de seeds anteriores)
+  const artesanalExistente = await prisma.category.findUnique({
+    where: { storeId_slug: { storeId: store.id, slug: "artesanal" } },
+    include: { _count: { select: { products: true } } },
+  });
+  if (artesanalExistente && artesanalExistente._count.products === 0) {
+    await prisma.category.delete({ where: { id: artesanalExistente.id } });
+    console.log(`✓ Subcategoria "Artesanal" removida (sem produtos vinculados)`);
+  } else if (artesanalExistente && artesanalExistente._count.products > 0) {
+    console.log(`⚠ Subcategoria "Artesanal" mantida — possui ${artesanalExistente._count.products} produto(s). Mova-os manualmente.`);
+  }
+
   for (const sub of subcategorias) {
-    await prisma.category.upsert({
+    const created = await prisma.category.upsert({
       where: { storeId_slug: { storeId: store.id, slug: sub.slug } },
       update: { name: sub.name, sortOrder: sub.sortOrder, isActive: true, parentCategoryId: sub.parentId },
       create: {
@@ -217,6 +231,7 @@ async function main() {
         isActive: true,
       },
     });
+    subMap[sub.slug] = { id: created.id };
   }
 
   console.log(`✓ Categorias: 7 categorias pai + ${subcategorias.length} subcategorias`);
@@ -225,9 +240,9 @@ async function main() {
   // Cada produto criado automaticamente ganha um InventoryItem via upsert
 
   const produtos = [
-    // Vinhos
+    // Vinhos — vinculados às subcategorias corretas
     {
-      categoryId: catVinhos.id,
+      categoryId: subMap["vinho-tinto"]!.id,
       name: "Vinho Tinto Cabernet Sauvignon",
       slug: "vinho-tinto-cabernet",
       description: "Vinho tinto encorpado, notas de frutas vermelhas e taninos equilibrados. Ideal para carnes e queijos.",
@@ -237,7 +252,7 @@ async function main() {
       stock: 24,
     },
     {
-      categoryId: catVinhos.id,
+      categoryId: subMap["vinho-branco"]!.id,
       name: "Vinho Branco Chardonnay",
       slug: "vinho-branco-chardonnay",
       description: "Chardonnay fresco e elegante, perfeito para peixes, frutos do mar e aperitivos.",
@@ -247,7 +262,7 @@ async function main() {
       stock: 18,
     },
     {
-      categoryId: catVinhos.id,
+      categoryId: subMap["espumante-nacional"]!.id,
       name: "Espumante Brut",
       slug: "espumante-brut",
       description: "Espumante nacional pelo método Charmat. Bolhas finas, sabor cítrico e refrescante.",
@@ -257,7 +272,7 @@ async function main() {
       stock: 12,
     },
     {
-      categoryId: catVinhos.id,
+      categoryId: subMap["vinho-rose"]!.id,
       name: "Vinho Rosé Suave",
       slug: "vinho-rose-suave",
       description: "Rosé leve e frutado, levemente adocicado. Harmoniza com saladas e massas leves.",
@@ -266,9 +281,9 @@ async function main() {
       isFeatured: false,
       stock: 15,
     },
-    // Cervejas
+    // Cervejas — vinculadas às subcategorias por estilo
     {
-      categoryId: catCervejas.id,
+      categoryId: subMap["lager-pilsen"]!.id,
       name: "Heineken Long Neck 330ml",
       slug: "heineken-long-neck-330ml",
       description: "A lager holandesa mais famosa do mundo. Refrescante e com amargor suave.",
@@ -278,7 +293,7 @@ async function main() {
       stock: 96,
     },
     {
-      categoryId: catCervejas.id,
+      categoryId: subMap["lager-pilsen"]!.id,
       name: "Budweiser Lata 350ml",
       slug: "budweiser-lata-350ml",
       description: "A cerveja americana clássica. Leve, refrescante e de fácil consumo.",
@@ -288,7 +303,7 @@ async function main() {
       stock: 72,
     },
     {
-      categoryId: catCervejas.id,
+      categoryId: subMap["lager-pilsen"]!.id,
       name: "Stella Artois Long Neck 330ml",
       slug: "stella-artois-long-neck",
       description: "A premiada lager belga. Sabor suave com final limpo e refrescante.",
@@ -298,18 +313,18 @@ async function main() {
       stock: 60,
     },
     {
-      categoryId: catCervejas.id,
+      categoryId: subMap["weiss-trigo"]!.id,
       name: "Colorado Appia 600ml",
       slug: "colorado-appia-600ml",
-      description: "Cerveja artesanal com mel e arroz. Sabor único e inconfundível da cervejaria Colorado.",
+      description: "Cerveja artesanal de trigo com mel. Sabor único e inconfundível da cervejaria Colorado.",
       listPriceCents: 1990,
       salePriceCents: 1790,
       isFeatured: true,
       stock: 30,
     },
-    // Destilados
+    // Destilados — vinculados às subcategorias corretas
     {
-      categoryId: catDestilados.id,
+      categoryId: subMap["whisky"]!.id,
       name: "Whisky Johnnie Walker Red Label 750ml",
       slug: "whisky-johnnie-walker-red-750ml",
       description: "O whisky blended escocês mais vendido do mundo. Encorpado, com notas de especiarias e baunilha.",
@@ -319,7 +334,7 @@ async function main() {
       stock: 20,
     },
     {
-      categoryId: catDestilados.id,
+      categoryId: subMap["gin"]!.id,
       name: "Gin Tanqueray 750ml",
       slug: "gin-tanqueray-750ml",
       description: "Gin londrino premium com quatro ingredientes botânicos. Perfeito para gin tônica.",
@@ -329,7 +344,7 @@ async function main() {
       stock: 15,
     },
     {
-      categoryId: catDestilados.id,
+      categoryId: subMap["cachaca"]!.id,
       name: "Cachaça Salinas Ouro 700ml",
       slug: "cachaca-salinas-ouro-700ml",
       description: "Cachaça artesanal mineira envelhecida em barril de carvalho. Para caipirinha ou pura.",
@@ -339,7 +354,7 @@ async function main() {
       stock: 18,
     },
     {
-      categoryId: catDestilados.id,
+      categoryId: subMap["vodka"]!.id,
       name: "Vodka Smirnoff 998ml",
       slug: "vodka-smirnoff-998ml",
       description: "A vodka mais vendida do Brasil. Suave, versátil e ideal para drinks.",
@@ -348,9 +363,9 @@ async function main() {
       isFeatured: false,
       stock: 25,
     },
-    // Não Alcoólicos
+    // Não Alcoólicos — vinculados às subcategorias corretas
     {
-      categoryId: catNaoAlcoolicos.id,
+      categoryId: subMap["agua"]!.id,
       name: "Água Mineral 500ml",
       slug: "agua-mineral-500ml",
       description: "Água mineral natural sem gás. Gelada na hora.",
@@ -360,7 +375,7 @@ async function main() {
       stock: 120,
     },
     {
-      categoryId: catNaoAlcoolicos.id,
+      categoryId: subMap["refrigerantes"]!.id,
       name: "Coca-Cola Lata 350ml",
       slug: "coca-cola-lata-350ml",
       description: "O refrigerante mais famoso do mundo. Clássico e refrescante.",
@@ -370,7 +385,7 @@ async function main() {
       stock: 48,
     },
     {
-      categoryId: catNaoAlcoolicos.id,
+      categoryId: subMap["energeticos"]!.id,
       name: "Red Bull Energy Drink 250ml",
       slug: "red-bull-250ml",
       description: "Bebida energética Red Bull. Combina com vodka, gin e whisky.",

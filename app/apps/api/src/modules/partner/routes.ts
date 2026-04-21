@@ -157,6 +157,7 @@ const CategoryCreateSchema = Type.Object({
   name: Type.String({ minLength: 1 }),
   slug: Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" }),
   isActive: Type.Optional(Type.Boolean()),
+  parentCategoryId: Type.Optional(Type.String()),
 });
 
 const CategoryPatchSchema = Type.Object({
