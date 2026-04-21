@@ -123,8 +123,8 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
     setMetodoPagamento("pix");
     setValorRecebido("");
 
-    fetchComAuth<Produto[]>("/partner/products")
-      .then(setProdutos)
+    fetchComAuth<{ produtos: Produto[] }>("/partner/products")
+      .then((res) => setProdutos(Array.isArray(res) ? res : (res.produtos ?? [])))
       .catch(() => setProdutos([]));
   }, [aberto]);
 
