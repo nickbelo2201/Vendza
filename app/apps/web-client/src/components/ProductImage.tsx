@@ -12,23 +12,10 @@ interface ProductImageProps {
   categorySlug?: string;
 }
 
-function transformSupabaseImageUrl(url: string, width: number = 400, quality: number = 80): string {
+function transformSupabaseImageUrl(url: string): string {
   if (!url) return url;
-
-  // Se já é uma URL de render/image, não transformar novamente
-  if (url.includes("/storage/v1/render/image/")) {
-    return url;
-  }
-
-  // Converter URL de /storage/v1/object/public/ para /storage/v1/render/image/public/
-  if (url.includes("/storage/v1/object/public/")) {
-    const transformed = url.replace(
-      "/storage/v1/object/public/",
-      "/storage/v1/render/image/public/"
-    );
-    return `${transformed}?width=${width}&quality=${quality}`;
-  }
-
+  // Usar URL direta — Next.js <Image> faz a otimização automaticamente
+  // O render endpoint do Supabase causava erros em produção com query params
   return url;
 }
 
