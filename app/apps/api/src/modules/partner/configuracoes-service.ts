@@ -247,7 +247,7 @@ export async function convidarUsuario(
   try {
     // C-03: Armazenar storeId nos metadados do convite para validação de tenant na aceitação
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(emailNormalizado, {
-      redirectTo: `${process.env.NEXT_PUBLIC_PARTNER_URL ?? "http://localhost:3001"}/onboarding/aceitar-convite`,
+      redirectTo: `${process.env.NEXT_PUBLIC_PARTNER_URL ?? "http://localhost:3001"}/aceitar-convite`,
       data: { storeId: context.storeId },
     });
 

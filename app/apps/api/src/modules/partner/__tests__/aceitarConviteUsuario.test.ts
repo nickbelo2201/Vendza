@@ -319,7 +319,10 @@ describe("aceitarConviteUsuario()", () => {
         auth: {
           verifyOtp: vi.fn().mockImplementation(async () => {
             ordemChamadas.push("supabase.verifyOtp");
-            return { data: { user: supabaseUserValido }, error: null };
+            return {
+              data: { user: { ...supabaseUserValido, user_metadata: { storeId: "store-aaa-111" } } },
+              error: null,
+            };
           }),
         },
       };
