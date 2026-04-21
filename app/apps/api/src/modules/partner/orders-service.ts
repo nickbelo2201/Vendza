@@ -41,6 +41,8 @@ export type PartnerOrderTimelineEvent = {
   label: string;
   createdAt: string;
   note?: string;
+  /** ID do operador (StoreUser) que executou a ação — null para eventos automáticos */
+  operadorId: string | null;
 };
 
 export type PartnerOrderRecord = {
@@ -144,6 +146,7 @@ function toPartnerOrderRecord(order: {
     type: string;
     payloadJson: unknown;
     createdAt: Date;
+    createdByUserId: string | null;
   }>;
 }): PartnerOrderRecord {
   return {
@@ -191,6 +194,7 @@ function toPartnerOrderRecord(order: {
           type: event.type,
           label,
           createdAt: event.createdAt.toISOString(),
+          operadorId: event.createdByUserId ?? null,
           ...(note ? { note } : {}),
         };
       }),

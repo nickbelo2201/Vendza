@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { fetchAPI, ApiError } from "../../../lib/api";
+import { ApiError } from "../../../lib/api-errors";
 
 /* ══════════════════════════════════════════════════════════════
    TIPOS
@@ -116,16 +116,20 @@ export default function AceitarConvitePage() {
     setMessage("Processando seu convite...");
 
     try {
-      const result = await fetchAPI<InviteResponse>(
-        "/v1/partner/aceitar-convite",
-        {
-          method: "POST",
-          body: JSON.stringify({ token }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const res = await fetch(`${apiUrl}/v1/partner/aceitar-convite`, {
+        method: "POST",
+        body: JSON.stringify({ token }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new ApiError(res.status, text || `HTTP ${res.status}`);
+      }
+
+      const json = await res.json();
+      const result = json.data as InviteResponse;
 
       setStatus("success");
       setMessage("Convite aceito com sucesso! Redirecionando para login...");

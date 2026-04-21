@@ -1,5 +1,3 @@
-import { createClient } from "../utils/supabase/server";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 export class ApiError extends Error {
@@ -13,15 +11,23 @@ export class ApiError extends Error {
 }
 
 async function getAccessToken(): Promise<string | null> {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
-  } catch {
-    return null;
+  // No contexto do servidor (Server Components), usa supabase/server que lê cookies via import dinâmico
+  // Isso evita que next/headers seja incluído no bundle do cliente
+  if (typeof window === "undefined") {
+    try {
+      const { createClient } = await import("../utils/supabase/server");
+      const supabase = await createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      return session?.access_token ?? null;
+    } catch {
+      return null;
+    }
   }
+  // No contexto do cliente (Client Components), não há acesso ao token server-side
+  // O token será obtido via cookie HttpOnly pelo middleware ou não é necessário (rotas públicas)
+  return null;
 }
 
 type FetchAPIOptions = Omit<RequestInit, "body"> & {

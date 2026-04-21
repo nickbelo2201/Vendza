@@ -60,7 +60,7 @@ export async function setupStore(
     }
   }
 
-  // 4. Transação: criar Tenant → Store → StoreUser → (opcionalmente) categorias
+  // 4. Transação: criar Tenant → Store → StoreUser
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const tenant = await tx.tenant.create({
       data: {
@@ -90,22 +90,22 @@ export async function setupStore(
       },
     });
 
-    // Aplicar templates dentro da mesma transação
-    let appliedCategories = 0;
-    if (templateIds.length > 0) {
-      appliedCategories = await createCategoriesFromTemplates(
-        tx,
-        store.id,
-        templateIds,
-      );
-    }
-
     return {
       store: { id: store.id, slug: store.slug, name: store.name },
       storeUser: { id: storeUser.id, role: storeUser.role },
-      appliedCategories: appliedCategories > 0 ? appliedCategories : undefined,
+      appliedCategories: undefined, // Será criado depois
     };
   });
+
+  // 5. Aplicar templates após a transação da Store
+  if (templateIds.length > 0) {
+    const appliedCategories = await createCategoriesFromTemplates(
+      prisma,
+      result.store.id,
+      templateIds,
+    );
+    result.appliedCategories = appliedCategories > 0 ? appliedCategories : undefined;
+  }
 
   return result;
 }
@@ -134,74 +134,76 @@ export async function applyTemplatesToStore(
     throw err;
   }
 
-  // 3. Transação: criar categorias + atualizar templateIds
-  const appliedCategories = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const count = await createCategoriesFromTemplates(tx, storeId, templateIds);
+  // 3. Criar categorias (fora de transação para evitar problemas com Prisma)
+  const appliedCategories = await createCategoriesFromTemplates(prisma, storeId, templateIds);
 
-    // Atualizar templateIds na store
-    await tx.store.update({
-      where: { id: storeId },
-      data: { templateIds: JSON.stringify(templateIds) },
-    });
-
-    return count;
-  });
+  // 4. Atualizar templateIds na store (via SQL direto)
+  await prisma.$executeRaw`
+    UPDATE stores
+    SET template_ids = ${JSON.stringify(templateIds)}
+    WHERE id = ${storeId}
+  `;
 
   return { appliedCategories };
 }
 
-// ─── Helper: criar categorias a partir de templates (dentro de transação) ────
+// ─── Helper: criar categorias a partir de templates ────
 
 async function createCategoriesFromTemplates(
-  tx: Prisma.TransactionClient,
+  db: typeof prisma,
   storeId: string,
   templateIds: string[],
 ): Promise<number> {
   const categories: TemplateCategory[] = combineTemplates(templateIds);
   let totalCreated = 0;
 
-  for (const cat of categories) {
-    // Criar categoria pai (upsert para evitar conflito se já existir)
-    const parentCategory = await tx.category.upsert({
-      where: { storeId_slug: { storeId, slug: cat.slug } },
-      update: {
-        name: cat.name,
-        sortOrder: cat.sortOrder,
-        isActive: true,
-        parentCategoryId: null,
-      },
-      create: {
-        storeId,
-        name: cat.name,
-        slug: cat.slug,
-        sortOrder: cat.sortOrder,
-        isActive: true,
-      },
-    });
-    totalCreated++;
+  // Usar transação com timeout maior
+  await db.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      for (const cat of categories) {
+        // Criar ou encontrar categoria pai
+        const existingParent = await tx.category.findUnique({
+          where: { storeId_slug: { storeId, slug: cat.slug } },
+        });
 
-    // Criar subcategorias
-    for (const sub of cat.subcategories) {
-      await tx.category.upsert({
-        where: { storeId_slug: { storeId, slug: sub.slug } },
-        update: {
-          name: sub.name,
-          sortOrder: sub.sortOrder,
-          isActive: true,
-          parentCategoryId: parentCategory.id,
-        },
-        create: {
-          storeId,
-          parentCategoryId: parentCategory.id,
-          name: sub.name,
-          slug: sub.slug,
-          sortOrder: sub.sortOrder,
-          isActive: true,
-        },
-      });
-      totalCreated++;
-    }
-  }
+        let parentCategory = existingParent;
+        if (!parentCategory) {
+          parentCategory = await tx.category.create({
+            data: {
+              storeId,
+              name: cat.name,
+              slug: cat.slug,
+              sortOrder: cat.sortOrder,
+              isActive: true,
+            },
+          });
+          totalCreated++;
+        }
+
+        // Criar subcategorias
+        for (const sub of cat.subcategories) {
+          const existingSub = await tx.category.findUnique({
+            where: { storeId_slug: { storeId, slug: sub.slug } },
+          });
+
+          if (!existingSub) {
+            await tx.category.create({
+              data: {
+                storeId,
+                parentCategoryId: parentCategory.id,
+                name: sub.name,
+                slug: sub.slug,
+                sortOrder: sub.sortOrder,
+                isActive: true,
+              },
+            });
+            totalCreated++;
+          }
+        }
+      }
+    },
+    { timeout: 60000 }
+  );
 
   return totalCreated;
 }
