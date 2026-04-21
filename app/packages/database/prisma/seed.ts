@@ -581,6 +581,31 @@ async function main() {
   }
 
   console.log(`✓ Cliente e pedido de exemplo criados`);
+
+  // ─── Templates de categorias (opcional via env var) ───────────────────────
+  // Exemplo: SEED_TEMPLATES=adega,mercado
+  // Se definido, aplica os templates indicados à loja demo.
+  // NOTA: as categorias hardcoded acima (vinhos, cervejas etc) serão mantidas,
+  // e o template fará upsert — sem duplicação.
+
+  if (process.env.SEED_TEMPLATES) {
+    const templateIds = process.env.SEED_TEMPLATES.split(",").map((s) => s.trim()).filter(Boolean);
+    if (templateIds.length > 0) {
+      console.log(`\n📦 Aplicando templates: ${templateIds.join(", ")}`);
+      try {
+        // Import dinâmico para não criar dependência circular no build do package database
+        const { applyTemplatesToStore } = await import(
+          "../../../apps/api/src/modules/onboarding/service.js"
+        );
+        const result = await applyTemplatesToStore(store.id, templateIds);
+        console.log(`✓ Templates aplicados: ${result.appliedCategories} categorias criadas/atualizadas`);
+      } catch (templateErr: any) {
+        console.error(`⚠ Erro ao aplicar templates: ${templateErr.message}`);
+        console.log(`  Templates não foram aplicados. O seed continua normalmente.`);
+      }
+    }
+  }
+
   console.log(`\n✅ Seed concluído com sucesso!\n`);
   console.log(`   Próximos passos:`);
   console.log(`   1. Atualize STORE_SLUG="${STORE_SLUG}" no Vercel (web-client)`);
