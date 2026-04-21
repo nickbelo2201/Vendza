@@ -5,6 +5,7 @@ import { envelopeSchema, ok } from "../../lib/http.js";
 import {
   calcularFrete,
   createOrderReal,
+  getBootstrap,
   getCategories,
   getOrderByPublicIdReal,
   getOrdersByPhone,
@@ -95,6 +96,14 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     const config = await getStorefrontConfig(storeSlug);
     if (!config) throw new Error(`Loja com slug '${storeSlug}' não encontrada.`);
     return ok(config, { stub: false });
+  });
+
+  app.get("/storefront/bootstrap", { schema: { response: { 200: envelopeSchema(Type.Any()) } } }, async () => {
+    const storeSlug = process.env.STORE_SLUG;
+    if (!storeSlug) throw new Error("STORE_SLUG não configurado.");
+    const bootstrap = await getBootstrap(storeSlug);
+    if (!bootstrap) throw new Error(`Loja com slug '${storeSlug}' não encontrada.`);
+    return ok(bootstrap, { stub: false });
   });
 
   app.get("/catalog/categories", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async () => {

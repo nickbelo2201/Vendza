@@ -177,6 +177,102 @@ async function _getProducts(
   }));
 }
 
+export async function getBootstrap(storeSlug: string) {
+  return withCache(`sf:bootstrap:${storeSlug}`, 300, () => _getBootstrap(storeSlug));
+}
+
+async function _getBootstrap(storeSlug: string) {
+  const store = await prisma.store.findFirst({
+    where: { slug: storeSlug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      whatsappPhone: true,
+      status: true,
+      minimumOrderValueCents: true,
+      hours: {
+        select: {
+          weekday: true,
+          opensAt: true,
+          closesAt: true,
+          isClosed: true,
+        },
+        orderBy: { weekday: "asc" },
+      },
+    },
+  });
+
+  if (!store) {
+    return null;
+  }
+
+  const [categories, products] = await Promise.all([
+    prisma.category.findMany({
+      where: { storeId: store.id, isActive: true, parentCategoryId: null },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        sortOrder: true,
+        children: {
+          where: { isActive: true },
+          select: { id: true, name: true, slug: true, sortOrder: true },
+          orderBy: { sortOrder: "asc" },
+        },
+      },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.product.findMany({
+      where: {
+        storeId: store.id,
+        isAvailable: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+        listPriceCents: true,
+        salePriceCents: true,
+        isAvailable: true,
+        isFeatured: true,
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      take: 20,
+    }),
+  ]);
+
+  type ProductRow = (typeof products)[number];
+
+  return {
+    config: {
+      id: store.id,
+      branding: {
+        name: store.name,
+        slug: store.slug,
+        logoUrl: store.logoUrl,
+      },
+      status: store.status,
+      whatsappPhone: store.whatsappPhone,
+      minimumOrderValueCents: store.minimumOrderValueCents,
+      paymentMethods: ["pix", "cash", "card_online", "card_on_delivery"],
+      hours: store.hours,
+      legalNotice: "Venda exclusiva para maiores de 18 anos.",
+    },
+    categories,
+    products: products.map((p: ProductRow) => ({
+      ...p,
+      offer: p.salePriceCents !== null && p.salePriceCents < p.listPriceCents,
+    })),
+  };
+}
+
 export async function quoteCartReal(
   storeId: string,
   items: Array<{ productId: string; quantity: number }>,

@@ -303,3 +303,30 @@
 - Backend: Proteção contra sobrecarga (máx 100 itens por request)
 - Database: Reduced memory footprint para queries grandes
 - Frontend: Paginação eficiente com limite seguro
+
+---
+
+### SOF-61: Criar endpoint /bootstrap (APROVADO)
+
+**Data:** 2026-04-21
+**Status:** Aprovado
+
+**O que foi validado:**
+1. Backend: Novo endpoint `GET /v1/storefront/bootstrap` implementado
+   - Retorna: config + categorias + 20 primeiros produtos em 1 request
+   - Usa cache Redis (TTL 300s) como endpoints individuais
+   - Implementa Promise.all para paralelização
+2. Response schema: { config, categories, products }
+3. Mantém endpoints individuais para compatibilidade backward
+4. TypeScript: 0 erros
+5. Lint: 0 erros
+
+**Arquivos alterados:**
+- `apps/api/src/modules/storefront/storefront-service.ts` — adicionada função `getBootstrap()`
+- `apps/api/src/modules/storefront/routes.ts` — adicionada rota `/storefront/bootstrap`
+
+**Impacto de performance:**
+- 1 RTT menos vs. 2 requests separados
+- Reduced latency percebida no carregamento
+- Cache unificado para bootstrap (não afeta endpoints individuais)
+- Frontend pode usar este endpoint na homepage
