@@ -250,3 +250,29 @@
 1. SOF-62 — Adicionar Suspense em rotas pesadas
 2. SOF-59 — Forçar paginação catálogo
 3. SOF-61 — Criar endpoint /bootstrap
+
+---
+
+### SOF-62: Adicionar Suspense em rotas pesadas (APROVADO)
+
+**Data:** 2026-04-21
+**Status:** Aprovado
+
+**O que foi validado:**
+1. Separado `Promise.all()` em 5 Suspense boundaries independentes
+2. Cada seção agora carrega independentemente sem bloquear as outras
+3. Criado `SuspenseWrappers.tsx` com async componentes para cada seção (Settings, Horarios, ContaBancaria, Zonas, Usuarios)
+4. Criado `loading.tsx` com skeleton animado que reflete estrutura real
+5. Falha de 1 endpoint não quebra mais a página inteira
+6. TypeScript: 0 erros
+7. Lint: 0 erros
+
+**Arquivos alterados:**
+- `apps/web-partner/src/app/(dashboard)/configuracoes/page.tsx` — refatorado para usar Suspense
+- `apps/web-partner/src/app/(dashboard)/configuracoes/SuspenseWrappers.tsx` — novo arquivo com async componentes
+- `apps/web-partner/src/app/(dashboard)/configuracoes/loading.tsx` — novo arquivo com skeleton
+
+**Impacto de performance:**
+- UX: usuário vê conteúdo conforme carrega (não branco)
+- Resiliência: falha de 1 endpoint = somente 1 seção com erro
+- Time-to-first-paint: reduzido (load é paralelo vs. sequencial)

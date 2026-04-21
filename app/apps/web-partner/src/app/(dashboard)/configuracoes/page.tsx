@@ -1,133 +1,53 @@
-import { ApiError, fetchAPI } from "../../../lib/api";
+import { Suspense } from "react";
 import { ConfigNavLateral } from "./ConfigNavLateral";
-import { DadosBancarios } from "./DadosBancarios";
-import { FormConfiguracoes } from "./FormConfiguracoes";
-import { HorariosForm } from "./HorariosForm";
-import { UsuariosConfig } from "./UsuariosConfig";
-import { MapaZonasEntrega } from "./MapaZonasEntrega";
+import {
+  SettingsSuspenseWrapper,
+  SettingsSection,
+  HorariosSection,
+  ContaBancariaSection,
+  ZonasSection,
+  UsuariosSection,
+} from "./SuspenseWrappers";
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-type StoreSettings = {
-  id: string;
-  name: string;
-  slug: string;
-  whatsappPhone: string;
-  status: string;
-  minimumOrderValueCents: number;
-};
-
-type Zona = {
-  id?: string;
-  label: string;
-  feeCents: number;
-  etaMinutes: number;
-  mode: "radius" | "neighborhoods";
-  radiusKm?: number | null;
-  centerLat?: number | null;
-  centerLng?: number | null;
-  neighborhoods: string[];
-  minimumOrderCents: number;
-  freeShippingAboveCents: number;
-};
-
-type HorarioDia = {
-  dayOfWeek: number;
-  opensAt: string;
-  closesAt: string;
-  isClosed: boolean;
-};
-
-type ContaBancaria = {
-  keyType: string;
-  lastFourDigits: string | null;
-  bankName: string | null;
-};
-
-type UsuarioStore = {
-  id: string;
-  userId: string;
-  role: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-};
-
-type SessaoAtual = {
-  userId: string;
-};
-
-// ─── Data fetchers ────────────────────────────────────────────────────────────
-
-async function getSettings(): Promise<StoreSettings | null> {
-  try {
-    return await fetchAPI<StoreSettings>("/partner/store/settings");
-  } catch (err) {
-    if (err instanceof ApiError) return null;
-    return null;
-  }
+function SkeletonFallback() {
+  return (
+    <div style={{
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
+      borderRadius: 12,
+      padding: 24,
+      marginBottom: 24,
+    }}>
+      <div style={{
+        height: 20,
+        background: "var(--border)",
+        borderRadius: 8,
+        marginBottom: 16,
+        animation: "shimmer 1.5s infinite",
+      }} />
+      <div style={{
+        height: 44,
+        background: "var(--border)",
+        borderRadius: 8,
+        animation: "shimmer 1.5s infinite",
+      }} />
+    </div>
+  );
 }
-
-async function getZonas(): Promise<Zona[]> {
-  try {
-    return await fetchAPI<Zona[]>("/partner/store/delivery-zones");
-  } catch {
-    return [];
-  }
-}
-
-async function getHorarios(): Promise<HorarioDia[]> {
-  try {
-    return await fetchAPI<HorarioDia[]>("/partner/store/hours");
-  } catch {
-    return [];
-  }
-}
-
-async function getContaBancaria(): Promise<ContaBancaria | null> {
-  try {
-    return await fetchAPI<ContaBancaria>("/partner/configuracoes/conta-bancaria");
-  } catch {
-    return null;
-  }
-}
-
-async function getUsuarios(): Promise<UsuarioStore[]> {
-  try {
-    return await fetchAPI<UsuarioStore[]>("/partner/configuracoes/usuarios");
-  } catch {
-    return [];
-  }
-}
-
-async function getSessaoAtual(): Promise<SessaoAtual | null> {
-  try {
-    return await fetchAPI<SessaoAtual>("/partner/me");
-  } catch {
-    return null;
-  }
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function SettingsPage() {
-  const [s, zonas, horarios, conta, usuarios, sessao] = await Promise.all([
-    getSettings(),
-    getZonas(),
-    getHorarios(),
-    getContaBancaria(),
-    getUsuarios(),
-    getSessaoAtual(),
-  ]);
-
   return (
     <>
       <style>{`
         @keyframes slide-in-right {
           from { transform: translateX(100%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes shimmer {
+          0% { opacity: 0.6; }
+          50% { opacity: 0.9; }
+          100% { opacity: 0.6; }
         }
 
         /* Tablet: 768px - 1200px */
@@ -195,44 +115,27 @@ export default async function SettingsPage() {
           {/* Nav lateral sticky — desktop */}
           <ConfigNavLateral />
 
-          {/* Cards em sequência */}
+          {/* Cards com Suspense boundaries independentes */}
           <div className="wp-stack-lg" style={{ flex: 1, minWidth: 0 }}>
-            <section id="loja">
-              {!s ? (
-                <div className="wp-note">
-                  Não foi possível carregar as configurações. Verifique a conexão com a API.
-                </div>
-              ) : (
-                <FormConfiguracoes
-                  settings={{
-                    name: s.name,
-                    slug: s.slug,
-                    whatsappPhone: s.whatsappPhone ?? "",
-                    status: s.status,
-                    minimumOrderValueCents: s.minimumOrderValueCents,
-                  }}
-                />
-              )}
-            </section>
+            <Suspense fallback={<SkeletonFallback />}>
+              <SettingsSection />
+            </Suspense>
 
-            <section id="horarios">
-              <HorariosForm initialHours={horarios && horarios.length > 0 ? horarios : null} />
-            </section>
+            <Suspense fallback={<SkeletonFallback />}>
+              <HorariosSection />
+            </Suspense>
 
-            <section id="dados-bancarios">
-              <DadosBancarios conta={conta ?? null} />
-            </section>
+            <Suspense fallback={<SkeletonFallback />}>
+              <ContaBancariaSection />
+            </Suspense>
 
-            <section id="zonas">
-              <MapaZonasEntrega zonas={zonas ?? []} />
-            </section>
+            <Suspense fallback={<SkeletonFallback />}>
+              <ZonasSection />
+            </Suspense>
 
-            <section id="usuarios">
-              <UsuariosConfig
-                usuarios={usuarios ?? []}
-                currentUserId={sessao?.userId ?? ""}
-              />
-            </section>
+            <Suspense fallback={<SkeletonFallback />}>
+              <UsuariosSection />
+            </Suspense>
           </div>
         </div>
       </div>
