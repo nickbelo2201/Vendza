@@ -120,7 +120,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         querystring: ProductFiltersSchema,
-        response: { 200: envelopeSchema(Type.Array(Type.Any())) },
+        response: { 200: envelopeSchema(Type.Any()) },
       },
     },
     async ({ query }) => {
