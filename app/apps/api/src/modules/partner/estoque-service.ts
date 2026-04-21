@@ -44,71 +44,77 @@ export async function getEstoque(context: PartnerContext) {
 
   const productIds = itens.map((i: { productId: string }) => i.productId);
 
-  // Calcula giro: quantidade vendida por produto nos últimos 30 dias
-  const vendasPorProduto = await Promise.all(
-    productIds.map(async (productId: string) => {
-      const agg = await prisma.orderItem.aggregate({
-        _sum: { quantity: true },
-        where: {
-          productId,
-          order: {
-            storeId: context.storeId,
-            placedAt: { gte: trintaDiasAtras },
-          },
-        },
-      });
-      return { productId, quantidadeVendida: agg._sum.quantity ?? 0 };
-    }),
-  );
+  // Calcula giro: quantidade vendida por produto nos últimos 30 dias (groupBy — elimina N+1)
+  const vendasGiro = await prisma.orderItem.groupBy({
+    by: ["productId"],
+    where: {
+      productId: { in: productIds },
+      order: {
+        storeId: context.storeId,
+        status: { in: ["delivered", "completed"] },
+      },
+      createdAt: { gte: trintaDiasAtras },
+    },
+    _sum: { quantity: true },
+  });
 
-  const vendaMap = new Map(vendasPorProduto.map((v: { productId: string; quantidadeVendida: number }) => [v.productId, v.quantidadeVendida]));
+  type VendaGiroRow = (typeof vendasGiro)[number];
+  const vendaMap = new Map<string, number>(vendasGiro.map((v: VendaGiroRow) => [v.productId, Number(v._sum.quantity ?? 0)]));
 
-  // Calcula receita por produto nos últimos 30 dias para curva ABC
-  const receitaPorProduto = await Promise.all(
-    productIds.map(async (productId: string) => {
-      const agg = await prisma.orderItem.aggregate({
-        _sum: { totalPriceCents: true },
-        where: {
-          productId,
-          order: {
-            storeId: context.storeId,
-            placedAt: { gte: trintaDiasAtras },
-          },
-        },
-      });
-      return { productId, receita: agg._sum.totalPriceCents ?? 0 };
-    }),
-  );
+  // Calcula receita por produto (histórico completo) para curva ABC (groupBy — elimina N+1)
+  const vendasAbc = await prisma.orderItem.groupBy({
+    by: ["productId"],
+    where: {
+      productId: { in: productIds },
+      order: {
+        storeId: context.storeId,
+        status: { in: ["delivered", "completed"] },
+      },
+    },
+    _sum: { totalPriceCents: true, quantity: true },
+  });
 
-  // Calcula curva ABC
-  const receitaTotal = receitaPorProduto.reduce((acc: number, r: { receita: number }) => acc + r.receita, 0);
+  // Calcula curva ABC baseada na receita histórica
+  type VendaAbcRow = (typeof vendasAbc)[number];
+  const receitaTotal = vendasAbc.reduce((acc: number, v: VendaAbcRow) => acc + Number(v._sum.totalPriceCents ?? 0), 0);
 
   // Ordena por receita desc para calcular acumulado
-  const receitaOrdenada = [...receitaPorProduto].sort((a, b) => b.receita - a.receita);
+  const vendasAbcOrdenadas = [...vendasAbc].sort(
+    (a, b) => Number(b._sum.totalPriceCents ?? 0) - Number(a._sum.totalPriceCents ?? 0),
+  );
 
   const abcMap = new Map<string, "A" | "B" | "C">();
 
   if (receitaTotal === 0) {
     // Sem vendas no período: todos ficam C
-    for (const r of receitaOrdenada) {
-      abcMap.set(r.productId, "C");
+    for (const v of vendasAbcOrdenadas) {
+      abcMap.set(v.productId, "C");
+    }
+    // Produtos sem nenhuma venda também ficam C
+    for (const id of productIds) {
+      if (!abcMap.has(id)) abcMap.set(id, "C");
     }
   } else {
     let acumulado = 0;
-    for (const r of receitaOrdenada) {
-      acumulado += r.receita;
+    for (const v of vendasAbcOrdenadas) {
+      acumulado += Number(v._sum.totalPriceCents ?? 0);
       const percentual = acumulado / receitaTotal;
       if (percentual <= 0.2) {
-        abcMap.set(r.productId, "A");
+        abcMap.set(v.productId, "A");
       } else if (percentual <= 0.5) {
-        abcMap.set(r.productId, "B");
+        abcMap.set(v.productId, "B");
       } else {
-        abcMap.set(r.productId, "C");
+        abcMap.set(v.productId, "C");
       }
+    }
+    // Produtos sem nenhuma venda ficam C
+    for (const id of productIds) {
+      if (!abcMap.has(id)) abcMap.set(id, "C");
     }
   }
 
-  return itens.map((item: typeof itens[number]) => {
+  type ItemEstoque = (typeof itens)[number];
+  return itens.map((item: ItemEstoque) => {
     const quantidadeVendida: number = vendaMap.get(item.productId) ?? 0;
     const giro = item.currentStock === 0 ? 0 : quantidadeVendida / item.currentStock;
 

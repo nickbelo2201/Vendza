@@ -62,7 +62,7 @@ export async function buildApp() {
         "http://localhost:3000",
         "http://localhost:3001",
       ].filter(Boolean) as string[];
-      if (!origin || allowed.some((o) => origin.startsWith(o))) {
+      if (!origin || allowed.includes(origin)) {
         cb(null, true);
       } else {
         cb(new Error("CORS: origin não permitida"), false);

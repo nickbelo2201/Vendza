@@ -102,18 +102,35 @@ export async function getProducts(
     search?: string;
     featured?: boolean;
     offer?: boolean;
+    page?: number;
+    pageSize?: number;
   },
 ) {
   // Queries com filtros dinâmicos (search/category) não são cacheadas
   const hasFilter = filters && (filters.search || filters.category || filters.featured || filters.offer);
-  if (hasFilter) return _getProducts(storeId, filters);
-  return withCache(`sf:prod:${storeId}`, 60, () => _getProducts(storeId, filters));
+  const page = filters?.page ?? 1;
+  const pageSize = Math.min(filters?.pageSize ?? 100, 200);
+  if (hasFilter) return _getProducts(storeId, { ...filters, page, pageSize });
+  return withCache(`sf:prod:${storeId}:p${page}:ps${pageSize}`, 60, () =>
+    _getProducts(storeId, { ...filters, page, pageSize }),
+  );
 }
 
 async function _getProducts(
   storeId: string,
-  filters?: { category?: string; search?: string; featured?: boolean; offer?: boolean },
+  filters?: {
+    category?: string;
+    search?: string;
+    featured?: boolean;
+    offer?: boolean;
+    page?: number;
+    pageSize?: number;
+  },
 ) {
+  const page = filters?.page ?? 1;
+  const pageSize = Math.min(filters?.pageSize ?? 100, 200);
+  const skip = (page - 1) * pageSize;
+
   // Resolver filtro de categoria: se for categoria pai, incluir filhas
   let categoryFilter: Record<string, unknown> = {};
   if (filters?.category) {
@@ -137,44 +154,59 @@ async function _getProducts(
     }
   }
 
-  const products = await prisma.product.findMany({
-    where: {
-      storeId,
-      isAvailable: true,
-      ...(filters?.featured ? { isFeatured: true } : {}),
-      ...(filters?.offer ? { salePriceCents: { not: null } } : {}),
-      ...categoryFilter,
-      ...(filters?.search
-        ? {
-            OR: [
-              { name: { contains: filters.search, mode: "insensitive" } },
-              { description: { contains: filters.search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      imageUrl: true,
-      listPriceCents: true,
-      salePriceCents: true,
-      isAvailable: true,
-      isFeatured: true,
-      category: {
-        select: { id: true, name: true, slug: true },
+  const where = {
+    storeId,
+    isAvailable: true,
+    ...(filters?.featured ? { isFeatured: true } : {}),
+    ...(filters?.offer ? { salePriceCents: { not: null } } : {}),
+    ...categoryFilter,
+    ...(filters?.search
+      ? {
+          OR: [
+            { name: { contains: filters.search, mode: "insensitive" as const } },
+            { description: { contains: filters.search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      skip,
+      take: pageSize,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+        listPriceCents: true,
+        salePriceCents: true,
+        isAvailable: true,
+        isFeatured: true,
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
       },
-    },
-    orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
-  });
+      orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
+    }),
+    prisma.product.count({ where }),
+  ]);
 
   type ProductRow = (typeof products)[number];
-  return products.map((p: ProductRow) => ({
-    ...p,
-    offer: p.salePriceCents !== null && p.salePriceCents < p.listPriceCents,
-  }));
+  return {
+    items: products.map((p: ProductRow) => ({
+      ...p,
+      offer: p.salePriceCents !== null && p.salePriceCents < p.listPriceCents,
+    })),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
 }
 
 export async function getBootstrap(storeSlug: string) {

@@ -29,3 +29,23 @@ export function ok<T>(data: T, meta: Record<string, unknown> = {}) {
     error: null,
   };
 }
+
+export function errorEnvelope(code: string, message: string) {
+  return {
+    data: null,
+    meta: { requestedAt: new Date().toISOString(), stub: false },
+    error: { code, message },
+  };
+}
+
+export function notFound(message: string) {
+  return errorEnvelope("NOT_FOUND", message);
+}
+
+export function badRequest(message: string) {
+  return errorEnvelope("BAD_REQUEST", message);
+}
+
+export function forbidden(message: string) {
+  return errorEnvelope("FORBIDDEN", message);
+}

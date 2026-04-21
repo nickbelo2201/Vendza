@@ -395,8 +395,8 @@ export async function updatePartnerOrderStatus(
 }
 
 export type ExportOrderFilters = {
-  from?: string;
-  to?: string;
+  from: string;
+  to: string;
   status?: string;
 };
 
@@ -421,25 +421,30 @@ function formatCentsToCurrency(cents: number): string {
 }
 
 export async function exportPartnerOrdersCSV(context: PartnerContext, filters: ExportOrderFilters) {
+  const startDate = new Date(filters.from);
+  const endDate = new Date(filters.to);
+
+  const maxDays = 90;
+  const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays > maxDays) {
+    const err = new Error(`Período máximo para export é ${maxDays} dias.`);
+    Object.assign(err, { statusCode: 400 });
+    throw err;
+  }
+
   const where: Record<string, unknown> = {
     storeId: context.storeId,
+    placedAt: { gte: startDate, lte: endDate },
   };
 
   if (filters.status) {
     where.status = filters.status;
   }
 
-  if (filters.from || filters.to) {
-    const placedAt: { gte?: Date; lte?: Date } = {};
-    if (filters.from) placedAt.gte = new Date(filters.from);
-    if (filters.to) placedAt.lte = new Date(filters.to);
-    where.placedAt = placedAt;
-  }
-
   const orders = await prisma.order.findMany({
     where,
     orderBy: { placedAt: "desc" },
-    take: 50000,
+    take: 10000,
     include: {
       items: true,
     },

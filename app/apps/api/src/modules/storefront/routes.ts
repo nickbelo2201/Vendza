@@ -1,7 +1,7 @@
 import { Type, type Static } from "@sinclair/typebox";
 import type { FastifyPluginAsync } from "fastify";
 
-import { envelopeSchema, ok } from "../../lib/http.js";
+import { envelopeSchema, ok, notFound } from "../../lib/http.js";
 import {
   calcularFrete,
   createOrderReal,
@@ -20,6 +20,8 @@ const ProductFiltersSchema = Type.Object({
   search: Type.Optional(Type.String()),
   featured: Type.Optional(Type.Boolean()),
   offer: Type.Optional(Type.Boolean()),
+  page: Type.Optional(Type.Integer({ minimum: 1, default: 1 })),
+  pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 200, default: 50 })),
 });
 
 const QuoteBodySchema = Type.Object({
@@ -70,6 +72,7 @@ const CreateOrderBodySchema = Type.Object({
 });
 
 type ProductFilters = Static<typeof ProductFiltersSchema>;
+// ProductFilters agora inclui page e pageSize para paginação
 type QuoteBody = Static<typeof QuoteBodySchema>;
 type CreateOrderBody = Static<typeof CreateOrderBodySchema>;
 
@@ -139,7 +142,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
       const storeId = await resolveStoreId();
       const product = await getProductBySlugReal(storeId, params.slug);
       if (!product) {
-        return reply.code(404).send(ok({ message: "Produto nao encontrado." }, { stub: false }));
+        return reply.code(404).send(notFound("Produto nao encontrado."));
       }
       return ok(product, { stub: false });
     },
@@ -191,7 +194,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
       const storeId = await resolveStoreId();
       const order = await getOrderByPublicIdReal(storeId, params.publicId);
       if (!order) {
-        return reply.code(404).send(ok({ message: "Pedido nao encontrado." }, { stub: false }));
+        return reply.code(404).send(notFound("Pedido nao encontrado."));
       }
       return ok(order, { stub: false });
     },

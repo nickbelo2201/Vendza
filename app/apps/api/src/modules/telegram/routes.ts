@@ -96,6 +96,11 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
     "/telegram/webhook",
     {},
     async (request, reply) => {
+      const secret = request.headers["x-telegram-bot-api-secret-token"];
+      if (process.env.TELEGRAM_WEBHOOK_SECRET && secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+        return reply.code(403).send({ ok: false });
+      }
+
       void reply.code(200).send({ ok: true });
 
       const update = request.body;

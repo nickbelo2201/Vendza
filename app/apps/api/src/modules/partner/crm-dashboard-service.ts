@@ -80,20 +80,52 @@ export async function listCustomerNotes(context: PartnerContext, customerId: str
   });
 }
 
-export async function listCustomers(context: PartnerContext) {
-  return prisma.customer.findMany({
-    where: { storeId: context.storeId },
-    orderBy: [{ lastOrderAt: "desc" }, { createdAt: "desc" }],
-    select: {
-      id: true,
-      name: true,
-      phone: true,
-      email: true,
-      totalSpentCents: true,
-      isInactive: true,
-      lastOrderAt: true,
+export async function listCustomers(
+  context: PartnerContext,
+  params?: { page?: number; pageSize?: number; search?: string },
+) {
+  const page = params?.page ?? 1;
+  const pageSize = Math.min(params?.pageSize ?? 50, 200);
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = { storeId: context.storeId };
+
+  if (params?.search) {
+    where.OR = [
+      { name: { contains: params.search, mode: "insensitive" } },
+      { phone: { contains: params.search } },
+      { email: { contains: params.search, mode: "insensitive" } },
+    ];
+  }
+
+  const [items, total] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: [{ lastOrderAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        totalSpentCents: true,
+        isInactive: true,
+        lastOrderAt: true,
+      },
+    }),
+    prisma.customer.count({ where }),
+  ]);
+
+  return {
+    items,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
     },
-  });
+  };
 }
 
 export async function getCustomerById(context: PartnerContext, id: string) {
@@ -183,6 +215,7 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
   const [pedidosAtivos, pedidosCancelados, novosClientes] = await Promise.all([
     prisma.order.findMany({
       where: whereAtivos,
+      take: 5000,
       select: {
         id: true,
         customerId: true,

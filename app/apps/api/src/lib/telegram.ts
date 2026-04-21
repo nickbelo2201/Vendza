@@ -38,7 +38,13 @@ export async function setTelegramWebhook(url: string): Promise<void> {
   const res = await fetch(`${BASE}/setWebhook`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url, allowed_updates: ["message"] }),
+    body: JSON.stringify({
+      url,
+      allowed_updates: ["message"],
+      ...(process.env.TELEGRAM_WEBHOOK_SECRET
+        ? { secret_token: process.env.TELEGRAM_WEBHOOK_SECRET }
+        : {}),
+    }),
   });
 
   const json = await res.json() as { ok: boolean; description?: string };

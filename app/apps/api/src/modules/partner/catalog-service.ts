@@ -425,28 +425,50 @@ export async function updateProductAvailability(context: PartnerContext, id: str
   return mapProduct(product);
 }
 
-export async function getInventory(context: PartnerContext) {
-  const inventory = await prisma.inventoryItem.findMany({
-    where: { storeId: context.storeId },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      product: {
-        include: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              parentCategoryId: true,
-              parent: { select: { id: true, name: true, slug: true } },
+export async function getInventory(
+  context: PartnerContext,
+  params?: { page?: number; pageSize?: number },
+) {
+  const page = params?.page ?? 1;
+  const pageSize = Math.min(params?.pageSize ?? 100, 500);
+  const skip = (page - 1) * pageSize;
+
+  const where = { storeId: context.storeId };
+
+  const [inventory, total] = await Promise.all([
+    prisma.inventoryItem.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: { updatedAt: "desc" },
+      include: {
+        product: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                parentCategoryId: true,
+                parent: { select: { id: true, name: true, slug: true } },
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.inventoryItem.count({ where }),
+  ]);
 
-  return inventory.map(mapInventoryItem);
+  return {
+    items: inventory.map(mapInventoryItem),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
 }
 
 export async function deletePartnerProduct(context: PartnerContext, productId: string) {

@@ -167,7 +167,7 @@ export async function getFinanceiroKpis(context: PartnerContext, from: Date, to:
       WHERE store_id = ${storeId}::uuid
         AND placed_at >= ${from}
         AND placed_at <= ${to}
-      GROUP BY DATE(placed_at)
+      GROUP BY DATE(placed_at AT TIME ZONE 'America/Sao_Paulo')
       ORDER BY data ASC
     ` as Promise<RowDia[]>,
 
@@ -439,7 +439,7 @@ export async function exportarFinanceiro(context: PartnerContext, params: Export
       WHERE store_id = ${context.storeId}::uuid
         AND placed_at >= ${params.from}
         AND placed_at <= ${params.to}
-      GROUP BY DATE(placed_at)
+      GROUP BY DATE(placed_at AT TIME ZONE 'America/Sao_Paulo')
       ORDER BY data ASC
     ` as Promise<RowResumo[]>);
 
