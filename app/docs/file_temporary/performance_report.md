@@ -330,3 +330,67 @@
 - Reduced latency percebida no carregamento
 - Cache unificado para bootstrap (não afeta endpoints individuais)
 - Frontend pode usar este endpoint na homepage
+
+---
+
+## RESUMO FINAL — ETAPA 2 CONCLUÍDA
+
+**Data de conclusão:** 2026-04-21
+**Tempo total:** ~1.5 horas
+**Status geral:** ✅ TODAS APROVADAS
+
+### Issues Validadas
+
+| ID | Título | Status | Arquivos | Tipo |
+|-----|--------|--------|----------|------|
+| SOF-60 | CDN para imagens | ✅ Aprovado | 2 alterados | Frontend (web-client) |
+| SOF-62 | Suspense em dashboard | ✅ Aprovado | 3 criados | Frontend (web-partner) |
+| SOF-59 | Paginação catálogo | ✅ Aprovado | 1 alterado | Backend |
+| SOF-61 | Bootstrap endpoint | ✅ Aprovado | 2 alterados | Backend |
+
+### Commits realizados
+
+1. `perf: implement CDN transformations for product images — SOF-60`
+2. `perf: add suspense boundaries to dashboard configuration page — SOF-62`
+3. `perf: enforce maximum pagination limit in partner catalog — SOF-59`
+4. `perf: create unified bootstrap endpoint for storefront — SOF-61`
+
+### Impactos de Performance
+
+#### SOF-60: CDN Imagens
+- Cache global via Cloudflare (Supabase)
+- Redução de latência para clientes distantes
+- Compressão automática (quality=80)
+
+#### SOF-62: Suspense Dashboard
+- Time-to-first-paint reduzido
+- UX: conteúdo renderiza conforme carrega
+- Resiliência: erros isolados por seção
+
+#### SOF-59: Paginação Catálogo
+- Proteção contra sobrecarga (máx 100 itens)
+- Reduced memory footprint no banco
+- Paginação eficiente no frontend
+
+#### SOF-61: Bootstrap Endpoint
+- 1 RTT menos (1 request vs. 2)
+- Latência percebida reduzida
+- Cache unificado (TTL 300s)
+
+### Testes realizados
+
+- ✅ TypeScript: 0 erros (turbo run typecheck)
+- ✅ Lint: 0 erros (turbo run lint)
+- ✅ Build: Sem falhas
+- ✅ Commits atômicos: 4 commits
+- ✅ Push automático: Todos para main
+
+### Status Linear
+
+Todas as 4 issues movidas para "In Review" com comentários de validação.
+
+### Próximos passos (fora de escopo)
+
+1. Integração frontend em SOF-61 (usar `/v1/storefront/bootstrap` na homepage)
+2. Testes e2e Playwright para validar performance real
+3. Opcional: virtualização com @tanstack/react-virtual em SOF-59
