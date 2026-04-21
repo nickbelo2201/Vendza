@@ -276,3 +276,30 @@
 - UX: usuário vê conteúdo conforme carrega (não branco)
 - Resiliência: falha de 1 endpoint = somente 1 seção com erro
 - Time-to-first-paint: reduzido (load é paralelo vs. sequencial)
+
+---
+
+### SOF-59: Forçar paginação catálogo parceiro (APROVADO)
+
+**Data:** 2026-04-21
+**Status:** Aprovado
+
+**O que foi validado:**
+1. Backend: Adicionado limit máximo forçado em `listPartnerProducts`
+   - Antes: `take: limite` (sem limite máximo)
+   - Depois: `take: Math.min(filters?.limite ?? 20, 100)` (máx 100 por página)
+2. Frontend: Já implementava paginação corretamente
+   - Usa `limite: 20` padrão
+   - Implementa paginação numérica (Anterior/Próximo)
+   - Suporta filtros (busca, categoria, subcategoria)
+3. Query performance: Sem N+1 (usa Promise.all para count + findMany)
+4. TypeScript: 0 erros
+5. Lint: 0 erros
+
+**Arquivos alterados:**
+- `apps/api/src/modules/partner/catalog-service.ts` — adicionado Math.min para limit máximo
+
+**Impacto de performance:**
+- Backend: Proteção contra sobrecarga (máx 100 itens por request)
+- Database: Reduced memory footprint para queries grandes
+- Frontend: Paginação eficiente com limite seguro

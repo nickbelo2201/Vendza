@@ -272,7 +272,7 @@ export type ListProductsFilters = {
 
 export async function listPartnerProducts(context: PartnerContext, filters?: ListProductsFilters) {
   const pagina = filters?.pagina ?? 1;
-  const limite = filters?.limite ?? 20;
+  const limite = Math.min(filters?.limite ?? 20, 100);
   const skip = (pagina - 1) * limite;
 
   const where: Record<string, unknown> = { storeId: context.storeId };
