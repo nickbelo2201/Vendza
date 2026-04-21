@@ -39,6 +39,7 @@ import {
   updatePartnerOrderStatus,
 } from "./orders-service.js";
 import {
+  aceitarConviteUsuario,
   convidarUsuario,
   getContaBancaria,
   getLoja,
@@ -947,9 +948,14 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (request, reply) => {
-      const dados = await convidarUsuario(partnerContext(request), request.body);
+      const dados = await convidarUsuario(
+        partnerContext(request),
+        request.body,
+        app.supabaseAdmin,
+        app.log,
+      );
       reply.code(201);
-      return ok(dados, { stub: true });
+      return ok(dados);
     },
   );
 

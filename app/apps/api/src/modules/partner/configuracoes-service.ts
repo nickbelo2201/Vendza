@@ -205,13 +205,186 @@ export async function listUsuarios(context: PartnerContext) {
   }));
 }
 
-export async function convidarUsuario(context: PartnerContext, input: ConviteInput) {
-  // STUB — convite por e-mail não implementado ainda (V3)
+export async function convidarUsuario(
+  context: PartnerContext,
+  input: ConviteInput,
+  supabaseAdmin: any,
+  appLog: any,
+) {
+  // 1. Validar entrada
+  if (!input.email || !input.email.trim()) {
+    throw new Error("Email obrigatório");
+  }
+
+  if (!input.role || !["owner", "manager", "operator"].includes(input.role)) {
+    throw new Error("Role inválida. Deve ser: owner, manager, operator");
+  }
+
+  const emailNormalizado = input.email.toLowerCase().trim();
+
+  appLog.info(
+    { email: emailNormalizado, storeId: context.storeId, role: input.role },
+    "Iniciando convite de usuário",
+  );
+
+  // 2. Verificar se email já existe nesta loja
+  const usuarioExistente = await prisma.storeUser.findFirst({
+    where: {
+      storeId: context.storeId,
+      email: emailNormalizado,
+    },
+    select: { id: true, email: true },
+  });
+
+  if (usuarioExistente) {
+    throw new Error(`Usuário com email ${emailNormalizado} já existe nesta loja`);
+  }
+
+  // 3. Chamar Supabase Auth para enviar convite
+  let supbaseInviteError: string | null = null;
+
+  try {
+    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(emailNormalizado, {
+      redirectTo: `${process.env.NEXT_PUBLIC_PARTNER_URL ?? "http://localhost:3001"}/onboarding/aceitar-convite`,
+    });
+
+    if (error) {
+      supbaseInviteError = error.message;
+      appLog.warn(
+        { email: emailNormalizado, error: error.message },
+        "Erro ao enviar convite via Supabase",
+      );
+      // Mesmo se houver erro, criar o StoreUser para rastreamento
+    } else {
+      appLog.info(
+        { email: emailNormalizado, userId: data?.user?.id },
+        "Convite enviado com sucesso via Supabase",
+      );
+    }
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    supbaseInviteError = errorMessage;
+    appLog.warn(
+      { email: emailNormalizado, error: errorMessage },
+      "Erro ao conectar com Supabase Auth",
+    );
+  }
+
+  // 4. Criar ou atualizar StoreUser
+  const storeUser = await prisma.storeUser.upsert({
+    where: {
+      storeId_email: {
+        storeId: context.storeId,
+        email: emailNormalizado,
+      },
+    },
+    update: {
+      role: input.role as any,
+    },
+    create: {
+      storeId: context.storeId,
+      email: emailNormalizado,
+      role: input.role as any,
+      name: emailNormalizado.split("@")[0] || emailNormalizado,
+      isActive: true,
+      authUserId: null,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
+  });
+
+  appLog.info(
+    { storeUserId: storeUser.id, email: storeUser.email },
+    "StoreUser criado/atualizado com sucesso",
+  );
+
+  // 5. Retornar resposta
   return {
-    email: input.email,
-    role: input.role,
+    id: storeUser.id,
+    email: storeUser.email,
+    role: storeUser.role,
     storeId: context.storeId,
-    status: "pending",
+    isActive: storeUser.isActive,
+    createdAt: storeUser.createdAt,
+    ...(supbaseInviteError ? { emailSendError: supbaseInviteError } : {}),
+  };
+}
+
+export async function aceitarConviteUsuario(token: string, supabaseAdmin: any, appLog: any) {
+  // 1. Validar token
+  if (!token || !token.trim()) {
+    throw new Error("Token obrigatório");
+  }
+
+  appLog.info({ tokenHash: token.substring(0, 10) }, "Processando aceitação de convite");
+
+  // 2. Validar o token usando Supabase
+  // O token vem da URL de convite que Supabase envia por email
+  // Usaremos verifyOtp para validar o token (magic link)
+  const { data, error } = await supabaseAdmin.auth.verifyOtp({
+    type: "invite",
+    token: token,
+  });
+
+  if (error || !data.user) {
+    appLog.warn(
+      { error: error?.message, tokenHash: token.substring(0, 10) },
+      "Token inválido ou expirado",
+    );
+    throw new Error("Token expirado ou inválido");
+  }
+
+  const authUserId = data.user.id;
+  const userEmail = data.user.email;
+
+  appLog.info({ authUserId, userEmail }, "Token validado com sucesso");
+
+  // 3. Encontrar StoreUser pelo email
+  const storeUser = await prisma.storeUser.findFirst({
+    where: { email: userEmail },
+    select: { id: true, storeId: true, email: true },
+  });
+
+  if (!storeUser) {
+    appLog.warn(
+      { userEmail, authUserId },
+      "StoreUser não encontrado para email do token",
+    );
+    throw new Error("Convite não encontrado. Solicite um novo convite.");
+  }
+
+  // 4. Atualizar StoreUser com authUserId
+  const storeUserAtualizado = await prisma.storeUser.update({
+    where: { id: storeUser.id },
+    data: { authUserId },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      storeId: true,
+      isActive: true,
+      createdAt: true,
+    },
+  });
+
+  appLog.info(
+    { storeUserId: storeUserAtualizado.id, storeId: storeUserAtualizado.storeId },
+    "Convite aceito com sucesso",
+  );
+
+  // 5. Retornar sucesso
+  return {
+    id: storeUserAtualizado.id,
+    email: storeUserAtualizado.email,
+    role: storeUserAtualizado.role,
+    storeId: storeUserAtualizado.storeId,
+    isActive: storeUserAtualizado.isActive,
+    createdAt: storeUserAtualizado.createdAt,
   };
 }
 

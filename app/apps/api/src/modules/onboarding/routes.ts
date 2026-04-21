@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { prisma } from "@vendza/database";
 import { envelopeSchema, ok } from "../../lib/http.js";
 import { setupStore } from "./service.js";
+import { aceitarConviteUsuario } from "../partner/configuracoes-service.js";
 
 const SetupStoreSchema = Type.Object({
   storeName: Type.String({ minLength: 2 }),
@@ -117,6 +118,38 @@ export const onboardingRoutes: FastifyPluginAsync = async (app) => {
       });
 
       return ok({ available: !existing }, { stub: false });
+    },
+  );
+
+  // ── POST /onboarding/aceitar-convite ──────────────────────────
+  const AceitarConviteQuerySchema = Type.Object({
+    token: Type.String({ minLength: 1 }),
+  });
+
+  type AceitarConviteQuery = Static<typeof AceitarConviteQuerySchema>;
+
+  app.post<{ Querystring: AceitarConviteQuery }>(
+    "/onboarding/aceitar-convite",
+    {
+      schema: {
+        querystring: AceitarConviteQuerySchema,
+        response: { 200: envelopeSchema(Type.Any()) },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { token } = request.query;
+        const resultado = await aceitarConviteUsuario(token, app.supabaseAdmin, app.log);
+        return ok(resultado);
+      } catch (err: any) {
+        const statusCode = err.message.includes("Token expirado") ? 400 : 500;
+        const code = statusCode === 400 ? "INVALID_TOKEN" : "INTERNAL_ERROR";
+        return reply.status(statusCode).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code, message: err.message },
+        });
+      }
     },
   );
 };

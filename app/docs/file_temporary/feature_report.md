@@ -325,7 +325,8 @@ Atualizado em: 2026-04-14
   - `app/apps/api/src/modules/partner/` — atualizar endpoint de produtos com filtros e paginação
   - `app/apps/web-partner/src/app/(dashboard)/catalogo/CatalogoClient.tsx` — busca + filtros + paginação
   - `app/apps/web-partner/src/app/(dashboard)/catalogo/page.tsx` — passar novas props (se necessário)
-- **Status:** `pendente`
+- **Status:** `resolvido`
+- **Commit:** `a741d0b`
 - **Plano de implementação:**
   1. Adicionar `parentCategoryId String? @map("parent_category_id") @db.Uuid` ao model `Category` com relação self-referential (`parent Category? @relation(...)` e `children Category[] @relation(...)`)
   2. Rodar `corepack pnpm db:generate` e `corepack pnpm db:migrate`
@@ -343,24 +344,15 @@ Atualizado em: 2026-04-14
 
 ---
 
-## Feature #14 — SOF-64
+## Feature #14 — SOF-64 ✅
 
 - **Título:** [UX] Skeleton animado no loading.tsx global do web-client
 - **Link:** https://linear.app/venza-project/issue/SOF-64/ux-skeleton-animado-no-loadingtsx-global-do-web-client
 - **Prioridade:** baixa
 - **Complexidade:** pequena (3 arquivos, frontend only)
 - **Descrição:** Substituir o "Carregando..." de texto simples no `loading.tsx` por skeletons animados que imitam o layout real de cada rota — homepage (header + grid), produto/[slug] (detalhe) e checkout (formulário + resumo).
-- **Escopo técnico:**
-  - Frontend: `apps/web-client/src/app/loading.tsx` (raiz), criar `apps/web-client/src/app/produto/[slug]/loading.tsx`, criar `apps/web-client/src/app/checkout/loading.tsx`
-  - Backend/API: nenhuma mudança
-  - Estado/Store: nenhuma mudança
-  - Pacotes necessários: nenhum (usa `animate-pulse` do Tailwind + CSS custom existente)
-- **Dependências:** nenhuma
-- **Arquivos afetados:**
-  - `app/apps/web-client/src/app/loading.tsx` (modificar — atualmente só exibe "Carregando...")
-  - `app/apps/web-client/src/app/produto/[slug]/loading.tsx` (criar)
-  - `app/apps/web-client/src/app/checkout/loading.tsx` (criar)
-- **Status:** `pendente`
+- **Status:** `resolvido`
+- **Commit:** `0c65e56`
 - **Plano de implementação:**
   1. Atualizar `loading.tsx` raiz: skeleton com header mock + grid de 8 cards `bg-gray-200 animate-pulse` no mesmo layout da `CatalogView` (2-4 colunas responsivo)
   2. Criar `produto/[slug]/loading.tsx`: skeleton de duas colunas — coluna esquerda com imagem + badges + título + preço; coluna direita com card de ação
@@ -374,7 +366,7 @@ Atualizado em: 2026-04-14
 
 ---
 
-## Feature #15 — SOF-68
+## Feature #15 — SOF-68 ✅
 
 - **Título:** [UX] Breadcrumb de navegação na vitrine do cliente
 - **Link:** https://linear.app/venza-project/issue/SOF-68/ux-breadcrumb-de-navegacao-na-vitrine-do-cliente
@@ -389,7 +381,8 @@ Atualizado em: 2026-04-14
 - **Dependências:** nenhuma
 - **Arquivos afetados:**
   - `app/apps/web-client/src/app/produto/[slug]/page.tsx`
-- **Status:** `pendente`
+- **Status:** `resolvido`
+- **Commit:** `8796d42`
 - **Plano de implementação:**
   1. Substituir o bloco `<div style={{ marginBottom: 16 }}>` com o botão "← Voltar" por um `<nav>` de breadcrumb
   2. Estrutura: `Início` (link para `/`) > `[categoria.name]` se categoria existir (link para `/?categoria=[categoria.slug]`) > `[produto.name]` (texto simples, não clicável)
@@ -404,7 +397,7 @@ Atualizado em: 2026-04-14
 
 ---
 
-## Feature #16 — SOF-67
+## Feature #16 — SOF-67 ✅
 
 - **Título:** [UX] Máscara de telefone no formulário de checkout
 - **Link:** https://linear.app/venza-project/issue/SOF-67/ux-mascara-de-telefone-no-formulario-de-checkout
@@ -420,7 +413,8 @@ Atualizado em: 2026-04-14
 - **Arquivos afetados:**
   - `app/apps/web-client/src/app/checkout/page.tsx`
   - `app/apps/web-client/package.json` (adicionar `react-imask`)
-- **Status:** `pendente`
+- **Status:** `resolvido`
+- **Commit:** `34f04d6`
 - **Plano de implementação:**
   1. Instalar `react-imask` no web-client: `corepack pnpm --filter web-client add react-imask`
   2. Importar `IMaskInput` de `react-imask` no checkout/page.tsx
