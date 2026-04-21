@@ -7,12 +7,24 @@ type Props = {
 };
 
 export function BotaoExportarCSV({ statusFiltro }: Props) {
-  function handleExportar() {
-    const url = `/api/exportar-pedidos${statusFiltro ? `?status=${statusFiltro}` : ""}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.click();
-    toast.success("CSV exportado");
+  async function handleExportar() {
+    try {
+      const url = `/api/exportar-pedidos${statusFiltro ? `?status=${statusFiltro}` : ""}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Falha ao exportar");
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "pedidos.csv";
+      link.click();
+      URL.revokeObjectURL(objectUrl);
+
+      toast.success("CSV exportado com sucesso");
+    } catch {
+      toast.error("Erro ao exportar CSV");
+    }
   }
 
   return (

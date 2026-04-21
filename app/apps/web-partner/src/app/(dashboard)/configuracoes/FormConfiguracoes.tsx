@@ -47,14 +47,6 @@ export function FormConfiguracoes({ settings }: Props) {
 
   const statusAtual = settings.status;
 
-  // Auto-dismiss do toast após 3s
-  useEffect(() => {
-    if (feedback?.ok) {
-      const t = setTimeout(() => setFeedback(null), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [feedback]);
-
   // Aviso de alterações não salvas ao sair da página
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -112,7 +104,7 @@ export function FormConfiguracoes({ settings }: Props) {
           status: String(data.get("status")) as "open" | "closed" | "paused",
           minimumOrderValueCents: minimumCents,
         });
-        setFeedback({ ok: true, msg: "Configurações salvas com sucesso." });
+        setFeedback(null);
         toast.success("Dados salvos com sucesso");
         setHasChanges(false);
       } catch (err) {
@@ -378,40 +370,6 @@ export function FormConfiguracoes({ settings }: Props) {
         </div>
       </form>
 
-      {/* Toast de sucesso */}
-      {feedback?.ok && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 24,
-            right: 24,
-            zIndex: 500,
-            background: "var(--green)",
-            color: "#fff",
-            padding: "12px 20px",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 600,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            animation: "slide-in-right 0.2s ease",
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          {feedback.msg}
-        </div>
-      )}
     </div>
   );
 }
