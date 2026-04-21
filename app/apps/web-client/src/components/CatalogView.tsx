@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
 import { ProductImage } from "./ProductImage";
 
@@ -178,15 +179,19 @@ function BrandCard({ brand }: { brand: Brand }) {
 }
 
 export function CatalogView({ categories, products, categoriaInicial = null, termoBusca = "" }: Props) {
-  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(categoriaInicial);
+  const router = useRouter();
   const { adicionarItem } = useCarrinho();
 
-  const produtosFiltrados = filtroCategoria
-    ? products.filter((p) => p.category?.slug === filtroCategoria)
-    : products;
+  // filtroCategoria reflete o parâmetro da URL (servidor já fez o lookup pai→filhos)
+  const filtroCategoria = categoriaInicial;
+  const produtosFiltrados = products;
 
   function toggleCategoria(slug: string) {
-    setFiltroCategoria((atual) => (atual === slug ? null : slug));
+    if (slug === filtroCategoria) {
+      router.push("/");
+    } else {
+      router.push(`/?categoria=${slug}`);
+    }
   }
 
   return (
@@ -212,7 +217,7 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
           {/* Item "Todos" sempre primeiro */}
           <button
             className={`wc-cat-item${!filtroCategoria ? " wc-cat-item--active" : ""}`}
-            onClick={() => setFiltroCategoria(null)}
+            onClick={() => router.push("/")}
           >
             <div className="wc-cat-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -253,7 +258,7 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
       <div className="wc-subcategory-row">
         <button
           className={`wc-subcategory-chip${filtroCategoria === null ? " active" : ""}`}
-          onClick={() => setFiltroCategoria(null)}
+          onClick={() => router.push("/")}
         >
           Todos
         </button>
