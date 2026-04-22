@@ -6,7 +6,36 @@ import { closeWorkers, startWorkers } from "./jobs/workers.js";
 const port = Number(process.env.API_PORT ?? process.env.PORT ?? 3333);
 const host = process.env.API_HOST ?? "0.0.0.0";
 
+/**
+ * Validar variáveis de ambiente obrigatórias no startup
+ * Garante que o servidor não inicia sem configurações críticas
+ */
+function validateRequiredEnvVars() {
+  const requiredEnvVars = [
+    "PIX_ENCRYPTION_KEY",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+  ];
+
+  const missing: string[] = [];
+
+  for (const key of requiredEnvVars) {
+    if (!process.env[key]) {
+      missing.push(key);
+    }
+  }
+
+  if (missing.length > 0) {
+    console.error(
+      `\nFATAL: Variáveis de ambiente obrigatórias não estão definidas:\n  - ${missing.join("\n  - ")}\n`
+    );
+    process.exit(1);
+  }
+}
+
 async function start() {
+  // Validar env vars ANTES de qualquer outra inicialização
+  validateRequiredEnvVars();
   const app = await buildApp();
 
   async function shutdown() {

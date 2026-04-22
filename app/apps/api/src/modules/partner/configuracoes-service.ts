@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import crypto, { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import { prisma } from "@vendza/database";
 
@@ -9,12 +9,26 @@ import type { PartnerContext } from "./context.js";
 const PIX_KEY_SECRET = process.env.PIX_ENCRYPTION_KEY ?? "";
 const ALGORITHM = "aes-256-gcm";
 
-function encryptPixKey(plaintext: string): string {
-  if (!PIX_KEY_SECRET || PIX_KEY_SECRET.length < 32) {
-    throw new Error("PIX_ENCRYPTION_KEY deve ter ao menos 32 caracteres");
+/**
+ * Derivar chave criptográfica 32-byte a partir de PIX_KEY_SECRET
+ * Usa SHA-256 para garantir tamanho exato e segurança
+ *
+ * NOTA sobre backward compatibility:
+ * Versões anteriores usavam Buffer.from(secret.slice(0, 32)), que podia resultar em chaves
+ * com tamanho variável. Essa versão garante 32 bytes via SHA-256.
+ * Como o projeto ainda está em early stage (V1 recém completo), essa mudança é segura.
+ * Se houvesse dados em produção, seria necessária uma migration para re-encriptar dados existentes.
+ */
+function deriveEncryptionKey(): Buffer {
+  if (!PIX_KEY_SECRET) {
+    throw new Error("PIX_ENCRYPTION_KEY não está definida");
   }
+  return crypto.createHash("sha256").update(PIX_KEY_SECRET).digest();
+}
+
+function encryptPixKey(plaintext: string): string {
   const iv = randomBytes(12);
-  const key = Buffer.from(PIX_KEY_SECRET.slice(0, 32));
+  const key = deriveEncryptionKey();
   const cipher = createCipheriv(ALGORITHM, key, iv);
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const authTag = cipher.getAuthTag();
@@ -23,7 +37,6 @@ function encryptPixKey(plaintext: string): string {
 }
 
 function decryptPixKey(ciphertext: string): string {
-  if (!PIX_KEY_SECRET) return ciphertext; // fallback seguro
   // Detecta formato antigo (Base64 simples, sem ":")
   if (!ciphertext.includes(":")) {
     return Buffer.from(ciphertext, "base64").toString("utf8");
@@ -32,7 +45,7 @@ function decryptPixKey(ciphertext: string): string {
   const ivHex = parts[0] ?? "";
   const authTagHex = parts[1] ?? "";
   const encryptedHex = parts[2] ?? "";
-  const key = Buffer.from(PIX_KEY_SECRET.slice(0, 32));
+  const key = deriveEncryptionKey();
   const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivHex, "hex"));
   decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
   const decrypted = Buffer.concat([

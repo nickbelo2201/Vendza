@@ -15,6 +15,8 @@ import { redisPlugin_ } from "./plugins/redis.js";
 import { initQueues } from "./jobs/queues.js";
 import { getRedis } from "./plugins/redis.js";
 import { setTelegramWebhook } from "./lib/telegram.js";
+import { AppError } from "./lib/errors.js";
+import { errorEnvelope } from "./lib/http.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -119,6 +121,14 @@ export async function buildApp() {
   app.setErrorHandler((error, _request, reply) => {
     app.log.error(error);
 
+    // Detectar AppError tipado
+    if (error instanceof AppError) {
+      return reply
+        .code(error.statusCode)
+        .send(errorEnvelope(error.code, error.message));
+    }
+
+    // Fallback para erros genéricos
     const errorLike =
       typeof error === "object" && error !== null ? (error as Record<string, unknown>) : null;
 

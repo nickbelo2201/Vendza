@@ -1,5 +1,6 @@
 import { InventoryMovementType, prisma, type Prisma } from "@vendza/database";
 
+import { invalidateStorefrontCache } from "../storefront/cache.js";
 import type { PartnerContext } from "./context.js";
 
 // ─── Tipos de categoria ───────────────────────────────────────────────────────
@@ -100,6 +101,9 @@ export async function createPartnerCategory(context: PartnerContext, input: Cate
     },
   });
 
+  // Invalida cache do storefront para refletir nova categoria
+  await invalidateStorefrontCache(context.storeId);
+
   return mapCategory(category);
 }
 
@@ -120,6 +124,9 @@ export async function updatePartnerCategory(context: PartnerContext, id: string,
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     },
   });
+
+  // Invalida cache do storefront para refletir categoria atualizada
+  await invalidateStorefrontCache(context.storeId);
 
   return mapCategory(category);
 }

@@ -4,6 +4,7 @@ import {
   combineTemplates,
   type TemplateCategory,
 } from "./templates.js";
+import { AppError } from "../../lib/errors.js";
 
 interface SetupStoreInput {
   storeName: string;
@@ -30,10 +31,11 @@ export async function setupStore(
   });
 
   if (existingStoreUser) {
-    const err = new Error("Loja já configurada para este usuário.");
-    (err as any).statusCode = 409;
-    (err as any).code = "STORE_ALREADY_EXISTS";
-    throw err;
+    throw new AppError(
+      409,
+      "STORE_ALREADY_EXISTS",
+      "Loja já configurada para este usuário.",
+    );
   }
 
   // 2. Verificar se slug já está em uso
@@ -42,10 +44,7 @@ export async function setupStore(
   });
 
   if (existingStore) {
-    const err = new Error("Este slug já está em uso.");
-    (err as any).statusCode = 400;
-    (err as any).code = "SLUG_TAKEN";
-    throw err;
+    throw new AppError(400, "SLUG_TAKEN", "Este slug já está em uso.");
   }
 
   // 3. Se templateIds informados, validar antes de criar
@@ -53,10 +52,11 @@ export async function setupStore(
   if (templateIds.length > 0) {
     const validation = validateTemplateCombo(templateIds);
     if (!validation.valid) {
-      const err = new Error(validation.error!);
-      (err as any).statusCode = 400;
-      (err as any).code = "INVALID_TEMPLATE_COMBO";
-      throw err;
+      throw new AppError(
+        400,
+        "INVALID_TEMPLATE_COMBO",
+        validation.error!,
+      );
     }
   }
 
@@ -119,19 +119,17 @@ export async function applyTemplatesToStore(
   // 1. Validar combo
   const validation = validateTemplateCombo(templateIds);
   if (!validation.valid) {
-    const err = new Error(validation.error!);
-    (err as any).statusCode = 400;
-    (err as any).code = "INVALID_TEMPLATE_COMBO";
-    throw err;
+    throw new AppError(
+      400,
+      "INVALID_TEMPLATE_COMBO",
+      validation.error!,
+    );
   }
 
   // 2. Verificar se a loja existe
   const store = await prisma.store.findUnique({ where: { id: storeId } });
   if (!store) {
-    const err = new Error("Loja não encontrada.");
-    (err as any).statusCode = 404;
-    (err as any).code = "STORE_NOT_FOUND";
-    throw err;
+    throw new AppError(404, "STORE_NOT_FOUND", "Loja não encontrada.");
   }
 
   // 3. Criar categorias (fora de transação para evitar problemas com Prisma)
