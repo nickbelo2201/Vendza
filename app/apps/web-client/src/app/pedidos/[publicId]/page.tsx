@@ -4,6 +4,7 @@ import type { OrderDetalhe } from "@vendza/types";
 
 import { fetchStorefront, fetchStorefrontConfig } from "../../../lib/api";
 import { OrderTracker } from "../../../components/OrderTracker";
+import { SalvarEnderecoPrompt } from "../../../components/SalvarEnderecoPrompt";
 
 export async function generateMetadata({ params }: { params: Promise<{ publicId: string }> }) {
   const { publicId } = await params;
@@ -94,6 +95,18 @@ export default async function OrderTrackingPage({
             Olá, {order.customerName}!
           </p>
         </div>
+
+        {/* Prompt para salvar endereço — só aparece se o pedido tem endereço e não é retirada */}
+        {order.address && !order.isPickup && (
+          <SalvarEnderecoPrompt
+            logradouro={order.address.line1}
+            numero={order.address.number ?? ""}
+            bairro={order.address.neighborhood}
+            cidade={order.address.city}
+            estado={order.address.state}
+            cep=""
+          />
+        )}
 
         {/* Timeline realtime */}
         <div className="wc-card">

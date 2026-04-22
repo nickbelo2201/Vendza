@@ -132,15 +132,27 @@ export default function CheckoutPage() {
     setNumero(end.numero);
     setComplemento(end.complemento ?? "");
     setBairro(end.bairro);
+    setCidade(end.cidade ?? "");
+    setEstado(end.estado ?? "");
     setCep(end.cep);
   }
 
   function handleSelecionarEndereco(id: string) {
-    setEnderecoSelecionado(id);
-    if (id) {
-      const end = enderecos.find((e) => e.id === id);
-      if (end) aplicarEndereco(end);
+    if (enderecoSelecionado === id) {
+      // Deselecionar — limpar campos
+      setEnderecoSelecionado("");
+      setRua("");
+      setNumero("");
+      setComplemento("");
+      setBairro("");
+      setCidade("");
+      setEstado("");
+      setCep("");
+      return;
     }
+    setEnderecoSelecionado(id);
+    const end = enderecos.find((e) => e.id === id);
+    if (end) aplicarEndereco(end);
   }
 
   const freteCents = freteInfo && !freteInfo.fora ? freteInfo.feeCents : 0;
@@ -206,6 +218,8 @@ export default function CheckoutPage() {
           numero,
           complemento: complemento || undefined,
           bairro,
+          cidade,
+          estado,
           cep,
         });
       }
@@ -297,24 +311,79 @@ export default function CheckoutPage() {
         <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
           <legend style={{ fontWeight: 600, color: "var(--carbon)", marginBottom: 12 }}>Endereço de entrega</legend>
           <div className="wc-stack">
-            {/* Seletor de endereços salvos */}
+            {/* Lista de endereços salvos */}
             {enderecos.length > 0 && (
               <div>
-                <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
-                  Usar endereço salvo
-                </label>
-                <select
-                  className="wc-input"
-                  value={enderecoSelecionado}
-                  onChange={(e) => handleSelecionarEndereco(e.target.value)}
-                >
-                  <option value="">— Preencher manualmente —</option>
-                  {enderecos.map((end) => (
-                    <option key={end.id} value={end.id}>
-                      {end.label} — {end.logradouro}, {end.numero}
-                    </option>
-                  ))}
-                </select>
+                <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>
+                  Endereços salvos
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {enderecos.map((end) => {
+                    const selecionado = enderecoSelecionado === end.id;
+                    return (
+                      <div
+                        key={end.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "10px 14px",
+                          borderRadius: 8,
+                          border: `1px solid ${selecionado ? "var(--green)" : "var(--border)"}`,
+                          background: selecionado ? "rgba(45, 90, 61, 0.06)" : "var(--surface)",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              padding: "2px 6px",
+                              borderRadius: 99,
+                              background: "var(--accent-soft)",
+                              color: "var(--blue)",
+                              marginBottom: 4,
+                            }}
+                          >
+                            {end.label}
+                          </span>
+                          <p style={{ margin: 0, fontSize: 13, color: "var(--carbon)", lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {end.logradouro}, {end.numero}
+                            {end.complemento ? `, ${end.complemento}` : ""}
+                          </p>
+                          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
+                            {end.bairro}{end.cidade ? ` — ${end.cidade}` : ""}{end.cep ? ` — ${end.cep}` : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSelecionarEndereco(end.id)}
+                          style={{
+                            flexShrink: 0,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            border: `1px solid ${selecionado ? "var(--green)" : "var(--border)"}`,
+                            background: selecionado ? "var(--green)" : "none",
+                            color: selecionado ? "#fff" : "var(--carbon)",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {selecionado ? "Selecionado" : "Usar este"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                {enderecoSelecionado && (
+                  <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                    Campos preenchidos automaticamente. Edite se necessário.
+                  </p>
+                )}
               </div>
             )}
 
@@ -359,8 +428,8 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={usarLocalizacao}
-                className="wc-btn-outline"
-                style={{ fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}
+                className="wc-btn wc-btn-secondary"
+                style={{ fontSize: 13, padding: "8px 16px" }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="3" />

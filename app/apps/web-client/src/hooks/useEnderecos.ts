@@ -9,8 +9,11 @@ export type Endereco = {
   logradouro: string;
   numero: string;
   bairro: string;
+  cidade: string;
+  estado: string;
   cep: string;
   complemento?: string;
+  criadoEm?: string; // ISO date — usado para ordenação e substituição do mais antigo
 };
 
 export type PerfilCliente = {
@@ -94,11 +97,22 @@ export function useEnderecos() {
     }
   }, [enderecos, carregando]);
 
-  const salvar = useCallback((endereco: Omit<Endereco, "id">) => {
+  const salvar = useCallback((endereco: Omit<Endereco, "id" | "criadoEm">) => {
     setEnderecos((prev) => {
-      if (prev.length >= MAX_ENDERECOS) return prev;
-      const novo: Endereco = { ...endereco, id: crypto.randomUUID() };
-      return [...prev, novo];
+      const novo: Endereco = { ...endereco, id: crypto.randomUUID(), criadoEm: new Date().toISOString() };
+      if (prev.length < MAX_ENDERECOS) {
+        // Mais recente primeiro
+        return [novo, ...prev];
+      }
+      // Limite atingido — substituir o mais antigo (último da lista)
+      const ordenados = [...prev].sort((a, b) =>
+        (a.criadoEm ?? "") < (b.criadoEm ?? "") ? -1 : 1
+      );
+      ordenados[0] = novo; // substitui o mais antigo
+      // Mantém mais recente primeiro
+      return ordenados.sort((a, b) =>
+        (a.criadoEm ?? "") > (b.criadoEm ?? "") ? -1 : 1
+      );
     });
   }, []);
 

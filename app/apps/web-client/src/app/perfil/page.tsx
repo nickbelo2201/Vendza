@@ -79,17 +79,19 @@ function CardEndereco({ endereco, onRemover }: { endereco: Endereco; onRemover: 
   );
 }
 
-function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: (e: Omit<Endereco, "id">) => void }) {
+function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: (e: Omit<Endereco, "id" | "criadoEm">) => void }) {
   const [label, setLabel] = useState<string>("Casa");
   const [logradouro, setLogradouro] = useState("");
   const [numero, setNumero] = useState("");
   const [complemento, setComplemento] = useState("");
   const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
   const [cep, setCep] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    salvar({ label, logradouro, numero, complemento: complemento || undefined, bairro, cep });
+    salvar({ label, logradouro, numero, complemento: complemento || undefined, bairro, cidade, estado, cep });
     onSalvar();
   }
 
@@ -150,17 +152,43 @@ function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: 
         />
       </div>
 
-      <div className="wc-checkout-fields-grid" style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 12 }}>
+      <div>
+        <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
+          Bairro *
+        </label>
+        <input
+          className="wc-input"
+          required
+          value={bairro}
+          onChange={(e) => setBairro(e.target.value)}
+          placeholder="Seu bairro"
+        />
+      </div>
+
+      <div className="wc-checkout-fields-grid" style={{ display: "grid", gridTemplateColumns: "1fr 60px 130px", gap: 12 }}>
         <div>
           <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
-            Bairro *
+            Cidade *
           </label>
           <input
             className="wc-input"
             required
-            value={bairro}
-            onChange={(e) => setBairro(e.target.value)}
-            placeholder="Seu bairro"
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            placeholder="Cidade"
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
+            UF *
+          </label>
+          <input
+            className="wc-input"
+            required
+            maxLength={2}
+            value={estado}
+            onChange={(e) => setEstado(e.target.value)}
+            placeholder="SP"
           />
         </div>
         <div>
