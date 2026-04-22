@@ -60,6 +60,7 @@ export default async function ProductPage({
       </nav>
 
       <div
+        className="wc-checkout-layout"
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 340px",

@@ -1118,7 +1118,7 @@ export default function FinanceiroPage() {
         </div>
 
         {/* ── Gráficos ─────────────────────────────────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", gap: 16 }}>
+        <div className="wp-grid-collapse-tablet" style={{ display: "grid", gridTemplateColumns: "65fr 35fr", gap: 16 }}>
 
           {/* Gráfico de área */}
           <div className="wp-card" style={{ padding: 0, overflow: "hidden" }}>

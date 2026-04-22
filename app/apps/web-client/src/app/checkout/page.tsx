@@ -339,7 +339,7 @@ export default function CheckoutPage() {
               <input className="wc-input" required value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Seu bairro" />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 140px", gap: 12 }}>
+            <div className="wc-checkout-fields-grid" style={{ display: "grid", gridTemplateColumns: "1fr 80px 140px", gap: 12 }}>
               <div>
                 <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Cidade *</label>
                 <input className="wc-input" required value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Cidade" />

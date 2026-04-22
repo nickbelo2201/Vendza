@@ -2004,6 +2004,75 @@ html[data-theme="dark"] body {
   animation: col-pulse 1.2s ease infinite;
 }
 
+/* ===== TABLET V2 ≤ 1024px ===== */
+/* ── Classes utilitárias responsivas ── */
+/* Grid que vira coluna única em tablet e mobile */
+.wp-grid-collapse-tablet {
+  display: grid;
+}
+
+/* Grid 2 colunas que colapsa em mobile */
+.wp-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  /* Metric grid: 2 colunas em tablet */
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* KPI grid de relatórios: 2 colunas */
+  .relatorio-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Dashboard bottom: coluna única empilhada */
+  .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  /* Side cards: horizontal em tablet landscape */
+  .side-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Topbar: ocultar badge IA em tablet para economizar espaço */
+  .topbar-badge-ia {
+    display: none;
+  }
+
+  /* v2-main: padding reduzido em tablet */
+  .v2-main {
+    padding: 16px;
+  }
+
+  /* Tabelas com scroll horizontal em tablet */
+  .wp-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Grids utilitários colapsam em tablet */
+  .wp-grid-collapse-tablet {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* wp-grid-2col: mantém 2 colunas em tablet (>=768px) */
+  /* override apenas em mobile (<768px) abaixo */
+}
+
+@media (max-width: 768px) {
+  .wp-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== MOBILE V2 ≤ 768px ===== */
 
 /* Utilitário genérico de ocultação mobile */

@@ -945,7 +945,7 @@ select {
   font-size: 14px;
 }
 
-/* ===== RESPONSIVO ===== */
+/* ===== RESPONSIVO — 768px ===== */
 @media (max-width: 768px) {
   .wc-main {
     padding: 16px 16px 40px;
@@ -957,6 +957,11 @@ select {
 
   .wc-search-wrapper {
     max-width: unset;
+  }
+
+  /* Grid de produtos: 2 colunas em tablet */
+  .wc-product-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1140,18 +1145,17 @@ select {
   }
 
   /* --- Checkout: coluna única --- */
-  /* O checkout usa style inline com gridTemplateColumns */
-  /* Sobrescrevemos com uma classe utilitária no wrapper principal */
-  .wc-checkout-layout,
-  /* Fallback: seleciona o div direto filho de .wc-main que usa display:grid no checkout */
-  .wc-main > div[style*="gridTemplateColumns"] {
+  /* O checkout usa style inline com gridTemplateColumns.
+     A classe .wc-checkout-layout é o seletor canônico;
+     o seletor de atributo é fallback para grids inline nos fieldsets. */
+  .wc-checkout-layout {
     display: flex !important;
     flex-direction: column !important;
     gap: 20px !important;
   }
 
   /* Campos em grid de 2+ colunas dentro do form viram coluna única */
-  .wc-main div[style*="gridTemplateColumns"] {
+  .wc-checkout-fields-grid {
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;

@@ -111,7 +111,7 @@ function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: 
         </select>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: 12 }}>
+      <div className="wc-checkout-fields-grid" style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: 12 }}>
         <div>
           <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
             Logradouro *
@@ -150,7 +150,7 @@ function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: 
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 12 }}>
+      <div className="wc-checkout-fields-grid" style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 12 }}>
         <div>
           <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>
             Bairro *
