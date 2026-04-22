@@ -18,6 +18,7 @@ export async function salvarConfiguracoes(dados: {
   whatsappPhone?: string;
   status?: "open" | "closed" | "paused";
   minimumOrderValueCents?: number;
+  logoUrl?: string | null;
 }) {
   await fetchAPI("/partner/configuracoes/loja", {
     method: "PUT",

@@ -10,6 +10,7 @@ import { CartSheet } from "./CartSheet";
 
 type Props = {
   nomeLoja: string;
+  logoUrl?: string | null;
 };
 
 // Ícone SVG de lupa (inline, estilo Lucide)
@@ -99,7 +100,7 @@ function IconeLua() {
   );
 }
 
-export function Header({ nomeLoja }: Props) {
+export function Header({ nomeLoja, logoUrl }: Props) {
   const { totalItens } = useCarrinho();
   const [cartOpen, setCartOpen] = useState(false);
   const { theme, toggle } = useTheme();
@@ -139,7 +140,7 @@ export function Header({ nomeLoja }: Props) {
         <a href="/" className="wc-logo" aria-label={nomeLoja}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-nobg.png"
+            src={logoUrl ?? "/logo-nobg.png"}
             alt={nomeLoja}
             className="wc-logo-img"
           />

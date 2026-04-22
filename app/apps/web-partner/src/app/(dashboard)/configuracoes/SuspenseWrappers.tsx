@@ -13,6 +13,7 @@ type StoreSettings = {
   whatsappPhone: string;
   status: string;
   minimumOrderValueCents: number;
+  logoUrl: string | null;
 };
 
 type Zona = {
@@ -163,6 +164,7 @@ export async function SettingsSection() {
             whatsappPhone: s.whatsappPhone ?? "",
             status: s.status,
             minimumOrderValueCents: s.minimumOrderValueCents,
+            logoUrl: s.logoUrl ?? null,
           }}
         />
       )}
