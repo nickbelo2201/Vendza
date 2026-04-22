@@ -261,7 +261,7 @@ export default function CheckoutPage() {
       }}
     >
       <form onSubmit={handleSubmit} className="wc-card wc-stack">
-        <h2 style={{ margin: 0, color: "var(--carbon)" }}>Dados do pedido</h2>
+        <h2>Dados do pedido</h2>
 
         <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
           <legend style={{ fontWeight: 600, color: "var(--carbon)", marginBottom: 12 }}>Identificação</legend>
@@ -571,7 +571,7 @@ export default function CheckoutPage() {
       </form>
 
       <aside className="wc-card wc-stack">
-        <h3 style={{ margin: 0, color: "var(--carbon)" }}>Resumo do pedido</h3>
+        <h3>Resumo do pedido</h3>
         {items.map((item) => (
           <div
             key={item.id}

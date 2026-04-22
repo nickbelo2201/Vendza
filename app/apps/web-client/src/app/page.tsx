@@ -9,12 +9,29 @@ type ProductsResponse = PaginatedResponse<ProdutoStorefront>;
 export async function generateMetadata() {
   try {
     const config = await fetchStorefrontConfig<{ branding: { name: string } }>("/storefront/config");
+    const nome = config.branding.name;
     return {
-      title: `${config.branding.name} — Delivery`,
-      description: `Peça agora no ${config.branding.name}. Entrega rápida na sua região.`,
+      title: `${nome} — Delivery`,
+      description: `Peça agora no ${nome}. Entrega rápida na sua região.`,
       openGraph: {
-        title: `${config.branding.name} — Delivery`,
-        description: `Peça agora no ${config.branding.name}.`,
+        type: "website",
+        title: `${nome} — Delivery`,
+        description: `Peça agora no ${nome}. Entrega rápida na sua região.`,
+        siteName: nome,
+        images: [
+          {
+            url: "/opengraph-image",
+            width: 1200,
+            height: 630,
+            alt: `${nome} — Delivery`,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image" as const,
+        title: `${nome} — Delivery`,
+        description: `Peça agora no ${nome}. Entrega rápida na sua região.`,
+        images: ["/opengraph-image"],
       },
     };
   } catch {

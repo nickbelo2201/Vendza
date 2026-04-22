@@ -136,6 +136,25 @@ a {
   text-decoration: none;
 }
 
+/* ===== TIPOGRAFIA — ESCALA CONSISTENTE ===== */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 { font-size: 28px; font-weight: 800; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 18px; font-weight: 600; }
+h4 { font-size: 15px; font-weight: 600; }
+
+p {
+  margin: 0;
+  line-height: 1.6;
+}
+
 button,
 input,
 textarea,
@@ -266,6 +285,10 @@ select {
   font-size: 14px;
 }
 
+.wc-theme-toggle:hover {
+  color: var(--color-text-primary);
+}
+
 .wc-toggle-track {
   width: 48px;
   height: 26px;
@@ -303,6 +326,11 @@ select {
   color: var(--color-text-secondary);
   white-space: nowrap;
   background: none;
+}
+
+.wc-address-pill:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border-strong);
 }
 
 .wc-address-label {
@@ -348,6 +376,11 @@ select {
   color: var(--color-text-primary);
   font-weight: 600;
   font-size: 14px;
+}
+
+.wc-cart-btn:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border-strong);
 }
 
 .wc-cart-badge {
@@ -769,6 +802,31 @@ select {
 .wc-btn-amber {
   background: var(--color-discount);
   color: #fff;
+}
+
+.wc-btn-amber:hover {
+  background: #e05a28;
+  opacity: 1;
+}
+
+.wc-btn-outline {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.wc-btn-outline:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* Botão Adicionar (CTA verde nos cards) */

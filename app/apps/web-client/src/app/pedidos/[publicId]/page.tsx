@@ -79,7 +79,7 @@ export default async function OrderTrackingPage({
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* Cabeçalho do pedido */}
         <div className="wc-card" style={{ textAlign: "center" }}>
-          <h1 style={{ margin: "0 0 8px", color: "var(--carbon)" }}>Pedido {order.publicId}</h1>
+          <h1 style={{ marginBottom: 8 }}>Pedido {order.publicId}</h1>
           <span
             className="wc-badge"
             style={{
@@ -110,7 +110,7 @@ export default async function OrderTrackingPage({
 
         {/* Timeline realtime */}
         <div className="wc-card">
-          <h3 style={{ margin: "0 0 20px", color: "var(--carbon)" }}>Histórico do pedido</h3>
+          <h3 style={{ marginBottom: 20 }}>Histórico do pedido</h3>
           <OrderTracker
             publicId={order.publicId}
             initialTimeline={order.timeline}
@@ -120,7 +120,7 @@ export default async function OrderTrackingPage({
 
         {/* Itens */}
         <div className="wc-card">
-          <h3 style={{ margin: "0 0 16px", color: "var(--carbon)" }}>Itens do pedido</h3>
+          <h3 style={{ marginBottom: 16 }}>Itens do pedido</h3>
           <table className="wc-table" style={{ width: "100%" }}>
             <thead>
               <tr>

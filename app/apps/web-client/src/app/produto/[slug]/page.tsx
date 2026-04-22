@@ -14,12 +14,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       ),
       fetchStorefrontConfig<{ branding: { name: string } }>("/storefront/config"),
     ]);
+    const ogImages = product.imageUrl
+      ? [{ url: product.imageUrl, width: 800, height: 800, alt: product.name }]
+      : [{ url: "/opengraph-image", width: 1200, height: 630, alt: config.branding.name }];
     return {
       title: `${product.name} — ${config.branding.name}`,
       description: `${product.name}${product.category ? ` — ${product.category.name}` : ""}. Peça agora.`,
       openGraph: {
-        title: product.name,
-        images: product.imageUrl ? [product.imageUrl] : [],
+        type: "website",
+        title: `${product.name} — ${config.branding.name}`,
+        description: `${product.name}${product.category ? ` — ${product.category.name}` : ""}. Peça agora.`,
+        siteName: config.branding.name,
+        images: ogImages,
+      },
+      twitter: {
+        card: "summary_large_image" as const,
+        title: `${product.name} — ${config.branding.name}`,
+        description: `${product.name}${product.category ? ` — ${product.category.name}` : ""}. Peça agora.`,
+        images: product.imageUrl ? [product.imageUrl] : ["/opengraph-image"],
       },
     };
   } catch {
@@ -91,7 +103,7 @@ export default async function ProductPage({
             </span>
           )}
 
-          <h1 style={{ margin: "8px 0", color: "var(--carbon)" }}>{produto.name}</h1>
+          <h1 style={{ marginTop: 8, marginBottom: 0 }}>{produto.name}</h1>
 
           <div className="wc-price" style={{ margin: "16px 0" }}>
             <span className="wc-price-now">{formatCurrency(preco)}</span>

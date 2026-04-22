@@ -18,9 +18,24 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   openGraph: {
+    type: "website",
     title: "Vendza",
     description: "Compre online com facilidade.",
-    images: [{ url: "/logo.png", width: 512, height: 512 }],
+    siteName: "Vendza",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Vendza — Delivery",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vendza",
+    description: "Compre online com facilidade.",
+    images: ["/opengraph-image"],
   },
 };
 
