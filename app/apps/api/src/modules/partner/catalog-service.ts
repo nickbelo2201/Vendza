@@ -1,5 +1,6 @@
 import { InventoryMovementType, prisma, type Prisma } from "@vendza/database";
 
+import { invalidateStorefrontCache } from "../storefront/cache.js";
 import type { PartnerContext } from "./context.js";
 
 // ─── Tipos de categoria ───────────────────────────────────────────────────────
@@ -100,6 +101,9 @@ export async function createPartnerCategory(context: PartnerContext, input: Cate
     },
   });
 
+  // Invalida cache do storefront para refletir nova categoria
+  await invalidateStorefrontCache(context.storeId);
+
   return mapCategory(category);
 }
 
@@ -120,6 +124,9 @@ export async function updatePartnerCategory(context: PartnerContext, id: string,
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     },
   });
+
+  // Invalida cache do storefront para refletir categoria atualizada
+  await invalidateStorefrontCache(context.storeId);
 
   return mapCategory(category);
 }
@@ -144,6 +151,9 @@ export async function deletePartnerCategory(
   }
 
   await prisma.category.delete({ where: { id: existing.id } });
+
+  // Invalida cache do storefront para remover categoria excluída
+  await invalidateStorefrontCache(context.storeId);
 
   return { deleted: true };
 }
@@ -378,6 +388,9 @@ export async function createPartnerProduct(context: PartnerContext, input: Produ
     return created;
   });
 
+  // Invalida cache do storefront para refletir novo produto
+  await invalidateStorefrontCache(context.storeId);
+
   return mapProduct(product);
 }
 
@@ -405,6 +418,9 @@ export async function updatePartnerProduct(context: PartnerContext, id: string, 
     },
   });
 
+  // Invalida cache do storefront para refletir produto atualizado
+  await invalidateStorefrontCache(context.storeId);
+
   return mapProduct(product);
 }
 
@@ -421,6 +437,9 @@ export async function updateProductAvailability(context: PartnerContext, id: str
       category: categoryFullSelect,
     },
   });
+
+  // Invalida cache do storefront para refletir mudança de disponibilidade
+  await invalidateStorefrontCache(context.storeId);
 
   return mapProduct(product);
 }
@@ -486,6 +505,9 @@ export async function deletePartnerProduct(context: PartnerContext, productId: s
       category: categoryFullSelect,
     },
   });
+
+  // Invalida cache do storefront para remover produto excluído
+  await invalidateStorefrontCache(context.storeId);
 
   return mapProduct(product);
 }

@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import { prisma } from "@vendza/database";
 
+import { invalidateStorefrontCache } from "../storefront/cache.js";
 import type { PartnerContext } from "./context.js";
 
 // ─── Criptografia PIX (AES-256-GCM) ─────────────────────────────────────────
@@ -108,6 +109,9 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       minimumOrderValueCents: true,
     },
   });
+
+  // Invalida cache do storefront para refletir configurações da loja atualizadas
+  await invalidateStorefrontCache(context.storeId);
 
   return {
     id: store.id,

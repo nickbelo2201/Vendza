@@ -1,5 +1,6 @@
 import { prisma } from "@vendza/database";
 
+import { invalidateStorefrontCache } from "../storefront/cache.js";
 import { type PartnerContext } from "./context.js";
 
 export type DeliveryZoneInput = {
@@ -70,6 +71,10 @@ export async function createDeliveryZone(context: PartnerContext, input: Deliver
       isActive: true,
     },
   });
+
+  // Invalida cache do storefront para refletir nova zona de entrega
+  await invalidateStorefrontCache(context.storeId);
+
   return mapZona(zone);
 }
 
@@ -110,6 +115,10 @@ export async function updateDeliveryZone(
         : {}),
     },
   });
+
+  // Invalida cache do storefront para refletir zona de entrega atualizada
+  await invalidateStorefrontCache(context.storeId);
+
   return mapZona(zone);
 }
 
@@ -123,5 +132,9 @@ export async function deleteDeliveryZone(context: PartnerContext, id: string) {
     where: { id },
     data: { isActive: false },
   });
+
+  // Invalida cache do storefront para refletir zona de entrega removida
+  await invalidateStorefrontCache(context.storeId);
+
   return mapZona(zone);
 }
