@@ -17,6 +17,7 @@
     "@vendza/types": "workspace:*",
     "@vendza/ui": "workspace:*",
     "@vendza/utils": "workspace:*",
+    "@sentry/nextjs": "^9.0.0",
     "lucide-react": "^1.7.0",
     "next": "15.5.14",
     "react": "^19.2.4",

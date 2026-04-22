@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@vendza/ui", "@vendza/utils", "@vendza/types"],
@@ -33,4 +34,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Suprime logs do Sentry CLI durante o build
+  silent: true,
+  // Desabilita upload de source maps (sem auth token configurado)
+  disableSourceMapUpload: true,
+});

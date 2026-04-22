@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import sensible from "@fastify/sensible";
+import * as Sentry from "@sentry/node";
 import Fastify from "fastify";
 
 import { coverageRoutes } from "./modules/cobertura/routes.js";
@@ -121,7 +122,7 @@ export async function buildApp() {
   app.setErrorHandler((error, _request, reply) => {
     app.log.error(error);
 
-    // Detectar AppError tipado
+    // Detectar AppError tipado — não reportar ao Sentry (erros de negócio esperados)
     if (error instanceof AppError) {
       return reply
         .code(error.statusCode)
@@ -141,6 +142,8 @@ export async function buildApp() {
 
     if (isServerError) {
       app.log.error({ err: error }, "Erro interno do servidor");
+      // Reportar erros 5xx ao Sentry para monitoramento em produção
+      Sentry.captureException(error);
     }
 
     reply.status(statusCode).send({
