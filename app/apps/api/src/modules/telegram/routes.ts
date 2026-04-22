@@ -97,7 +97,8 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
     {},
     async (request, reply) => {
       const secret = request.headers["x-telegram-bot-api-secret-token"];
-      if (process.env.TELEGRAM_WEBHOOK_SECRET && secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+      const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+      if (!expectedSecret || secret !== expectedSecret) {
         return reply.code(403).send({ ok: false });
       }
 
@@ -134,8 +135,21 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
           return;
         }
 
-        // Buscar cliente e último pedido
-        const customer = await buscarCliente(store.id, chatId, texto);
+        // Buscar cliente, último pedido e catálogo em paralelo
+        const [customer, produtos] = await Promise.all([
+          buscarCliente(store.id, chatId, texto),
+          prisma.product.findMany({
+            where: { storeId: store.id, isAvailable: true },
+            select: {
+              name: true,
+              salePriceCents: true,
+              listPriceCents: true,
+              category: { select: { name: true } },
+            },
+            orderBy: { category: { name: "asc" } },
+            take: 40,
+          }),
+        ]);
 
         const ultimoPedido = customer
           ? await prisma.order.findFirst({
@@ -148,14 +162,22 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
         // Carregar histórico da conversa
         const historico = await carregarHistorico(chatId);
 
+        const storefrontUrl = process.env.NEXT_PUBLIC_CLIENT_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+
         // Gerar resposta via IA
         const resposta = await responderCliente({
           mensagem: texto,
           historico,
           contexto: {
             storeName: store.name,
+            storefrontUrl,
             customerName: customer?.name ?? primeiroNome,
             ultimoPedido,
+            catalogo: produtos.map((p: (typeof produtos)[number]) => ({
+              nome: p.name,
+              categoria: p.category?.name ?? "Geral",
+              precoCents: p.salePriceCents ?? p.listPriceCents,
+            })),
           },
         });
 

@@ -13,14 +13,22 @@ export interface MensagemHistorico {
   content: string;
 }
 
+interface ProdutoCatalogo {
+  nome: string;
+  categoria: string;
+  precoCents: number;
+}
+
 interface ContextoCliente {
   storeName: string;
+  storefrontUrl?: string;
   customerName?: string;
   ultimoPedido?: {
     publicId: string;
     status: string;
     totalCents: number;
   } | null;
+  catalogo?: ProdutoCatalogo[];
 }
 
 function traduzirStatus(status: string): string {
@@ -51,14 +59,26 @@ function buildSystemPrompt(contexto: ContextoCliente): string {
     ? `Último pedido: #${contexto.ultimoPedido.publicId} — ${traduzirStatus(contexto.ultimoPedido.status)} — R$ ${formatarValor(contexto.ultimoPedido.totalCents)}`
     : "Nenhum pedido encontrado para este cliente.";
 
+  const secaoCatalogo = contexto.catalogo && contexto.catalogo.length > 0
+    ? `\nCardápio disponível:\n${contexto.catalogo.map(p => `- ${p.nome} (${p.categoria}): R$ ${formatarValor(p.precoCents)}`).join("\n")}`
+    : "";
+
+  const instrucaoPedido = contexto.storefrontUrl
+    ? `Para fazer pedidos, oriente o cliente a acessar: ${contexto.storefrontUrl}`
+    : "Para fazer pedidos, oriente o cliente a entrar em contato diretamente com a loja.";
+
   return `Você é o atendente virtual da ${contexto.storeName}. Responda de forma humana, direta e simpática em português brasileiro. Nunca mencione que é uma IA ou assistente virtual.
 
 ${linhaCliente}
 ${linhaPedido}
+${secaoCatalogo}
+
+${instrucaoPedido}
 
 Regras:
 - Seja breve (máximo 3 linhas por resposta)
 - Use os dados do pedido acima para responder dúvidas sobre status e entrega
+- Se o cliente quiser fazer um pedido, informe o link acima de forma simpática
 - Se não souber algo com certeza, seja honesto e oriente o cliente
 - Nunca invente preços, prazos ou promoções que não foram informados
 - Linguagem descontraída mas profissional`;
