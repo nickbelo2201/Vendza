@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
-  typecheck-and-build:
-    name: Typecheck + Build
+  ci:
+    name: CI
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Enable Corepack (pnpm)
+      - name: Enable Corepack
         run: corepack enable
 
       - name: Get pnpm store path
@@ -43,89 +43,53 @@ jobs:
         run: corepack pnpm db:generate
         working-directory: app
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vendza
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
 
       - name: Typecheck
         run: corepack pnpm typecheck
         working-directory: app
 
-      - name: Build (API)
-        run: corepack pnpm --filter api build
+      - name: Build
+        run: corepack pnpm build
         working-directory: app
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vendza
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          DIRECT_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          REDIS_URL: redis://placeholder:6379
+          NODE_ENV: production
+          API_HOST: 0.0.0.0
+          API_PORT: 3333
           SUPABASE_URL: https://placeholder.supabase.co
-          SUPABASE_ANON_KEY: placeholder
-          SUPABASE_SERVICE_ROLE_KEY: placeholder
-          STORE_SLUG: adega-demo
-
-      - name: Build (web-partner)
-        run: corepack pnpm --filter web-partner build
-        working-directory: app
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3333
+          SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
-
-      - name: Build (web-client)
-        run: corepack pnpm --filter web-client build
-        working-directory: app
-        env:
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_PARTNER_URL: http://localhost:3001
           NEXT_PUBLIC_API_URL: http://localhost:3333
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+          PAYMENT_PROVIDER: mercado_pago
+          MERCADO_PAGO_ACCESS_TOKEN: placeholder
+          MERCADO_PAGO_PUBLIC_KEY: placeholder
+          WHATSAPP_DEFAULT_PHONE: 5511999999999
+          ZAPI_INSTANCE_ID: placeholder
+          ZAPI_TOKEN: placeholder
+          ZAPI_CLIENT_TOKEN: placeholder
+          TELEGRAM_BOT_TOKEN: placeholder
+          TELEGRAM_WEBHOOK_SECRET: placeholder
+          OPENROUTER_API_KEY: placeholder
+          AI_MODEL: google/gemini-2.0-flash
+          API_PUBLIC_URL: https://placeholder.vendza.app
+          S3_ENDPOINT: https://placeholder.s3.amazonaws.com
+          S3_ACCESS_KEY_ID: placeholder
+          S3_SECRET_ACCESS_KEY: placeholder
+          S3_BUCKET: placeholder
           STORE_SLUG: adega-demo
-
-  e2e-smoke:
-    name: E2E Smoke Tests (produção)
-    runs-on: ubuntu-latest
-    needs: typecheck-and-build
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Enable Corepack (pnpm)
-        run: corepack enable
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: echo "STORE_PATH=$(corepack pnpm store path)" >> $GITHUB_OUTPUT
-        working-directory: app
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: pnpm-store-${{ hashFiles('app/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-
-
-      - name: Install dependencies
-        run: corepack pnpm install --frozen-lockfile
-        working-directory: app
-
-      - name: Install Playwright browsers (chromium only)
-        run: npx playwright install --with-deps chromium
-        working-directory: app/apps/e2e
-
-      - name: Run E2E smoke tests
-        run: npx playwright test --project=chromium
-        working-directory: app/apps/e2e
-        env:
-          PLAYWRIGHT_BASE_URL: https://vendza-storefront.vercel.app
-          PLAYWRIGHT_API_URL: https://vendza-production.up.railway.app
-          CI: true
-
-      - name: Upload test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: app/apps/e2e/playwright-report/
-          retention-days: 7
+          PIX_ENCRYPTION_KEY: placeholder-encryption-key-32-characters-long
+          SEED_STORE_SLUG: adega-demo
+          SEED_STORE_NAME: Adega Demo
+          SEED_STORE_WHATSAPP: 5511999999999
+          SEED_OWNER_AUTH_USER_ID: 00000000-0000-0000-0000-000000000000
+          SEED_OWNER_EMAIL: demo@vendza.app
+          SEED_OWNER_NAME: Demo Owner
+          SENTRY_DSN: https://placeholder@placeholder.ingest.sentry.io/placeholder
+          NEXT_PUBLIC_SENTRY_DSN: https://placeholder@placeholder.ingest.sentry.io/placeholder

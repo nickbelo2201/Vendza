@@ -1,5 +1,7 @@
 # Venza Oficial
 
+[![CI](https://github.com/nicholasbelo/INF_Adega/actions/workflows/ci.yml/badge.svg)](https://github.com/nicholasbelo/INF_Adega/actions/workflows/ci.yml)
+
 Esta pasta consolida a fase de analise e transforma o material antigo em um pacote unico, orientado a execucao.
 
 Ela foi organizada em dois blocos:
