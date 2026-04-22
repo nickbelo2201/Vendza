@@ -79,22 +79,16 @@ function CardEndereco({ endereco, onRemover }: { endereco: Endereco; onRemover: 
   );
 }
 
-function FormNovoEndereco({ onSalvar }: { onSalvar: () => void }) {
-  const { salvar, enderecos, max } = useEnderecos();
+function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: (e: Omit<Endereco, "id">) => void }) {
   const [label, setLabel] = useState<string>("Casa");
   const [logradouro, setLogradouro] = useState("");
   const [numero, setNumero] = useState("");
   const [complemento, setComplemento] = useState("");
   const [bairro, setBairro] = useState("");
   const [cep, setCep] = useState("");
-  const [erro, setErro] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (enderecos.length >= max) {
-      setErro(`Máximo de ${max} endereços atingido.`);
-      return;
-    }
     salvar({ label, logradouro, numero, complemento: complemento || undefined, bairro, cep });
     onSalvar();
   }
@@ -184,10 +178,6 @@ function FormNovoEndereco({ onSalvar }: { onSalvar: () => void }) {
         </div>
       </div>
 
-      {erro && (
-        <p style={{ color: "var(--amber)", fontSize: 13, margin: 0 }}>{erro}</p>
-      )}
-
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" className="wc-btn wc-btn-primary">
           Salvar endereço
@@ -206,7 +196,7 @@ function FormNovoEndereco({ onSalvar }: { onSalvar: () => void }) {
 }
 
 export default function PerfilPage() {
-  const { enderecos, remover, max } = useEnderecos();
+  const { enderecos, salvar, remover, max } = useEnderecos();
   const { perfil, salvarPerfil } = usePerfil();
   const [adicionandoEndereco, setAdicionandoEndereco] = useState(false);
   const [perfilSalvo, setPerfilSalvo] = useState(false);
@@ -322,7 +312,7 @@ export default function PerfilPage() {
         ))}
 
         {adicionandoEndereco ? (
-          <FormNovoEndereco onSalvar={() => setAdicionandoEndereco(false)} />
+          <FormNovoEndereco onSalvar={() => setAdicionandoEndereco(false)} salvar={salvar} />
         ) : (
           enderecos.length < max && (
             <button
