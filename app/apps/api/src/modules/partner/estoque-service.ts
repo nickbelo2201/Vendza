@@ -52,7 +52,7 @@ export async function getEstoque(context: PartnerContext) {
       productId: { in: productIds },
       order: {
         storeId: context.storeId,
-        status: { in: ["delivered", "completed"] },
+        status: { in: ["delivered"] },
       },
       createdAt: { gte: trintaDiasAtras },
     },
@@ -69,7 +69,7 @@ export async function getEstoque(context: PartnerContext) {
       productId: { in: productIds },
       order: {
         storeId: context.storeId,
-        status: { in: ["delivered", "completed"] },
+        status: { in: ["delivered"] },
       },
     },
     _sum: { totalPriceCents: true, quantity: true },
