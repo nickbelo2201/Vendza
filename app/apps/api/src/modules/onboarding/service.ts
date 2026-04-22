@@ -93,8 +93,7 @@ export async function setupStore(
     return {
       store: { id: store.id, slug: store.slug, name: store.name },
       storeUser: { id: storeUser.id, role: storeUser.role },
-      appliedCategories: undefined, // Será criado depois
-    };
+    } as SetupStoreResult;
   });
 
   // 5. Aplicar templates após a transação da Store
@@ -104,7 +103,9 @@ export async function setupStore(
       result.store.id,
       templateIds,
     );
-    result.appliedCategories = appliedCategories > 0 ? appliedCategories : undefined;
+    if (appliedCategories > 0) {
+      result.appliedCategories = appliedCategories;
+    }
   }
 
   return result;

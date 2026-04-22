@@ -1,6 +1,3 @@
-export const designGateNotice =
-  "Visual final bloqueado ate aprovacao explicita do cliente.";
-
 export const neutralTokens = {
   radius: {
     sm: "12px",
