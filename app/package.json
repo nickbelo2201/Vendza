@@ -16,7 +16,8 @@
     "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --filter @vendza/database db:generate",
     "db:migrate": "pnpm --filter @vendza/database db:migrate",
-    "db:push": "pnpm --filter @vendza/database db:push",
+    "db:migrate:dev": "pnpm --filter @vendza/database db:migrate:dev",
+    "db:push": "echo 'AVISO: db:push foi descontinuado. Use db:migrate para produção ou db:migrate:dev para desenvolvimento' && exit 1",
     "db:seed": "pnpm --filter @vendza/database db:seed"
   },
   "devDependencies": {
