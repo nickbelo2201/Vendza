@@ -26,14 +26,36 @@ const ROLE_LABELS: Record<string, string> = {
   operator: "Operador",
 };
 
-const ROLE_BADGE_STYLE: Record<string, React.CSSProperties> = {
-  owner: { background: "#dbeafe", color: "#1d4ed8", border: "1px solid #bfdbfe" },
-  manager: {
-    background: "var(--green-soft)",
-    color: "var(--green)",
-    border: "1px solid #a7d9c8",
+/* Gradientes de avatar por papel */
+const AVATAR_GRADIENT: Record<string, string> = {
+  owner: "linear-gradient(135deg, #1A7A5E, #15a87c)",
+  manager: "linear-gradient(135deg, #3b82f6, #60a5fa)",
+  operator: "linear-gradient(135deg, #64748b, #94a3b8)",
+};
+
+/* Estilos dos role badges — fundo translúcido, borda colorida, dot */
+const ROLE_BADGE: Record<
+  string,
+  { background: string; border: string; color: string; dot: string }
+> = {
+  owner: {
+    background: "rgba(26, 122, 94, 0.15)",
+    border: "1px solid rgba(26, 122, 94, 0.3)",
+    color: "#4ade80",
+    dot: "#4ade80",
   },
-  operator: { background: "#f4f4f5", color: "#52525b", border: "1px solid #e4e4e7" },
+  manager: {
+    background: "rgba(59, 130, 246, 0.15)",
+    border: "1px solid rgba(59, 130, 246, 0.3)",
+    color: "#60a5fa",
+    dot: "#60a5fa",
+  },
+  operator: {
+    background: "rgba(148, 163, 184, 0.15)",
+    border: "1px solid rgba(148, 163, 184, 0.3)",
+    color: "#94a3b8",
+    dot: "#94a3b8",
+  },
 };
 
 function getIniciais(name: string | null, email: string): string {
@@ -101,6 +123,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
 
   return (
     <div className="wp-panel">
+      {/* Cabeçalho do painel */}
       <div
         style={{
           display: "flex",
@@ -135,27 +158,32 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
         </button>
       </div>
 
+      {/* Formulário de convite */}
       {mostrarConvite && (
         <form
           onSubmit={handleConvidar}
           style={{
-            background: "var(--cream)",
-            border: "1px solid var(--border)",
-            borderRadius: 10,
-            padding: 16,
+            background: "rgba(15, 23, 42, 0.5)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: 12,
+            padding: 20,
             marginBottom: 20,
           }}
         >
+          {/* Label de seção */}
           <p
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--night)",
-              marginBottom: 12,
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "var(--dark-text-muted, #64748B)",
+              marginBottom: 14,
             }}
           >
-            Novo convite
+            Convidar por e-mail
           </p>
+
           <div
             style={{
               display: "grid",
@@ -164,27 +192,56 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
               alignItems: "flex-end",
             }}
           >
+            {/* Campo e-mail com ícone de envelope */}
             <div className="wp-field" style={{ margin: 0 }}>
-              <label className="wp-label" htmlFor="emailConvite">
+              <label
+                className="wp-label"
+                htmlFor="emailConvite"
+                style={{ color: "var(--dark-text-sec, #94A3B8)", fontSize: 12, fontWeight: 600 }}
+              >
                 E-mail
               </label>
-              <input
-                id="emailConvite"
-                className="wp-input"
-                type="email"
-                value={emailConvite}
-                onChange={(e) => setEmailConvite(e.target.value)}
-                placeholder="email@exemplo.com"
-                autoComplete="off"
-              />
+              <div className="uc-input-wrapper">
+                {/* Ícone de envelope inline */}
+                <span className="uc-input-icon" aria-hidden="true">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                </span>
+                <input
+                  id="emailConvite"
+                  className="uc-input-dark"
+                  type="email"
+                  value={emailConvite}
+                  onChange={(e) => setEmailConvite(e.target.value)}
+                  placeholder="email@exemplo.com"
+                  autoComplete="off"
+                />
+              </div>
             </div>
+
+            {/* Select de perfil */}
             <div className="wp-field" style={{ margin: 0 }}>
-              <label className="wp-label" htmlFor="roleConvite">
+              <label
+                className="wp-label"
+                htmlFor="roleConvite"
+                style={{ color: "var(--dark-text-sec, #94A3B8)", fontSize: 12, fontWeight: 600 }}
+              >
                 Perfil
               </label>
               <select
                 id="roleConvite"
-                className="wp-input"
+                className="uc-select-dark"
                 value={roleConvite}
                 onChange={(e) => setRoleConvite(e.target.value)}
                 style={{ minWidth: 130 }}
@@ -193,12 +250,13 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                 <option value="operator">Operador</option>
               </select>
             </div>
+
+            {/* Botão Convidar */}
             <div style={{ paddingBottom: 1 }}>
               <button
                 type="submit"
-                className="wp-btn wp-btn-primary"
+                className="uc-btn-invite"
                 disabled={convidando}
-                style={{ opacity: convidando ? 0.7 : 1 }}
               >
                 {convidando ? "Enviando..." : "Convidar"}
               </button>
@@ -207,6 +265,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
         </form>
       )}
 
+      {/* Feedback de operação */}
       {feedback && (
         <div
           style={{
@@ -214,15 +273,18 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
             borderRadius: 8,
             fontSize: 13,
             marginBottom: 16,
-            background: feedback.ok ? "#f0fdf4" : "#fef2f2",
-            border: `1px solid ${feedback.ok ? "#bbf7d0" : "#fecaca"}`,
-            color: feedback.ok ? "#15803d" : "#dc2626",
+            background: feedback.ok
+              ? "rgba(26, 122, 94, 0.12)"
+              : "rgba(220, 38, 38, 0.10)",
+            border: `1px solid ${feedback.ok ? "rgba(26, 122, 94, 0.3)" : "rgba(220, 38, 38, 0.3)"}`,
+            color: feedback.ok ? "#4ade80" : "#f87171",
           }}
         >
           {feedback.msg}
         </div>
       )}
 
+      {/* Tabela de usuários */}
       <table className="wp-table" style={{ width: "100%" }}>
         <thead>
           <tr>
@@ -235,11 +297,19 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
         <tbody>
           {usuarios.map((u) => {
             const isMe = u.userId === currentUserId;
-            const badgeStyle = ROLE_BADGE_STYLE[u.role] ?? ROLE_BADGE_STYLE.operator;
+            const badge = ROLE_BADGE[u.role] ?? {
+              background: "rgba(148, 163, 184, 0.15)",
+              border: "1px solid rgba(148, 163, 184, 0.3)",
+              color: "#94a3b8",
+              dot: "#94a3b8",
+            };
+            const avatarGradient =
+              AVATAR_GRADIENT[u.role] ?? "linear-gradient(135deg, #64748b, #94a3b8)";
             const confirmando = confirmarRevogacaoId === u.id;
 
             return (
-              <tr key={u.id}>
+              <tr key={u.id} className="uc-table-row">
+                {/* Coluna: nome + avatar */}
                 <td>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
@@ -247,7 +317,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                         width: 36,
                         height: 36,
                         borderRadius: "50%",
-                        background: "var(--blue)",
+                        background: avatarGradient,
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
@@ -255,6 +325,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                         fontSize: 13,
                         fontWeight: 700,
                         flexShrink: 0,
+                        fontFamily: "'Space Grotesk', sans-serif",
                       }}
                     >
                       {getIniciais(u.user.name, u.user.email)}
@@ -265,7 +336,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                         <span
                           style={{
                             fontSize: 11,
-                            color: "var(--text-muted)",
+                            color: "var(--dark-text-muted, #64748B)",
                             marginLeft: 8,
                             fontWeight: 400,
                           }}
@@ -276,21 +347,51 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                     </span>
                   </div>
                 </td>
-                <td style={{ color: "var(--text-muted)", fontSize: 13 }}>{u.user.email}</td>
+
+                {/* Coluna: e-mail em monospace */}
+                <td
+                  style={{
+                    color: "var(--dark-text-sec, #94A3B8)",
+                    fontSize: 13,
+                    fontFamily: "'Space Grotesk', 'JetBrains Mono', monospace",
+                  }}
+                >
+                  {u.user.email}
+                </td>
+
+                {/* Coluna: badge de role */}
                 <td>
                   <span
                     style={{
-                      display: "inline-block",
-                      padding: "2px 8px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "3px 10px",
                       borderRadius: 6,
                       fontSize: 12,
                       fontWeight: 600,
-                      ...badgeStyle,
+                      background: badge.background,
+                      border: badge.border,
+                      color: badge.color,
                     }}
                   >
+                    {/* Dot indicator */}
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: badge.dot,
+                        flexShrink: 0,
+                      }}
+                      aria-hidden="true"
+                    />
                     {ROLE_LABELS[u.role] ?? u.role}
                   </span>
                 </td>
+
+                {/* Coluna: ações */}
                 <td>
                   {!isMe && (
                     <>
@@ -301,10 +402,10 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                             onClick={() => handleRevogar(u.id)}
                             disabled={revogando === u.id}
                             style={{
-                              background: "#fef2f2",
-                              border: "1px solid #fecaca",
+                              background: "rgba(220, 38, 38, 0.12)",
+                              border: "1px solid rgba(220, 38, 38, 0.3)",
                               borderRadius: 6,
-                              color: "#dc2626",
+                              color: "#f87171",
                               fontSize: 12,
                               fontWeight: 600,
                               padding: "4px 10px",
@@ -318,9 +419,9 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                             onClick={() => setConfirmarRevogacaoId(null)}
                             style={{
                               background: "none",
-                              border: "1px solid var(--border)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
                               borderRadius: 6,
-                              color: "var(--text-muted)",
+                              color: "var(--dark-text-muted, #64748B)",
                               fontSize: 12,
                               padding: "4px 8px",
                               cursor: "pointer",
@@ -332,19 +433,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                       ) : (
                         <div style={{ position: "relative" }}>
                           <details style={{ position: "relative" }}>
-                            <summary
-                              style={{
-                                listStyle: "none",
-                                cursor: "pointer",
-                                padding: "6px 8px",
-                                borderRadius: 6,
-                                background: "none",
-                                border: "1px solid var(--border)",
-                                color: "var(--text-muted)",
-                                display: "inline-flex",
-                                alignItems: "center",
-                              }}
-                            >
+                            <summary className="uc-action-btn">
                               <svg
                                 width="14"
                                 height="14"
@@ -361,13 +450,13 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                                 position: "absolute",
                                 right: 0,
                                 top: "100%",
-                                background: "var(--surface)",
-                                border: "1px solid var(--border)",
+                                background: "var(--dark-surface-solid, #1e293b)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
                                 borderRadius: 8,
                                 padding: 4,
                                 minWidth: 140,
                                 zIndex: 100,
-                                boxShadow: "0 4px 16px rgba(0,0,0,.12)",
+                                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
                               }}
                             >
                               <button
@@ -383,7 +472,7 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
                                   borderRadius: 6,
                                   cursor: "pointer",
                                   fontSize: 13,
-                                  color: "#dc2626",
+                                  color: "#f87171",
                                   fontWeight: 500,
                                 }}
                               >
@@ -403,7 +492,11 @@ export function UsuariosConfig({ usuarios: usuariosProp, currentUserId }: Props)
             <tr>
               <td
                 colSpan={4}
-                style={{ textAlign: "center", color: "var(--text-muted)", padding: 24 }}
+                style={{
+                  textAlign: "center",
+                  color: "var(--dark-text-muted, #64748B)",
+                  padding: 24,
+                }}
               >
                 Nenhum usuário encontrado.
               </td>

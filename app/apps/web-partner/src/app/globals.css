@@ -2179,3 +2179,128 @@ html[data-theme="dark"] body {
     font-family: 'Courier New', monospace;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   UsuariosConfig redesign — dark theme form & table
+═══════════════════════════════════════════════════════════ */
+
+/* Wrapper do campo de e-mail com ícone inline */
+.uc-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.uc-input-icon {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+  color: var(--dark-text-muted, #64748B);
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.uc-input-wrapper:focus-within .uc-input-icon {
+  color: var(--g, #1A7A5E);
+}
+
+/* Input e select no tema escuro do formulário de convite */
+.uc-input-dark {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-sm, 10px);
+  color: var(--dark-text-prim, #F1F5F9);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.uc-input-dark::placeholder {
+  color: var(--dark-text-muted, #64748B);
+}
+
+.uc-input-dark:focus {
+  border-color: var(--g, #1A7A5E);
+  box-shadow: 0 0 0 3px rgba(26, 122, 94, 0.18);
+}
+
+/* Select dark — sem ícone de envelope, padding normal */
+.uc-select-dark {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-sm, 10px);
+  color: var(--dark-text-prim, #F1F5F9);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.uc-select-dark:focus {
+  border-color: var(--g, #1A7A5E);
+  box-shadow: 0 0 0 3px rgba(26, 122, 94, 0.18);
+}
+
+/* Botão Convidar — verde primário com hover elevado */
+.uc-btn-invite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--g, #1A7A5E);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm, 10px);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.uc-btn-invite:hover:not(:disabled) {
+  background: var(--gn, #15a87c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 122, 94, 0.3);
+}
+
+.uc-btn-invite:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Hover nas linhas da tabela de usuários */
+.uc-table-row {
+  transition: background 0.15s ease;
+}
+
+.uc-table-row:hover td {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Botão de ações (...) */
+.uc-action-btn {
+  list-style: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--dark-text-muted, #64748B);
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.uc-action-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+}
