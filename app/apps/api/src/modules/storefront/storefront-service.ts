@@ -134,10 +134,14 @@ async function _getProducts(
   // Resolver filtro de categoria: se for categoria pai, incluir filhas
   let categoryFilter: Record<string, unknown> = {};
   if (filters?.category) {
+    // UUID v4 regex — só buscar por id se parecer UUID, senão buscar por slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(filters.category);
     const category = await prisma.category.findFirst({
       where: {
         storeId,
-        OR: [{ id: filters.category }, { slug: filters.category }],
+        ...(isUuid
+          ? { OR: [{ id: filters.category }, { slug: filters.category }] }
+          : { slug: filters.category }),
       },
     });
     if (category) {
