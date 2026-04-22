@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { OrderItem, TimelineEvent, OrderDetalhe } from "@vendza/types";
 import { moverCardKanban } from "../app/(dashboard)/kanban-actions";
 import { createClient } from "../utils/supabase/client";
+import { ModalConfirmacaoStatus, STATUSES_COM_CONFIRMACAO, MENSAGEM_CONFIRMACAO } from "./ModalConfirmacaoStatus";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
@@ -70,6 +71,8 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
   const [currentColLabel, setCurrentColLabel] = useState<string | null>(colLabel);
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  // Estado para modal de confirmação dentro do drawer
+  const [pendingAction, setPendingAction] = useState<{ tipo: "avancar" | "cancelar"; status: string } | null>(null);
 
   // Monta no cliente e observa tema dark/light
   useEffect(() => {
@@ -135,7 +138,21 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
     return () => document.removeEventListener("keydown", handleKey);
   }, [orderId, onClose]);
 
-  async function handleAvancarStatus() {
+  function handleAvancarStatus() {
+    if (!pedido || !currentColLabel) return;
+    const proximo = KANBAN_NEXT[currentColLabel];
+    if (!proximo) return;
+
+    // Se o status destino requer confirmação, mostra o modal
+    if (STATUSES_COM_CONFIRMACAO.has(proximo.status)) {
+      setPendingAction({ tipo: "avancar", status: proximo.status });
+      return;
+    }
+
+    executarAvancar();
+  }
+
+  async function executarAvancar() {
     if (!pedido || !currentColLabel) return;
     const proximo = KANBAN_NEXT[currentColLabel];
     if (!proximo) return;
@@ -151,7 +168,13 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
     }
   }
 
-  async function handleCancelar() {
+  function handleCancelar() {
+    if (!pedido) return;
+    // Cancelar sempre requer confirmação
+    setPendingAction({ tipo: "cancelar", status: "cancelled" });
+  }
+
+  async function executarCancelar() {
     if (!pedido) return;
     setCancelando(true);
     try {
@@ -161,6 +184,21 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
     } finally {
       setCancelando(false);
     }
+  }
+
+  async function handleConfirmarAction() {
+    if (!pendingAction) return;
+    if (pendingAction.tipo === "avancar") {
+      setPendingAction(null);
+      await executarAvancar();
+    } else {
+      setPendingAction(null);
+      await executarCancelar();
+    }
+  }
+
+  function handleCancelarAction() {
+    setPendingAction(null);
   }
 
   if (!orderId || !mounted) return null;
@@ -555,6 +593,26 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
           </div>
         )}
       </div>
+
+      {/* Modal de confirmação para ações do drawer */}
+      {(() => {
+        if (!pendingAction || !pedido) return null;
+        const msg = MENSAGEM_CONFIRMACAO[pendingAction.status];
+        if (!msg) return null;
+        return (
+          <ModalConfirmacaoStatus
+            titulo={msg.titulo}
+            descricao={msg.descricao}
+            publicId={pedido.publicId}
+            statusAtualLabel={STATUS_LABEL[pedido.status]}
+            statusDestinoLabel={STATUS_LABEL[pendingAction.status]}
+            statusAlvo={pendingAction.status}
+            onConfirmar={handleConfirmarAction}
+            onCancelar={handleCancelarAction}
+            carregando={avancando || cancelando}
+          />
+        );
+      })()}
     </>,
     document.body
   );

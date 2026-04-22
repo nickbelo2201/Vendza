@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 import { moverCardKanban } from "../app/(dashboard)/kanban-actions";
 import { PedidoDrawerKanban } from "./PedidoDrawerKanban";
+import { ModalConfirmacaoStatus, STATUSES_COM_CONFIRMACAO, MENSAGEM_CONFIRMACAO } from "./ModalConfirmacaoStatus";
 
 // Mapeamento coluna kanban → status da API
 const COL_STATUS: Record<string, string> = {
@@ -47,7 +48,34 @@ function IconWarning() {
   );
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  confirmed: "Confirmado",
+  preparing: "Preparando",
+  ready_for_delivery: "Pronto",
+  out_for_delivery: "A caminho",
+  delivered: "Entregue",
+  cancelled: "Cancelado",
+};
+
+// Mapeamento coluna kanban → label de status para exibição
+const COL_STATUS_LABEL: Record<string, string> = {
+  "Preparando": "Preparando",
+  "Entregando": "A caminho",
+  "Entregue": "Entregue",
+};
+
 type SelectedItem = { id: string; orderId: string; colLabel: string } | null;
+
+type PendingDrop = {
+  itemId: string;
+  publicId: string;
+  orderId: string;
+  srcColLabel: string;
+  targetColLabel: string;
+  newStatus: string;
+  snapshot: KanbanCol[];
+} | null;
 
 // Formata o tempo decorrido desde um ISO timestamp
 function formatTempoDecorrido(isoString: string): string {
@@ -82,6 +110,8 @@ export function KanbanBoard({ initialCols }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
+  const [pendingDrop, setPendingDrop] = useState<PendingDrop>(null);
+  const [confirmandoDrop, setConfirmandoDrop] = useState(false);
   // Tick a cada 30s para recalcular tempos decorridos e alertas
   const [tick, setTick] = useState(0);
 
@@ -172,21 +202,15 @@ export function KanbanBoard({ initialCols }: Props) {
     );
   }, [selectedItem]);
 
-  const handleDrop = useCallback(async (e: React.DragEvent, targetColLabel: string) => {
-    e.preventDefault();
-    setDraggingId(null); // garante cleanup mesmo que dragend não dispare (inconsistência do HTML5 DnD)
-    setOverColLabel(null);
-    if (!dragSource.current) return;
-
-    const { colLabel: srcColLabel, itemId } = dragSource.current;
-    if (srcColLabel === targetColLabel) return;
-
-    // Snapshot do estado atual para rollback (lê via ref — sempre fresco)
-    const snapshot = colsRef.current;
-    const srcCol = snapshot.find((c) => c.label === srcColLabel);
-    const item = srcCol?.items.find((i) => i.id === itemId);
-    if (!item) return;
-
+  // Executa a movimentação de fato (otimista + API)
+  const executarDrop = useCallback(async (
+    itemId: string,
+    orderId: string,
+    srcColLabel: string,
+    targetColLabel: string,
+    newStatus: string,
+    snapshot: KanbanCol[],
+  ) => {
     // Atualização otimista imediata
     setCols((prev) => {
       const next = prev.map((col) => ({ ...col, items: [...col.items] }));
@@ -200,19 +224,73 @@ export function KanbanBoard({ initialCols }: Props) {
       return next;
     });
 
-    const newStatus = COL_STATUS[targetColLabel];
-    if (!newStatus) return;
-
     setLoadingId(itemId);
     try {
-      await moverCardKanban(item.orderId, newStatus);
+      await moverCardKanban(orderId, newStatus);
     } catch {
-      // Reverte para o estado anterior ao drag
       setCols(snapshot);
-      setToast(`Não foi possível mover o pedido ${item.id}. Tente novamente.`);
+      setToast(`Não foi possível mover o pedido ${itemId}. Tente novamente.`);
     } finally {
       setLoadingId(null);
     }
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, targetColLabel: string) => {
+    e.preventDefault();
+    setDraggingId(null);
+    setOverColLabel(null);
+    if (!dragSource.current) return;
+
+    const { colLabel: srcColLabel, itemId } = dragSource.current;
+    if (srcColLabel === targetColLabel) return;
+
+    const snapshot = colsRef.current;
+    const srcCol = snapshot.find((c) => c.label === srcColLabel);
+    const item = srcCol?.items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const newStatus = COL_STATUS[targetColLabel];
+    if (!newStatus) return;
+
+    // Se o status destino requer confirmação, mostra o modal
+    if (STATUSES_COM_CONFIRMACAO.has(newStatus)) {
+      setPendingDrop({
+        itemId: item.id,
+        publicId: item.id,
+        orderId: item.orderId,
+        srcColLabel,
+        targetColLabel,
+        newStatus,
+        snapshot,
+      });
+      return;
+    }
+
+    // Status que não precisam de confirmação — executa direto
+    await executarDrop(item.id, item.orderId, srcColLabel, targetColLabel, newStatus, snapshot);
+  }, [executarDrop]);
+
+  const handleConfirmarDrop = useCallback(async () => {
+    if (!pendingDrop) return;
+    setConfirmandoDrop(true);
+    try {
+      await executarDrop(
+        pendingDrop.itemId,
+        pendingDrop.orderId,
+        pendingDrop.srcColLabel,
+        pendingDrop.targetColLabel,
+        pendingDrop.newStatus,
+        pendingDrop.snapshot,
+      );
+    } finally {
+      setPendingDrop(null);
+      setConfirmandoDrop(false);
+    }
+  }, [pendingDrop, executarDrop]);
+
+  const handleCancelarDrop = useCallback(() => {
+    setPendingDrop(null);
+    setConfirmandoDrop(false);
   }, []);
 
   return (
@@ -351,6 +429,26 @@ export function KanbanBoard({ initialCols }: Props) {
         onStatusAvancado={handleStatusAvancado}
         onCancelado={handleCancelado}
       />
+
+      {/* Modal de confirmação para drag-and-drop */}
+      {(() => {
+        if (!pendingDrop) return null;
+        const msg = MENSAGEM_CONFIRMACAO[pendingDrop.newStatus];
+        if (!msg) return null;
+        return (
+          <ModalConfirmacaoStatus
+            titulo={msg.titulo}
+            descricao={msg.descricao}
+            publicId={pendingDrop.publicId}
+            statusAtualLabel={COL_STATUS_LABEL[pendingDrop.srcColLabel]}
+            statusDestinoLabel={STATUS_LABEL[pendingDrop.newStatus]}
+            statusAlvo={pendingDrop.newStatus}
+            onConfirmar={handleConfirmarDrop}
+            onCancelar={handleCancelarDrop}
+            carregando={confirmandoDrop}
+          />
+        );
+      })()}
     </div>
   );
 }
