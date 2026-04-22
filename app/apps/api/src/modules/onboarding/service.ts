@@ -93,7 +93,7 @@ export async function setupStore(
     return {
       store: { id: store.id, slug: store.slug, name: store.name },
       storeUser: { id: storeUser.id, role: storeUser.role },
-      appliedCategories: undefined, // Será criado depois
+      appliedCategories: undefined as number | undefined, // Será preenchido após a transação
     };
   });
 

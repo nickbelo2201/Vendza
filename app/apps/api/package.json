@@ -17,6 +17,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/sensible": "^6.0.4",
     "@fastify/type-provider-typebox": "^6.1.0",
+    "@sentry/node": "^9.0.0",
     "@sinclair/typebox": "^0.34.48",
     "@supabase/supabase-js": "^2.100.0",
     "@vendza/database": "workspace:*",

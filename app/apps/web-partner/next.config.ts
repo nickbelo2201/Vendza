@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 // @ts-ignore — @ducanh2912/next-pwa não possui declarações de tipo completas
 import withPWAInit from "@ducanh2912/next-pwa";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -22,4 +23,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default withSentryConfig(withPWA(nextConfig), {
+  // Suprime logs do Sentry CLI durante o build
+  silent: true,
+  // Desabilita upload de source maps (sem auth token configurado)
+  disableSourceMapUpload: true,
+});

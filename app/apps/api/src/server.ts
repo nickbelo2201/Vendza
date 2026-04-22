@@ -1,3 +1,6 @@
+// Sentry deve ser o PRIMEIRO import — intercepta erros desde o startup
+import "./instrument.js";
+
 import { buildApp } from "./app.js";
 import { closeScheduledJobs, initScheduledJobs } from "./jobs/crons.js";
 import { getOrderPlacedQueue, getOrderStatusChangedQueue } from "./jobs/queues.js";
