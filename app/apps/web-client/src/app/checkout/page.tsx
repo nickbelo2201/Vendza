@@ -238,6 +238,7 @@ export default function CheckoutPage() {
 
   return (
     <div
+      className="wc-checkout-layout"
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 340px",
@@ -317,7 +318,7 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: 12 }}>
+            <div className="wc-checkout-fields-grid" style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: 12 }}>
               <div>
                 <label style={{ display: "block", marginBottom: 4, color: "var(--text-muted)", fontSize: 13 }}>Rua *</label>
                 <input className="wc-input" required value={rua} onChange={(e) => setRua(e.target.value)} placeholder="Nome da rua" />

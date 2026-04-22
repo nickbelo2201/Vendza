@@ -197,19 +197,22 @@ function FormNovoEndereco({ onSalvar, salvar }: { onSalvar: () => void; salvar: 
 
 export default function PerfilPage() {
   const { enderecos, salvar, remover, max } = useEnderecos();
-  const { perfil, salvarPerfil } = usePerfil();
+  const { perfil, salvarPerfil, carregando } = usePerfil();
   const [adicionandoEndereco, setAdicionandoEndereco] = useState(false);
   const [perfilSalvo, setPerfilSalvo] = useState(false);
-  const [carregando, setCarregando] = useState(true);
 
-  // Aguarda montagem no cliente para evitar mismatch de hidratação SSR
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
+
+  // Sincroniza o formulário quando os dados do localStorage são carregados
   useEffect(() => {
-    setCarregando(false);
-  }, []);
-
-  const [nome, setNome] = useState(perfil.nome);
-  const [telefone, setTelefone] = useState(perfil.telefone);
-  const [email, setEmail] = useState(perfil.email);
+    if (!carregando) {
+      setNome(perfil.nome);
+      setTelefone(perfil.telefone);
+      setEmail(perfil.email);
+    }
+  }, [carregando, perfil.nome, perfil.telefone, perfil.email]);
 
   function handleSalvarPerfil(e: React.FormEvent) {
     e.preventDefault();

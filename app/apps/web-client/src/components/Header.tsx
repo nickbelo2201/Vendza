@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { useCarrinho } from "../context/CarrinhoContext";
 import { useTheme } from "../hooks/useTheme";
+import { usePerfil } from "../hooks/useEnderecos";
 import { CartSheet } from "./CartSheet";
 
 type Props = {
@@ -102,6 +103,7 @@ export function Header({ nomeLoja }: Props) {
   const { totalItens } = useCarrinho();
   const [cartOpen, setCartOpen] = useState(false);
   const { theme, toggle } = useTheme();
+  const { perfil } = usePerfil();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -171,9 +173,16 @@ export function Header({ nomeLoja }: Props) {
             </div>
           </button>
 
-          {/* Avatar — link para perfil */}
+          {/* Avatar — link para perfil; exibe inicial do nome salvo ou ícone de usuário */}
           <a href="/perfil" className="wc-avatar" title="Minha conta" aria-label="Minha conta">
-            V
+            {perfil.nome.trim() ? (
+              perfil.nome.trim().charAt(0).toUpperCase()
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
           </a>
 
           {/* Carrinho */}
