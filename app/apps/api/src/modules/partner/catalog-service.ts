@@ -152,6 +152,9 @@ export async function deletePartnerCategory(
 
   await prisma.category.delete({ where: { id: existing.id } });
 
+  // Invalida cache do storefront para remover categoria excluída
+  await invalidateStorefrontCache(context.storeId);
+
   return { deleted: true };
 }
 
@@ -384,6 +387,9 @@ export async function createPartnerProduct(context: PartnerContext, input: Produ
 
     return created;
   });
+
+  // Invalida cache do storefront para refletir novo produto
+  await invalidateStorefrontCache(context.storeId);
 
   return mapProduct(product);
 }
