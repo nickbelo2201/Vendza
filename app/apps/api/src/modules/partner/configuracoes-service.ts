@@ -63,6 +63,7 @@ type LojaInput = {
   whatsappPhone?: string;
   status?: "open" | "closed" | "paused";
   minimumOrderValueCents?: number;
+  logoUrl?: string | null;
 };
 
 type ContaBancariaInput = {
@@ -88,6 +89,7 @@ export async function getLoja(context: PartnerContext) {
       whatsappPhone: true,
       status: true,
       minimumOrderValueCents: true,
+      logoUrl: true,
     },
   });
 
@@ -98,6 +100,7 @@ export async function getLoja(context: PartnerContext) {
     whatsappPhone: store.whatsappPhone,
     status: store.status,
     minimumOrderValueCents: store.minimumOrderValueCents,
+    logoUrl: store.logoUrl ?? null,
   };
 }
 
@@ -112,6 +115,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       ...(input.minimumOrderValueCents !== undefined
         ? { minimumOrderValueCents: input.minimumOrderValueCents }
         : {}),
+      ...(input.logoUrl !== undefined ? { logoUrl: input.logoUrl } : {}),
     },
     select: {
       id: true,
@@ -120,6 +124,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       whatsappPhone: true,
       status: true,
       minimumOrderValueCents: true,
+      logoUrl: true,
     },
   });
 
@@ -133,6 +138,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
     whatsappPhone: store.whatsappPhone,
     status: store.status,
     minimumOrderValueCents: store.minimumOrderValueCents,
+    logoUrl: store.logoUrl ?? null,
   };
 }
 

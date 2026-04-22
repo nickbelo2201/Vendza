@@ -34,6 +34,7 @@ const LojaResponseSchema = Type.Object({
   whatsappPhone: Type.Union([Type.String(), Type.Null()]),
   status: Type.String(),
   minimumOrderValueCents: Type.Integer(),
+  logoUrl: Type.Union([Type.String(), Type.Null()]),
 });
 
 /** Schema de horário de funcionamento */
@@ -129,6 +130,15 @@ const LojaUpdateSchema = Type.Object({
   whatsappPhone: Type.Optional(Type.String()),
   status: Type.Optional(Type.Union([Type.Literal("open"), Type.Literal("closed"), Type.Literal("paused")])),
   minimumOrderValueCents: Type.Optional(Type.Integer({ minimum: 0 })),
+  logoUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+});
+
+/** Schema de URL assinada para upload de logo */
+const LogoSignedUrlResponseSchema = Type.Object({
+  signedUrl: Type.String(),
+  token: Type.String(),
+  path: Type.String(),
+  publicUrl: Type.String(),
 });
 
 const ContaBancariaUpdateSchema = Type.Object({
@@ -153,6 +163,9 @@ type ContaBancariaUpdateBody = Static<typeof ContaBancariaUpdateSchema>;
 type ConviteBody = Static<typeof ConviteSchema>;
 type StoreHourBody = Static<typeof StoreHourSchema>;
 type DeliveryZoneBody = Static<typeof DeliveryZoneBodySchema>;
+type LogoSignedUrlBody = { ext: string };
+
+export type { LojaUpdateBody };
 
 function partnerContext(request: FastifyRequest) {
   if (!request.partnerContext) {
@@ -348,6 +361,56 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
         return reply.code(404).send(notFound("Zona de entrega nao encontrada."));
       }
       return ok(zona);
+    },
+  );
+
+  // ─── Upload de logo da loja (signed URL) ──────────────────────────────────
+
+  app.post<{ Body: LogoSignedUrlBody }>(
+    "/partner/upload/logo-signed-url",
+    {
+      schema: {
+        body: Type.Object({
+          ext: Type.String(),
+        }),
+        response: { 200: envelopeSchema(LogoSignedUrlResponseSchema) },
+      },
+    },
+    async (request, reply) => {
+      const { ext } = request.body;
+      const context = partnerContext(request);
+
+      // Validar ext contra allowlist
+      const EXT_ALLOWLIST = ["jpg", "jpeg", "png", "webp", "svg"];
+      const extNormalizada = ext.replace(/^\./, "").toLowerCase();
+      if (!EXT_ALLOWLIST.includes(extNormalizada)) {
+        return reply.code(400).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "INVALID_EXT", message: `Extensão não permitida. Use: ${EXT_ALLOWLIST.join(", ")}.` },
+        });
+      }
+
+      // Path fixo por loja — sobrescreve sempre (cada loja tem uma única logo)
+      const path = `logos/store-${context.storeId}.${extNormalizada}`;
+
+      const { data, error } = await app.supabaseAdmin.storage
+        .from("product-images")
+        .createSignedUploadUrl(path, { upsert: true });
+
+      if (error || !data) {
+        return reply.code(500).send({
+          data: null,
+          meta: { requestedAt: new Date().toISOString(), stub: false },
+          error: { code: "UPLOAD_ERROR", message: error?.message ?? "Erro ao gerar URL de upload." },
+        });
+      }
+
+      const { data: { publicUrl } } = app.supabaseAdmin.storage
+        .from("product-images")
+        .getPublicUrl(path);
+
+      return ok({ signedUrl: data.signedUrl, token: data.token, path, publicUrl });
     },
   );
 }
