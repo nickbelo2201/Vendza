@@ -14,6 +14,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.0",
+    "@vendza/types": "workspace:*",
     "@vendza/ui": "workspace:*",
     "@vendza/utils": "workspace:*",
     "lucide-react": "^1.7.0",

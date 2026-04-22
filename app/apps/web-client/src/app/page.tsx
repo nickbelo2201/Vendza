@@ -1,36 +1,10 @@
+import type { StorefrontConfig, StorefrontCategory, ProdutoStorefront, PaginatedResponse } from "@vendza/types";
+
 import { fetchStorefrontCatalog, fetchStorefrontConfig } from "../lib/api";
 import { AgeGate } from "../components/AgeGate";
 import { CatalogView } from "../components/CatalogView";
 
-type StorefrontConfig = {
-  id: string;
-  branding: { name: string; slug: string; logoUrl: string | null };
-  status: string;
-  minimumOrderValueCents: number;
-};
-
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  imageUrl: string | null;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  isFeatured: boolean;
-  offer: boolean;
-  category: { id: string; name: string; slug: string } | null;
-};
-
-type ProductsResponse = {
-  items: Product[];
-  pagination: { page: number; pageSize: number; total: number; totalPages: number };
-};
+type ProductsResponse = PaginatedResponse<ProdutoStorefront>;
 
 export async function generateMetadata() {
   try {
@@ -68,13 +42,13 @@ export default async function HomePage({
   };
 
   let config = configFallback;
-  let categories: Category[] = [];
-  let products: Product[] = [];
+  let categories: StorefrontCategory[] = [];
+  let products: ProdutoStorefront[] = [];
 
   try {
     const [configResult, categoriesResult, productsResult] = await Promise.all([
       fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
-      fetchStorefrontCatalog<Category[]>("/catalog/categories"),
+      fetchStorefrontCatalog<StorefrontCategory[]>("/catalog/categories"),
       fetchStorefrontCatalog<ProductsResponse>(produtosUrl),
     ]);
     config = configResult;
@@ -84,7 +58,7 @@ export default async function HomePage({
     // API indisponível — exibe estado vazio
   }
 
-  const produtosExibidos: Product[] = products;
+  const produtosExibidos: ProdutoStorefront[] = products;
 
   return (
     <>

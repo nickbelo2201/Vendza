@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
+import type { StorefrontCategory, ProdutoStorefront } from "@vendza/types";
 import { ProductImage } from "./ProductImage";
 
 import { useCarrinho } from "../context/CarrinhoContext";
@@ -29,7 +30,7 @@ const EMOJI_POR_SLUG: Record<string, string> = {
 };
 
 function CategoryCarouselItem({ category, isActive, onClick }: {
-  category: Category;
+  category: StorefrontCategory;
   isActive: boolean;
   onClick: () => void;
 }) {
@@ -63,27 +64,9 @@ function CategoryCarouselItem({ category, isActive, onClick }: {
   );
 }
 
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  imageUrl: string | null;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  isFeatured: boolean;
-  offer: boolean;
-  category: { id: string; name: string; slug: string } | null;
-};
-
 type Props = {
-  categories: Category[];
-  products: Product[];
+  categories: StorefrontCategory[];
+  products: ProdutoStorefront[];
   categoriaInicial?: string | null;
   termoBusca?: string;
 };

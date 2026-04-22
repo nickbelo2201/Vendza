@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "../../../utils/supabase/client";
+import type { Categoria, ProdutoResumo } from "@vendza/types";
+
 import { BarcodeScanner } from "../../../components/BarcodeScanner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -33,26 +35,7 @@ function formatCents(cents: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-type CategoriaFilha = { id: string; name: string; slug: string };
-type Categoria = {
-  id: string; name: string; slug: string;
-  isActive: boolean; sortOrder: number;
-  parentCategoryId: string | null;
-  children?: CategoriaFilha[];
-};
-type Produto = {
-  id: string;
-  name: string;
-  slug: string;
-  imageUrl: string | null;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  isAvailable: boolean;
-  categoryId: string | null;
-  barcode?: string | null;
-};
+// ─── Tipos locais do PDV ───────────────────────────────────────────────────────
 type ItemCarrinho = {
   productId: string;
   productName: string;
@@ -100,7 +83,7 @@ export default function PdvPage() {
   const router = useRouter();
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtos, setProdutos] = useState<ProdutoResumo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erroCarregar, setErroCarregar] = useState<string | null>(null);
 
@@ -133,12 +116,12 @@ export default function PdvPage() {
       try {
         const [cats, prodsResp] = await Promise.all([
           fetchComAuth<Categoria[]>("/partner/categories"),
-          fetchComAuth<{ produtos: Produto[] }>("/partner/products?limite=500"),
+          fetchComAuth<{ produtos: ProdutoResumo[] }>("/partner/products?limite=500"),
         ]);
         setCategorias(
           (cats as Categoria[])
             .filter((c) => c.isActive)
-            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
         );
         setProdutos(prodsResp.produtos);
       } catch (err) {
@@ -157,7 +140,7 @@ export default function PdvPage() {
     return () => clearTimeout(t);
   }, [sucessoMsg]);
 
-  const adicionarItem = useCallback((produto: Produto) => {
+  const adicionarItem = useCallback((produto: ProdutoResumo) => {
     if (!produto.isAvailable) return;
     setCarrinho((prev) => {
       const existe = prev.find((i) => i.productId === produto.id);
@@ -204,7 +187,7 @@ export default function PdvPage() {
     setScannerAberto(false);
     setBarcodeErro(null);
     try {
-      const produto = await fetchComAuth<Produto & { barcode: string | null }>(`/partner/products/barcode/${encodeURIComponent(codigo)}`);
+      const produto = await fetchComAuth<ProdutoResumo & { barcode: string | null }>(`/partner/products/barcode/${encodeURIComponent(codigo)}`);
       if (produto) {
         adicionarItem(produto);
         setSucessoMsg(`"${produto.name}" adicionado ao carrinho.`);

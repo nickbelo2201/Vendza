@@ -2,17 +2,11 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
+import type { Order } from "@vendza/types";
 
 import { StatusSelect } from "./StatusSelect";
 import { PedidoDetalhe } from "./PedidoDetalhe";
 import { PedidoManualModal } from "./PedidoManualModal";
-
-type OrderItem = { productId: string; title: string; quantity: number; totalCents: number };
-type Order = {
-  id: string; publicId: string; status: string; channel: string;
-  customerName: string; customerPhone: string; paymentMethod: string;
-  totalCents: number; placedAt: string; items: OrderItem[];
-};
 
 const CHANNEL_LABELS: Record<string, string> = {
   web: "Web",

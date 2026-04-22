@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
+import type { ProdutoStorefront } from "@vendza/types";
 
 import { fetchStorefrontCatalog, fetchStorefrontConfig } from "../../../lib/api";
 import { BotaoAdicionarAoCarrinho } from "../../../components/BotaoAdicionarAoCarrinho";
@@ -26,21 +27,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-type Produto = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  imageUrl: string | null;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  isAvailable: boolean;
-  isFeatured: boolean;
-  offer: boolean;
-  categorySlug: string | null;
-  category: { id: string; name: string; slug: string } | null;
-};
-
 export default async function ProductPage({
   params,
 }: {
@@ -48,9 +34,9 @@ export default async function ProductPage({
 }) {
   const { slug } = await params;
 
-  let produto: Produto;
+  let produto: ProdutoStorefront;
   try {
-    produto = await fetchStorefrontCatalog<Produto>(`/catalog/products/${slug}`);
+    produto = await fetchStorefrontCatalog<ProdutoStorefront>(`/catalog/products/${slug}`);
   } catch {
     notFound();
   }

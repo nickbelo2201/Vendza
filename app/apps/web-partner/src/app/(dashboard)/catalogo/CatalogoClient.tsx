@@ -2,49 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { formatCurrency } from "@vendza/utils";
+import type { Categoria, Produto, ProdutoForm } from "@vendza/types";
 
 import { ProdutoModal } from "./ProdutoModal";
 import { BotaoDeletar } from "./BotaoDeletar";
 import { DisponibilidadeToggle } from "./DisponibilidadeToggle";
 import { ImportarCSVModal } from "./ImportarCSVModal";
 import { buscarProdutos } from "./actions";
-
-type CategoriaFilha = {
-  id: string;
-  name: string;
-  slug: string;
-  parentCategoryId: string | null;
-};
-
-type Categoria = {
-  id: string;
-  name: string;
-  slug: string;
-  parentCategoryId: string | null;
-  children?: CategoriaFilha[];
-};
-
-type Produto = {
-  id: string; name: string; slug: string;
-  categoryId: string | null; categorySlug: string | null; categoryName: string | null;
-  parentCategoryId: string | null; parentCategoryName: string | null; parentCategorySlug: string | null;
-  listPriceCents: number; salePriceCents: number | null;
-  imageUrl: string | null;
-  isAvailable: boolean; isFeatured: boolean;
-};
-
-type ProdutoParaEditar = {
-  id?: string;
-  name: string;
-  slug: string;
-  categoryId: string;
-  parentCategoryId?: string | null;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  imageUrl: string;
-  isAvailable: boolean;
-  isFeatured: boolean;
-};
 
 type Props = {
   produtosIniciais: Produto[];
@@ -55,7 +19,7 @@ type Props = {
 
 export function CatalogoClient({ produtosIniciais, totalIniciais, totalPaginasIniciais, categorias }: Props) {
   const [modalAberto, setModalAberto] = useState(false);
-  const [produtoEditando, setProdutoEditando] = useState<ProdutoParaEditar | null>(null);
+  const [produtoEditando, setProdutoEditando] = useState<ProdutoForm | null>(null);
   const [importarCSVAberto, setImportarCSVAberto] = useState(false);
 
   // Filtros e paginacao

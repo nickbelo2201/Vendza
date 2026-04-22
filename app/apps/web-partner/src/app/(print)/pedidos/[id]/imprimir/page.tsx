@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+import type { OrderComanda } from "@vendza/types";
 
 import { ApiError, fetchAPI } from "@/lib/api";
-import { ComandaPedido, type OrderComanda } from "@/components/ComandaPedido";
+import { ComandaPedido } from "@/components/ComandaPedido";
 import { ImprimirAuto } from "@/components/ImprimirAuto";
 
 export const dynamic = "force-dynamic";

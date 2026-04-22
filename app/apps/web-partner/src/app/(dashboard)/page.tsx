@@ -1,4 +1,5 @@
 import { formatCurrency } from "@vendza/utils";
+import type { DashboardSummary, Order, OrdersResponse, InventoryItem } from "@vendza/types";
 
 import { ApiError, fetchAPI } from "../../lib/api";
 import { KanbanBoard } from "../../components/KanbanBoard";
@@ -52,29 +53,6 @@ function IconStar() {
   );
 }
 
-type DashboardSummary = {
-  ordersToday: number;
-  revenueCents: number;
-  averageTicketCents: number;
-  recurringCustomers: number;
-  newCustomers: number;
-};
-
-type OrderItem = { productId: string; title: string; quantity: number; totalCents: number };
-type Order = {
-  id: string; publicId: string; status: string; channel: string;
-  customerName: string; customerPhone: string; paymentMethod: string;
-  totalCents: number; placedAt: string; items: OrderItem[];
-};
-type OrdersResponse = { orders: Order[]; total: number; page: number; pageSize: number };
-
-type InventoryItem = {
-  id: string;
-  productId: string;
-  currentStock: number;
-  lowStockThreshold: number;
-  product: { name: string };
-};
 
 async function getDashboardData() {
   try {

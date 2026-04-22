@@ -2,13 +2,9 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
+import type { Cliente } from "@vendza/types";
 
 import { ClienteDetalhe } from "./ClienteDetalhe";
-
-type Cliente = {
-  id: string; name: string; phone: string; email: string | null;
-  totalSpentCents: number; isInactive: boolean; lastOrderAt: string | null;
-};
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();

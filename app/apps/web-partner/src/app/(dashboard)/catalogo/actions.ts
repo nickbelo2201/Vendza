@@ -1,25 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { ProdutosResponse } from "@vendza/types";
 
 import { fetchAPI } from "../../../lib/api";
-
-type Produto = {
-  id: string; name: string; slug: string;
-  categoryId: string | null; categorySlug: string | null; categoryName: string | null;
-  parentCategoryId: string | null; parentCategoryName: string | null; parentCategorySlug: string | null;
-  listPriceCents: number; salePriceCents: number | null;
-  imageUrl: string | null;
-  isAvailable: boolean; isFeatured: boolean;
-};
-
-type ProdutosResponse = {
-  produtos: Produto[];
-  total: number;
-  pagina: number;
-  limite: number;
-  totalPaginas: number;
-};
 
 export async function buscarProdutos(params: {
   busca?: string;

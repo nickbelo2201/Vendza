@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@vendza/utils";
+import type { OrderDetalhe } from "@vendza/types";
 
 import { fetchStorefront, fetchStorefrontConfig } from "../../../lib/api";
 import { OrderTracker } from "../../../components/OrderTracker";
@@ -17,37 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ publicId:
   }
 }
 
-type OrderEvent = {
-  type: string;
-  label: string;
-  createdAt: string;
-};
-
-type OrderItem = {
-  id: string;
-  productName: string;
-  quantity: number;
-  unitPriceCents: number;
-  totalPriceCents: number;
-};
-
-type Order = {
-  id: string;
-  publicId: string;
-  status: string;
-  channel: string;
-  paymentMethod: string;
-  customerName: string;
-  customerPhone: string;
-  subtotalCents: number;
-  deliveryFeeCents: number;
-  discountCents: number;
-  totalCents: number;
-  items: OrderItem[];
-  timeline: OrderEvent[];
-};
-
-type StorefrontConfig = {
+type StorefrontConfigWhatsapp = {
   whatsappPhone: string;
 };
 
@@ -78,16 +49,16 @@ export default async function OrderTrackingPage({
 }) {
   const { publicId } = await params;
 
-  let order: Order;
+  let order: OrderDetalhe;
   try {
-    order = await fetchStorefront<Order>(`/orders/${publicId}`);
+    order = await fetchStorefront<OrderDetalhe>(`/orders/${publicId}`);
   } catch {
     notFound();
   }
 
   let whatsappPhone = "";
   try {
-    const config = await fetchStorefrontConfig<StorefrontConfig>("/storefront/config");
+    const config = await fetchStorefrontConfig<StorefrontConfigWhatsapp>("/storefront/config");
     whatsappPhone = config.whatsappPhone;
   } catch {
     // silencia

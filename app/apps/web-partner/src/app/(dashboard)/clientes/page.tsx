@@ -1,12 +1,9 @@
+import type { Cliente, PaginatedResponse } from "@vendza/types";
+
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { BuscaClientes } from "./BuscaClientes";
 
-type Cliente = {
-  id: string; name: string; phone: string; email: string | null;
-  totalSpentCents: number; isInactive: boolean; lastOrderAt: string | null;
-};
-
-type ClientesResponse = { items: Cliente[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+type ClientesResponse = PaginatedResponse<Cliente>;
 
 async function getClientes(): Promise<Cliente[]> {
   try {

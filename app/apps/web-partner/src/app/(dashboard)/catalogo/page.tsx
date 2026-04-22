@@ -1,37 +1,7 @@
+import type { Categoria, Produto, ProdutosResponse } from "@vendza/types";
+
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { CatalogoClient } from "./CatalogoClient";
-
-type CategoriaFilha = {
-  id: string;
-  name: string;
-  slug: string;
-  parentCategoryId: string | null;
-};
-
-type Categoria = {
-  id: string;
-  name: string;
-  slug: string;
-  parentCategoryId: string | null;
-  children?: CategoriaFilha[];
-};
-
-type Produto = {
-  id: string; name: string; slug: string;
-  categoryId: string | null; categorySlug: string | null; categoryName: string | null;
-  parentCategoryId: string | null; parentCategoryName: string | null; parentCategorySlug: string | null;
-  listPriceCents: number; salePriceCents: number | null;
-  imageUrl: string | null;
-  isAvailable: boolean; isFeatured: boolean;
-};
-
-type ProdutosResponse = {
-  produtos: Produto[];
-  total: number;
-  pagina: number;
-  limite: number;
-  totalPaginas: number;
-};
 
 async function getProdutos(): Promise<ProdutosResponse> {
   try {
@@ -61,3 +31,5 @@ export default async function CatalogPage() {
     </div>
   );
 }
+
+export type { Categoria, Produto, ProdutosResponse };

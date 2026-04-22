@@ -5,24 +5,19 @@ import { useRouter } from "next/navigation";
 import { usePerfil } from "../../hooks/useEnderecos";
 import { useCarrinho } from "../../context/CarrinhoContext";
 import { formatCurrency } from "@vendza/utils";
+import type { TimelineEvent } from "@vendza/types";
 
 // ---------------------------------------------------------------------------
-// Tipos da resposta da API
+// Tipos locais da minha-conta
 // ---------------------------------------------------------------------------
 
-type OrderItem = {
+type ContaOrderItem = {
   id: string;
   productId: string;
   productName: string;
   quantity: number;
   unitPriceCents: number;
   totalPriceCents: number;
-};
-
-type TimelineEvent = {
-  type: string;
-  label: string;
-  createdAt: string;
 };
 
 type Pedido = {
@@ -35,7 +30,7 @@ type Pedido = {
   deliveryFeeCents: number;
   totalCents: number;
   placedAt: string;
-  items: OrderItem[];
+  items: ContaOrderItem[];
   timeline: TimelineEvent[];
 };
 

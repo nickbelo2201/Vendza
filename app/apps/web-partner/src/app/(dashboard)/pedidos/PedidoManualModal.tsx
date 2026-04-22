@@ -2,19 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import type { ProdutoResumo } from "@vendza/types";
 
 import { createClient } from "../../../utils/supabase/client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-
-type Produto = {
-  id: string;
-  name: string;
-  slug: string;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  isAvailable: boolean;
-};
 
 type ItemPedido = {
   productId: string;
@@ -96,7 +88,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
   const [buscandoCliente, setBuscandoCliente] = useState(false);
 
   // Seção 2 — Itens
-  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtos, setProdutos] = useState<ProdutoResumo[]>([]);
   const [buscaProduto, setBuscaProduto] = useState("");
   const [itensPedido, setItensPedido] = useState<ItemPedido[]>([]);
 
@@ -123,7 +115,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
     setMetodoPagamento("pix");
     setValorRecebido("");
 
-    fetchComAuth<{ produtos: Produto[] }>("/partner/products")
+    fetchComAuth<{ produtos: ProdutoResumo[] }>("/partner/products")
       .then((res) => setProdutos(Array.isArray(res) ? res : (res.produtos ?? [])))
       .catch(() => setProdutos([]));
   }, [aberto]);
@@ -159,7 +151,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
     }
   }, []);
 
-  function adicionarItem(produto: Produto) {
+  function adicionarItem(produto: ProdutoResumo) {
     setItensPedido((prev) => {
       const existente = prev.find((i) => i.productId === produto.id);
       if (existente) {

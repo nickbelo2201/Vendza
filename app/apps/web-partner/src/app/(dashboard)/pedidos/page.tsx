@@ -1,18 +1,10 @@
 import { Suspense } from "react";
+import type { Order, OrdersResponse } from "@vendza/types";
 
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { FiltroStatus } from "./FiltroStatus";
 import { PedidosClient } from "./PedidosClient";
 import { BotaoExportarCSV } from "./BotaoExportarCSV";
-
-type OrderItem = { productId: string; title: string; quantity: number; totalCents: number };
-type Order = {
-  id: string; publicId: string; status: string; channel: string;
-  customerName: string; customerPhone: string; paymentMethod: string;
-  totalCents: number; placedAt: string; items: OrderItem[];
-};
-
-type OrdersResponse = { orders: Order[]; total: number; page: number; pageSize: number };
 
 async function getPedidos(status?: string): Promise<Order[]> {
   try {

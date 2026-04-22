@@ -2,37 +2,12 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
+import type { PromocoesResultado } from "@vendza/types";
 
 /* ─── tipos ─────────────────────────────────────────────────────── */
 
-type ProdutoEmPromocao = {
-  id: string;
-  name: string;
-  slug: string;
-  listPriceCents: number;
-  salePriceCents: number;
-  descontoPercent: number;
-  currentStock: number;
-};
-
-type ProdutoAlerta = {
-  id: string;
-  name: string;
-  slug: string;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  currentStock: number;
-  safetyStock?: number;
-};
-
-type Resultado = {
-  emPromocao: ProdutoEmPromocao[];
-  alertasParado: ProdutoAlerta[];
-  alertasEstoqueAlto: ProdutoAlerta[];
-};
-
 type Props = {
-  dados: Resultado;
+  dados: PromocoesResultado;
 };
 
 /* ─── helpers ───────────────────────────────────────────────────── */

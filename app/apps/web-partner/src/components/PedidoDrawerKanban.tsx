@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { OrderItem, TimelineEvent, OrderDetalhe } from "@vendza/types";
 import { moverCardKanban } from "../app/(dashboard)/kanban-actions";
 import { createClient } from "../utils/supabase/client";
 
@@ -47,46 +48,6 @@ const KANBAN_NEXT: Record<string, { status: string; colLabel: string } | null> =
   "Entregue": null,
 };
 
-type OrderItem = {
-  productId: string;
-  title: string;
-  quantity: number;
-  unitPriceCents: number;
-  totalCents: number;
-};
-
-type TimelineEvent = {
-  type: string;
-  label: string;
-  createdAt: string;
-  note?: string;
-};
-
-type OrderDetalhe = {
-  id: string;
-  publicId: string;
-  status: string;
-  channel: string;
-  customerName: string;
-  customerPhone: string;
-  paymentMethod: string;
-  subtotalCents: number;
-  deliveryFeeCents: number;
-  discountCents: number;
-  totalCents: number;
-  placedAt: string;
-  note: string | null;
-  address: {
-    line1: string;
-    number?: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-  } | null;
-  isPickup?: boolean;
-  items: OrderItem[];
-  timeline: TimelineEvent[];
-};
 
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
@@ -370,7 +331,7 @@ export function PedidoDrawerKanban({ orderId, colLabel, onClose, onStatusAvancad
                           {formatCents(item.unitPriceCents)}
                         </td>
                         <td style={{ textAlign: "right", fontWeight: 600, fontSize: 13 }}>
-                          {formatCents(item.totalCents)}
+                          {formatCents(item.totalCents ?? item.totalPriceCents)}
                         </td>
                       </tr>
                     ))}

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 
 import { createClient } from "../../../utils/supabase/client";
 
+import type { Categoria, ProdutoForm } from "@vendza/types";
+
 import { BarcodeScanner } from "../../../components/BarcodeScanner";
 import { criarProduto, editarProduto } from "./actions";
 
@@ -58,30 +60,6 @@ async function comprimirImagem(file: File, maxWidthPx = 1200, qualidade = 0.82):
     img.src = url;
   });
 }
-
-type CategoriaFilha = { id: string; name: string; slug: string; parentCategoryId: string | null };
-
-type Categoria = {
-  id: string;
-  name: string;
-  slug: string;
-  parentCategoryId: string | null;
-  children?: CategoriaFilha[];
-};
-
-type ProdutoForm = {
-  id?: string;
-  name: string;
-  slug: string;
-  categoryId: string;
-  parentCategoryId?: string | null;
-  listPriceCents: number;
-  salePriceCents: number | null;
-  imageUrl: string;
-  isAvailable: boolean;
-  isFeatured: boolean;
-  barcode?: string | null;
-};
 
 type Props = {
   aberto: boolean;

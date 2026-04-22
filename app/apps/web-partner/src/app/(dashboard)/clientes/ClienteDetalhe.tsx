@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Cliente } from "@vendza/types";
 
 import { createClient } from "../../../utils/supabase/client";
 
@@ -24,16 +25,6 @@ const STATUS_CLASS: Record<string, string> = {
   out_for_delivery: "wp-status wp-status-out_delivery",
   delivered: "wp-status wp-status-delivered",
   cancelled: "wp-status wp-status-cancelled",
-};
-
-type Cliente = {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-  totalSpentCents: number;
-  isInactive: boolean;
-  lastOrderAt: string | null;
 };
 
 type PedidoResumo = {

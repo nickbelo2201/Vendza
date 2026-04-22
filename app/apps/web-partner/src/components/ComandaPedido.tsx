@@ -3,47 +3,13 @@
  * Compatível com impressoras térmicas e impressão via navegador.
  */
 
+import type { OrderComanda } from "@vendza/types";
+
 const PAYMENT_LABELS: Record<string, string> = {
   pix: "PIX",
   cash: "Dinheiro",
   card_online: "Cartao na maquina (credito/debito)",
   card_on_delivery: "Cartao na entrega",
-};
-
-type OrderItem = {
-  productId: string;
-  title: string;
-  quantity: number;
-  unitPriceCents: number;
-  totalCents: number;
-};
-
-type DeliveryAddress = {
-  line1: string;
-  number?: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-};
-
-export type OrderComanda = {
-  id: string;
-  publicId: string;
-  status: string;
-  channel: string;
-  customerName: string;
-  customerPhone: string;
-  paymentMethod: string;
-  totalCents: number;
-  subtotalCents?: number;
-  deliveryFeeCents?: number;
-  discountCents?: number;
-  placedAt: string;
-  items: OrderItem[];
-  deliveryAddress?: DeliveryAddress;
-  address?: DeliveryAddress;
-  notes?: string;
-  note?: string;
 };
 
 function formatCents(cents: number): string {
@@ -126,7 +92,7 @@ export function ComandaPedido({ pedido, nomeLojaEnv }: Props) {
               {item.quantity}x {item.title}
             </span>
             <span style={{ whiteSpace: "nowrap", marginLeft: 8 }}>
-              {formatCents(item.totalCents)}
+              {formatCents(item.totalCents ?? item.totalPriceCents)}
             </span>
           </div>
         ))}
