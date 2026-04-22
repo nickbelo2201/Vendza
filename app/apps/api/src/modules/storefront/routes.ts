@@ -169,6 +169,8 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: CreateOrderBody }>(
     "/orders",
     {
+      // Rate limit mais restritivo: criação de pedido é operação sensível
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
       schema: {
         body: CreateOrderBodySchema,
         response: { 201: envelopeSchema(Type.Any()) },
@@ -211,6 +213,8 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: ClientePedidosQuery }>(
     "/storefront/cliente/pedidos",
     {
+      // Rate limit restritivo: consulta de pedidos por telefone pode ser abusada para enumeração
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
       schema: {
         querystring: ClientePedidosQuerySchema,
         response: { 200: envelopeSchema(Type.Any()) },

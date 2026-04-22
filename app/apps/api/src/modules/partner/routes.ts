@@ -435,6 +435,8 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: { from?: string; to?: string; status?: string } }>(
     "/partner/orders/export",
     {
+      // Rate limit restritivo: exportação CSV pode gerar carga elevada no banco
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
       schema: {
         querystring: Type.Object({
           from: Type.Optional(Type.String()),
@@ -1109,6 +1111,8 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     "/partner/financeiro/exportar",
     {
       preHandler: requireRole("owner", "manager"),
+      // Rate limit restritivo: exportação financeira pode gerar carga elevada e expõe dados sensíveis
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
       schema: {
         querystring: Type.Object({
           from: Type.Optional(Type.String()),
@@ -1222,6 +1226,8 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/partner/products/import",
     {
+      // Rate limit muito restritivo: importação em lote pode criar centenas de produtos por chamada
+      config: { rateLimit: { max: 3, timeWindow: "1 minute" } },
       schema: {
         body: ImportBodySchema,
         response: {
