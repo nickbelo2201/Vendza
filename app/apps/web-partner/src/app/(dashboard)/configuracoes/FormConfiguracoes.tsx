@@ -45,7 +45,10 @@ export function FormConfiguracoes({ settings }: Props) {
     return v ? formatWhatsapp(v) : "";
   });
 
-  const statusAtual = settings.status;
+  const [statusAtual, setStatusAtual] = useState(settings.status);
+
+  // Sincroniza quando o Server Component re-renderiza com novo status (via revalidatePath)
+  useEffect(() => { setStatusAtual(settings.status); }, [settings.status]);
 
   // Aviso de alterações não salvas ao sair da página
   useEffect(() => {
@@ -267,7 +270,8 @@ export function FormConfiguracoes({ settings }: Props) {
                 <select
                   id="status"
                   name="status"
-                  defaultValue={settings.status}
+                  value={statusAtual}
+                  onChange={(e) => { setStatusAtual(e.target.value); setHasChanges(true); }}
                   className="wp-input conf-input"
                   style={{ flex: 1 }}
                 >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 
 import { toggleStatusLoja } from "../app/(dashboard)/configuracoes/actions";
 
@@ -10,6 +10,9 @@ type Props = {
 
 export function ToggleLojaAberta({ initialStatus }: Props) {
   const [status, setStatus] = useState<"open" | "closed">(initialStatus);
+
+  // Sincroniza quando o Server Component re-renderiza com novo status (via revalidatePath)
+  useEffect(() => { setStatus(initialStatus); }, [initialStatus]);
   const [isPending, startTransition] = useTransition();
   const [erroToggle, setErroToggle] = useState<string | null>(null);
 
