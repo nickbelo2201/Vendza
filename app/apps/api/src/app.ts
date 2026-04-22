@@ -38,19 +38,24 @@ export async function buildApp() {
     }
   });
 
+  // ─── Rate Limiting diferenciado por grupo de rotas ────────────────────────
+  // Global: 200 req/min (fallback para rotas não categorizadas)
+  // Sobrescritas por grupo são aplicadas via routeConfig nos registros de rota.
+  const rateLimitErrorResponse = (_request: unknown, context: { ttl: number }) => ({
+    data: null,
+    meta: { requestedAt: new Date().toISOString(), stub: false },
+    error: {
+      code: "RATE_LIMIT_EXCEEDED",
+      message: `Limite de requisições atingido. Tente novamente em ${Math.ceil(context.ttl / 1000)}s.`,
+    },
+  });
+
   await app.register(rateLimit, {
     global: true,
     max: 200,
     timeWindow: "1 minute",
     keyGenerator: (request) => request.ip,
-    errorResponseBuilder: (_request, context) => ({
-      data: null,
-      meta: { requestedAt: new Date().toISOString(), stub: false },
-      error: {
-        code: "RATE_LIMIT_EXCEEDED",
-        message: `Limite de requisições atingido. Tente novamente em ${Math.ceil(context.ttl / 1000)}s.`,
-      },
-    }),
+    errorResponseBuilder: rateLimitErrorResponse,
   });
 
   await app.register(helmet, {
@@ -106,15 +111,70 @@ export async function buildApp() {
 
   app.register(
     async (v1) => {
+      // ── Rotas de cobertura e telegram (limite global padrão: 200 req/min) ──
       v1.register(coverageRoutes);
-      v1.register(storefrontRoutes);
-      v1.register(onboardingRoutes);
-
-      // Rotas partner com schemas TypeBox de validação (routes.ts)
-      // O hook authenticate já está declarado dentro de partnerRoutes
-      // Caminhos em routes.ts já incluem prefixo "/partner/" nos paths
-      v1.register(partnerRoutes);
       v1.register(telegramRoutes);
+
+      // ── Storefront: 100 req/min (público, mais restrito) ──────────────────
+      v1.register(async (storefront) => {
+        storefront.addHook("onRoute", (routeOptions) => {
+          routeOptions.config = {
+            ...routeOptions.config,
+            rateLimit: {
+              max: 100,
+              timeWindow: "1 minute",
+              keyGenerator: (request: { ip: string }) => request.ip,
+              errorResponseBuilder: rateLimitErrorResponse,
+            },
+          };
+        });
+        storefront.register(storefrontRoutes);
+      });
+
+      // ── Onboarding: 20 req/min (proteção contra abuso, similar a auth) ───
+      v1.register(async (onboarding) => {
+        onboarding.addHook("onRoute", (routeOptions) => {
+          routeOptions.config = {
+            ...routeOptions.config,
+            rateLimit: {
+              max: 20,
+              timeWindow: "1 minute",
+              keyGenerator: (request: { ip: string }) => request.ip,
+              errorResponseBuilder: rateLimitErrorResponse,
+            },
+          };
+        });
+        onboarding.register(onboardingRoutes);
+      });
+
+      // ── Partner: 500 req/min (autenticado, mais permissivo) ───────────────
+      // Rotas de import/export recebem limite alto (1000 req/min)
+      v1.register(async (partner) => {
+        const rotasImportExport = [
+          "/partner/products/import",
+          "/partner/orders/export",
+          "/partner/financeiro/exportar",
+        ];
+
+        partner.addHook("onRoute", (routeOptions) => {
+          const isImportExport = rotasImportExport.some(
+            (rota) => routeOptions.url === rota
+          );
+
+          routeOptions.config = {
+            ...routeOptions.config,
+            rateLimit: {
+              max: isImportExport ? 1000 : 500,
+              timeWindow: "1 minute",
+              keyGenerator: (request: { ip: string }) => request.ip,
+              errorResponseBuilder: rateLimitErrorResponse,
+            },
+          };
+        });
+
+        // O hook authenticate já está declarado dentro de partnerRoutes
+        partner.register(partnerRoutes);
+      });
     },
     { prefix: "/v1" }
   );
