@@ -24,8 +24,12 @@ function calcComparacao(atual: number, anterior: number): number | null {
   return Math.round(((atual - anterior) / anterior) * 100 * 10) / 10;
 }
 
+/**
+ * Formata um Date para "YYYY-MM-DD" usando o fuso horário de Brasília.
+ * Alinha com o critério de "pedido do dia" (America/Sao_Paulo).
+ */
 function formatarData(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 }
 
 function adicionarDias(d: Date, dias: number): Date {

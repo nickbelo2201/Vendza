@@ -186,16 +186,54 @@ export type ReportFilters = {
   to?: string;
 };
 
+/**
+ * Converte uma data no formato "YYYY-MM-DD" para o início do dia em Brasília (UTC-3).
+ * Ex: "2026-04-22" → 2026-04-22T03:00:00.000Z (= 00:00 Brasília)
+ */
+function inicioDiaBrasilia(dateStr: string): Date {
+  return new Date(`${dateStr}T03:00:00.000Z`);
+}
+
+/**
+ * Retorna a data de hoje no fuso horário de Brasília, formato "YYYY-MM-DD".
+ */
+function hojeEmBrasilia(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+}
+
+/**
+ * Converte um Date para o formato "YYYY-MM-DD" no fuso horário de Brasília.
+ */
+function dataParaBrasilia(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+}
+
+/**
+ * Retorna a hora (0-23) no fuso horário de Brasília para um Date.
+ */
+function horaEmBrasilia(d: Date): number {
+  return parseInt(d.toLocaleString("en-US", { timeZone: "America/Sao_Paulo", hour: "numeric", hour12: false }), 10);
+}
+
 export async function getPartnerReports(context: PartnerContext, filters: ReportFilters) {
-  const now = new Date();
-  // Ao receber só a data (ex: "2026-04-16"), new Date() cria meia-noite UTC.
-  // Para o "to", precisamos cobrir o dia inteiro até 23:59:59.999Z.
-  const toDate = filters.to
-    ? (() => { const d = new Date(filters.to); d.setUTCHours(23, 59, 59, 999); return d; })()
-    : now;
-  const fromDate = filters.from
-    ? new Date(filters.from + "T00:00:00.000Z")
-    : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+  // Critério de "período" usa America/Sao_Paulo para alinhar com getDashboardSummary.
+  // Datas recebidas como "YYYY-MM-DD" representam dias em Brasília.
+  const hojeStr = hojeEmBrasilia();
+
+  const toStr = filters.to ?? hojeStr;
+  const fromStr = filters.from ?? (() => {
+    // 30 dias atrás a partir de hoje em Brasília
+    const d = new Date(inicioDiaBrasilia(toStr).getTime() - 30 * 24 * 60 * 60 * 1000);
+    return dataParaBrasilia(d);
+  })();
+
+  // Converter para range UTC: início do dia Brasília até início do dia seguinte Brasília
+  const fromDate = inicioDiaBrasilia(fromStr);
+  const toDate = (() => {
+    // Fim do dia "to" em Brasília = início do dia seguinte em Brasília - 1ms
+    const nextDay = new Date(inicioDiaBrasilia(toStr).getTime() + 24 * 60 * 60 * 1000);
+    return new Date(nextDay.getTime() - 1);
+  })();
 
   const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
   if (diffDays > 90) throw new Error("Período máximo para relatórios é 90 dias.");
@@ -265,10 +303,10 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
       ? Math.min(100, Math.round((repeatCustomers / totalOrders) * 100 * 10) / 10)
       : 0;
 
-  // Receita por dia
+  // Receita por dia — agrupada pela data em Brasília (America/Sao_Paulo)
   const revenueByDayMap = new Map<string, number>();
   for (const o of pedidosAtivos) {
-    const day = o.placedAt.toISOString().slice(0, 10);
+    const day = dataParaBrasilia(o.placedAt);
     revenueByDayMap.set(day, (revenueByDayMap.get(day) ?? 0) + o.totalCents);
   }
   const revenueByDay = [...revenueByDayMap.entries()]
@@ -300,10 +338,10 @@ export async function getPartnerReports(context: PartnerContext, filters: Report
     .map(([method, count]) => ({ method, count }))
     .sort((a, b) => b.count - a.count);
 
-  // Vendas por hora
+  // Vendas por hora — hora em Brasília (America/Sao_Paulo)
   const hourMap = new Map<number, { count: number; revenueCents: number }>();
   for (const o of pedidosAtivos) {
-    const h = o.placedAt.getHours();
+    const h = horaEmBrasilia(o.placedAt);
     const cur = hourMap.get(h) ?? { count: 0, revenueCents: 0 };
     hourMap.set(h, { count: cur.count + 1, revenueCents: cur.revenueCents + o.totalCents });
   }

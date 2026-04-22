@@ -144,8 +144,12 @@ function formatarDiaMes(dateStr: string): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 }
 
+/**
+ * Formata um Date para "YYYY-MM-DD" usando o fuso horário de Brasília.
+ * Evita o problema de toISOString() retornar a data UTC (que entre 00:00-02:59 BRT é o dia seguinte).
+ */
 function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 }
 
 function calcularPeriodo(periodo: PeriodoRapido): { from: string; to: string } {

@@ -18,7 +18,8 @@ export function GraficoTempoReal({ totalOrders, totalRevenueCents, averageTicket
   useEffect(() => {
     const intervalo = setInterval(async () => {
       try {
-        const hoje = new Date().toISOString().substring(0, 10);
+        // Usar timezone de Brasília para obter a data correta de "hoje"
+        const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
         const res = await fetch(`/api/relatorios-hoje?from=${hoje}&to=${hoje}`);
         if (res.ok) {
           const json = await res.json();

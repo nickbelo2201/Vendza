@@ -89,6 +89,28 @@ function partnerContext(request: FastifyRequest) {
   return request.partnerContext as PartnerContext;
 }
 
+/**
+ * Converte uma data "YYYY-MM-DD" para o início do dia em Brasília (00:00 BRT = 03:00 UTC).
+ * Critério padronizado: "pedido do dia" = criado entre 00:00 e 23:59:59.999 em Brasília.
+ */
+function inicioDiaBrasilia(dateStr: string): Date {
+  return new Date(`${dateStr}T03:00:00.000Z`);
+}
+
+/**
+ * Converte uma data "YYYY-MM-DD" para o fim do dia em Brasília (23:59:59.999 BRT = 02:59:59.999 UTC do dia seguinte).
+ */
+function fimDiaBrasilia(dateStr: string): Date {
+  return new Date(new Date(`${dateStr}T03:00:00.000Z`).getTime() + 24 * 60 * 60 * 1000 - 1);
+}
+
+/**
+ * Retorna a data de hoje no fuso horário de Brasília, formato "YYYY-MM-DD".
+ */
+function hojeEmBrasilia(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+}
+
 // ─── Plugin Fastify ───────────────────────────────────────────────────────────
 
 export default async function financeiroRoutes(app: FastifyInstance) {
@@ -102,9 +124,13 @@ export default async function financeiroRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const { from, to } = request.query;
-      const agora = new Date();
-      const dataFim = to ? new Date(to) : agora;
-      const dataInicio = from ? new Date(from) : new Date(agora.getFullYear(), agora.getMonth(), 1);
+      const hojeStr = hojeEmBrasilia();
+      const dataFim = to ? fimDiaBrasilia(to) : fimDiaBrasilia(hojeStr);
+      const dataInicio = from ? inicioDiaBrasilia(from) : (() => {
+        // Primeiro dia do mês em Brasília
+        const [ano, mes] = hojeStr.split("-");
+        return inicioDiaBrasilia(`${ano}-${mes}-01`);
+      })();
       return ok(await getFinanceiroKpis(partnerContext(request), dataInicio, dataFim));
     },
   );
@@ -141,9 +167,12 @@ export default async function financeiroRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const { from, to, status, metodo, busca, page, pageSize, orderBy, orderDir } = request.query;
-      const agora = new Date();
-      const dataFim = to ? new Date(to) : agora;
-      const dataInicio = from ? new Date(from) : new Date(agora.getFullYear(), agora.getMonth(), 1);
+      const hojeStr = hojeEmBrasilia();
+      const dataFim = to ? fimDiaBrasilia(to) : fimDiaBrasilia(hojeStr);
+      const dataInicio = from ? inicioDiaBrasilia(from) : (() => {
+        const [ano, mes] = hojeStr.split("-");
+        return inicioDiaBrasilia(`${ano}-${mes}-01`);
+      })();
       return ok(
         await getExtratoFinanceiro(partnerContext(request), {
           from: dataInicio,
@@ -178,11 +207,14 @@ export default async function financeiroRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const { from, to, tipo, status, metodo } = request.query;
-      const agora = new Date();
-      const dataFim = to ? new Date(to) : agora;
-      const dataInicio = from ? new Date(from) : new Date(agora.getFullYear(), agora.getMonth(), 1);
-      const fromStr = dataInicio.toISOString().substring(0, 10);
-      const toStr = dataFim.toISOString().substring(0, 10);
+      const hojeStr = hojeEmBrasilia();
+      const dataFim = to ? fimDiaBrasilia(to) : fimDiaBrasilia(hojeStr);
+      const dataInicio = from ? inicioDiaBrasilia(from) : (() => {
+        const [ano, mes] = hojeStr.split("-");
+        return inicioDiaBrasilia(`${ano}-${mes}-01`);
+      })();
+      const fromStr = from ?? `${hojeStr.split("-")[0]}-${hojeStr.split("-")[1]}-01`;
+      const toStr = to ?? hojeStr;
       const nomeArquivo = `financeiro_${tipo ?? "completo"}_${fromStr}_a_${toStr}.csv`;
       const csv = await exportarFinanceiro(partnerContext(request), {
         from: dataInicio,

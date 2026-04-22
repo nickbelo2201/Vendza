@@ -11,8 +11,12 @@ const OPCOES: Opcao[] = [
   { label: "30 dias", dias: 30 },
 ];
 
+/**
+ * Formata um Date para "YYYY-MM-DD" usando o fuso horário de Brasília.
+ * Evita o problema de toISOString() retornar a data UTC (que entre 00:00-02:59 BRT é o dia seguinte).
+ */
 function formatarData(d: Date): string {
-  return d.toISOString().substring(0, 10);
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 }
 
 function formatarDataBR(iso: string): string {
