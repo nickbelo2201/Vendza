@@ -19,7 +19,7 @@ async function verificarAcesso() {
 
 async function fetchStoreId(): Promise<string | null> {
   try {
-    const settings = await fetchAPI<StoreSettings>("/partner/store/settings");
+    const settings = await fetchAPI<StoreSettings>("/partner/configuracoes/loja");
     return settings.id;
   } catch {
     return null;

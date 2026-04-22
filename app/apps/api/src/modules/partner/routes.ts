@@ -4,13 +4,11 @@ import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { prisma } from "@vendza/database";
 import { envelopeSchema, ok, notFound, badRequest } from "../../lib/http.js";
 import {
-  createInventoryMovement,
   createPartnerCategory,
   createPartnerProduct,
   deletePartnerCategory,
   deletePartnerProduct,
   findProductByBarcode,
-  getInventory,
   listPartnerCategories,
   listPartnerProducts,
   updatePartnerCategory,
@@ -75,14 +73,7 @@ import {
   getExtratoFinanceiro,
   exportarFinanceiro,
 } from "./financeiro-service.js";
-import {
-  getDeliveryZones,
-  getStoreHours,
-  getStoreSettings,
-  updateDeliveryZones,
-  updateStoreHours,
-  updateStoreSettings,
-} from "./store-service.js";
+import { getStoreHours, updateStoreHours } from "./store-service.js";
 
 const OrderFiltersSchema = Type.Object({
   status: Type.Optional(Type.String()),
@@ -148,12 +139,6 @@ const AvailabilitySchema = Type.Object({
   isAvailable: Type.Boolean(),
 });
 
-const InventoryMovementSchema = Type.Object({
-  productId: Type.String(),
-  quantityDelta: Type.Integer(),
-  reason: Type.String(),
-});
-
 const CategoryCreateSchema = Type.Object({
   name: Type.String({ minLength: 1 }),
   slug: Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" }),
@@ -172,12 +157,6 @@ const CustomerUpdateSchema = Type.Object({
   isInactive: Type.Optional(Type.Boolean()),
 });
 
-const StoreSettingsSchema = Type.Object({
-  name: Type.Optional(Type.String()),
-  whatsappPhone: Type.Optional(Type.String()),
-  minimumOrderValueCents: Type.Optional(Type.Integer({ minimum: 0 })),
-});
-
 const StoreHourSchema = Type.Object({
   dayOfWeek: Type.Integer({ minimum: 0, maximum: 6 }),
   opensAt: Type.String({ pattern: "^\\d{2}:\\d{2}$" }),
@@ -185,16 +164,6 @@ const StoreHourSchema = Type.Object({
   isClosed: Type.Optional(Type.Boolean()),
 });
 const StoreHoursBodySchema = Type.Array(StoreHourSchema, { maxItems: 7 });
-
-const DeliveryZoneInputSchema = Type.Object({
-  id: Type.Optional(Type.String()),
-  label: Type.String({ minLength: 1, maxLength: 200 }),
-  feeCents: Type.Integer({ minimum: 0 }),
-  etaMinutes: Type.String(),
-  neighborhoods: Type.Array(Type.String()),
-  radiusKm: Type.Number({ minimum: 0 }),
-});
-const DeliveryZonesBodySchema = Type.Array(DeliveryZoneInputSchema);
 
 const DeliveryZoneBodySchema = Type.Object({
   label: Type.String({ minLength: 1 }),
@@ -243,13 +212,10 @@ type StatusUpdateBody = Static<typeof StatusUpdateSchema>;
 type ManualOrderBody = Static<typeof ManualOrderSchema>;
 type ProductUpsertBody = Static<typeof ProductUpsertSchema>;
 type AvailabilityBody = Static<typeof AvailabilitySchema>;
-type InventoryMovementBody = Static<typeof InventoryMovementSchema>;
 type CategoryCreateBody = Static<typeof CategoryCreateSchema>;
 type CategoryPatchBody = Static<typeof CategoryPatchSchema>;
 type CustomerUpdateBody = Static<typeof CustomerUpdateSchema>;
-type StoreSettingsBody = Static<typeof StoreSettingsSchema>;
 type StoreHourBody = Static<typeof StoreHourSchema>;
-type DeliveryZoneInputBody = Static<typeof DeliveryZoneInputSchema>;
 type DeliveryZoneBody = Static<typeof DeliveryZoneBodySchema>;
 
 function partnerContext(request: FastifyRequest) {
@@ -571,42 +537,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  const InventoryQuerySchema = Type.Object({
-    page: Type.Optional(Type.Integer({ minimum: 1, default: 1 })),
-    pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 200, default: 50 })),
-  });
-
-  app.get<{ Querystring: { page?: number; pageSize?: number } }>(
-    "/partner/inventory",
-    {
-      schema: {
-        querystring: InventoryQuerySchema,
-        response: { 200: envelopeSchema(Type.Any()) },
-      },
-    },
-    async (request) =>
-      ok(await getInventory(partnerContext(request), request.query)),
-  );
-
-  app.post<{ Body: InventoryMovementBody }>(
-    "/partner/inventory/movements",
-    {
-      schema: {
-        body: InventoryMovementSchema,
-        response: { 201: envelopeSchema(Type.Any()) },
-      },
-    },
-    async (request, reply) => {
-      const movement = await createInventoryMovement(partnerContext(request), request.body);
-      if (!movement) {
-        return reply.code(404).send(notFound("Item de estoque nao encontrado."));
-      }
-      reply.code(201);
-      return ok(movement);
-    },
-  );
-
-  // ─── Gestão de Estoque (Grupo 1) ─────────────────────────────────────────────
+  // ─── Gestão de Estoque ───────────────────────────────────────────────────────
 
   app.get(
     "/partner/estoque",
@@ -801,56 +732,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  app.get("/partner/store/settings", { schema: { response: { 200: envelopeSchema(Type.Any()) } } }, async (request) =>
-    ok(await getStoreSettings(partnerContext(request))),
-  );
-
-  app.patch<{ Body: StoreSettingsBody }>(
-    "/partner/store/settings",
-    {
-      preHandler: requireRole("owner", "manager"),
-      schema: {
-        body: StoreSettingsSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
-      },
-    },
-    async (request) => ok(await updateStoreSettings(partnerContext(request), request.body)),
-  );
-
-  app.get(
-    "/partner/store/hours",
-    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
-    async (request) => ok(await getStoreHours(partnerContext(request))),
-  );
-
-  app.patch<{ Body: StoreHourBody[] }>(
-    "/partner/store/hours",
-    {
-      preHandler: requireRole("owner", "manager"),
-      schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } },
-    },
-    async (request) => ok(await updateStoreHours(partnerContext(request), request.body)),
-  );
-
-  app.get(
-    "/partner/store/delivery-zones",
-    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
-    async (request) => ok(await getDeliveryZones(partnerContext(request))),
-  );
-
-  app.patch<{ Body: DeliveryZoneInputBody[] }>(
-    "/partner/store/delivery-zones",
-    {
-      preHandler: requireRole("owner", "manager"),
-      schema: {
-        body: DeliveryZonesBodySchema,
-        response: { 200: envelopeSchema(Type.Array(Type.Any())) },
-      },
-    },
-    async (request) => ok(await updateDeliveryZones(partnerContext(request), request.body)),
-  );
-
-  // ─── Zonas de Entrega (Grupo 3) ──────────────────────────────────────────────
+  // ─── Zonas de Entrega ────────────────────────────────────────────────────────
 
   app.get(
     "/partner/configuracoes/zonas-entrega",

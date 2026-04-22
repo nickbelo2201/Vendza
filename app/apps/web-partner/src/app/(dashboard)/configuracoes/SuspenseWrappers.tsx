@@ -100,7 +100,7 @@ export function SettingsSuspenseWrapper({
 
 async function getSettings(): Promise<StoreSettings | null> {
   try {
-    return await fetchAPI<StoreSettings>("/partner/store/settings");
+    return await fetchAPI<StoreSettings>("/partner/configuracoes/loja");
   } catch (err) {
     if (err instanceof ApiError) return null;
     return null;
@@ -109,7 +109,7 @@ async function getSettings(): Promise<StoreSettings | null> {
 
 async function getZonas(): Promise<Zona[]> {
   try {
-    return await fetchAPI<Zona[]>("/partner/store/delivery-zones");
+    return await fetchAPI<Zona[]>("/partner/configuracoes/zonas-entrega");
   } catch {
     return [];
   }
@@ -117,7 +117,7 @@ async function getZonas(): Promise<Zona[]> {
 
 async function getHorarios(): Promise<HorarioDia[]> {
   try {
-    return await fetchAPI<HorarioDia[]>("/partner/store/hours");
+    return await fetchAPI<HorarioDia[]>("/partner/configuracoes/horarios");
   } catch {
     return [];
   }

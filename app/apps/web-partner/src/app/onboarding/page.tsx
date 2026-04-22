@@ -6,7 +6,7 @@ import { OnboardingWizard } from "./OnboardingWizard";
 
 export default async function OnboardingPage() {
   try {
-    await fetchAPI("/partner/store/settings");
+    await fetchAPI("/partner/configuracoes/loja");
     // Se chegou aqui, o usuário já tem loja — redireciona para o dashboard
     redirect("/");
   } catch (err) {

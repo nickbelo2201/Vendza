@@ -6,7 +6,7 @@ type StoreSettings = { status: string };
 
 async function getStatusLoja(): Promise<"open" | "closed"> {
   try {
-    const settings = await fetchAPI<StoreSettings>("/partner/store/settings");
+    const settings = await fetchAPI<StoreSettings>("/partner/configuracoes/loja");
     return settings.status === "open" ? "open" : "closed";
   } catch {
     return "closed";

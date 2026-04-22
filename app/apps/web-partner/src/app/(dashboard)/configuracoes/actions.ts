@@ -19,8 +19,8 @@ export async function salvarConfiguracoes(dados: {
   status?: "open" | "closed" | "paused";
   minimumOrderValueCents?: number;
 }) {
-  await fetchAPI("/partner/store/settings", {
-    method: "PATCH",
+  await fetchAPI("/partner/configuracoes/loja", {
+    method: "PUT",
     body: dados,
   });
   revalidatePath("/configuracoes");
@@ -75,8 +75,8 @@ export async function salvarZonasEntrega(
 // ─── Aba Horários ─────────────────────────────────────────────────────────────
 
 export async function salvarHorarios(horarios: HorarioDia[]) {
-  await fetchAPI("/partner/store/hours", {
-    method: "PATCH",
+  await fetchAPI("/partner/configuracoes/horarios", {
+    method: "PUT",
     body: horarios,
   });
   revalidatePath("/configuracoes");
@@ -85,8 +85,8 @@ export async function salvarHorarios(horarios: HorarioDia[]) {
 // ─── Toggle rápido de status (usado no header) ────────────────────────────────
 
 export async function toggleStatusLoja(status: "open" | "closed") {
-  await fetchAPI("/partner/store/settings", {
-    method: "PATCH",
+  await fetchAPI("/partner/configuracoes/loja", {
+    method: "PUT",
     body: { status },
   });
   revalidatePath("/");
