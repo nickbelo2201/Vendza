@@ -5,11 +5,6 @@ export function formatCurrency(cents: number) {
   }).format(cents / 100);
 }
 
-export function buildOrderPublicId(prefix = "INF") {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  return `${prefix}-${timestamp}`;
-}
-
 export function buildApiUrl(pathname: string) {
   const maybeProcess = globalThis as {
     process?: {
