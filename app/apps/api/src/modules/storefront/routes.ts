@@ -15,6 +15,239 @@ import {
   quoteCartReal,
 } from "./storefront-service.js";
 
+// ─── Schemas de resposta — storefront ────────────────────────────────────────
+
+/** Schema de hora de funcionamento da loja */
+const StoreHourSchema = Type.Object({
+  weekday: Type.Integer(),
+  opensAt: Type.String(),
+  closesAt: Type.String(),
+  isClosed: Type.Boolean(),
+});
+
+/** Schema de configuração pública da loja */
+const StorefrontConfigSchema = Type.Object({
+  id: Type.String(),
+  branding: Type.Object({
+    name: Type.String(),
+    slug: Type.String(),
+    logoUrl: Type.Union([Type.String(), Type.Null()]),
+  }),
+  status: Type.String(),
+  whatsappPhone: Type.Union([Type.String(), Type.Null()]),
+  minimumOrderValueCents: Type.Integer(),
+  paymentMethods: Type.Array(Type.String()),
+  hours: Type.Array(StoreHourSchema),
+  legalNotice: Type.String(),
+});
+
+/** Schema de subcategoria */
+const SubcategorySchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  slug: Type.String(),
+  sortOrder: Type.Integer(),
+});
+
+/** Schema de categoria com filhos */
+const CategorySchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  slug: Type.String(),
+  sortOrder: Type.Integer(),
+  children: Type.Array(SubcategorySchema),
+});
+
+/** Schema de categoria resumida (sem filhos) */
+const CategoryRefSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  slug: Type.String(),
+});
+
+/** Schema de produto público (listagem e detalhe) */
+const StorefrontProductSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  slug: Type.String(),
+  description: Type.Union([Type.String(), Type.Null()]),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
+  listPriceCents: Type.Integer(),
+  salePriceCents: Type.Union([Type.Integer(), Type.Null()]),
+  isAvailable: Type.Boolean(),
+  isFeatured: Type.Boolean(),
+  offer: Type.Boolean(),
+  category: Type.Union([CategoryRefSchema, Type.Null()]),
+});
+
+/** Schema de produto com campo categorySlug (retorno de getProductBySlugReal) */
+const StorefrontProductDetailSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  slug: Type.String(),
+  description: Type.Union([Type.String(), Type.Null()]),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
+  listPriceCents: Type.Integer(),
+  salePriceCents: Type.Union([Type.Integer(), Type.Null()]),
+  isAvailable: Type.Boolean(),
+  isFeatured: Type.Boolean(),
+  offer: Type.Boolean(),
+  categorySlug: Type.Union([Type.String(), Type.Null()]),
+  category: Type.Union([CategoryRefSchema, Type.Null()]),
+});
+
+/** Schema de paginação */
+const PaginationSchema = Type.Object({
+  page: Type.Integer(),
+  pageSize: Type.Integer(),
+  total: Type.Integer(),
+  totalPages: Type.Integer(),
+});
+
+/** Schema de listagem paginada de produtos */
+const ProductsListSchema = Type.Object({
+  items: Type.Array(StorefrontProductSchema),
+  pagination: PaginationSchema,
+});
+
+/** Schema de item cotado no carrinho */
+const QuotedItemSchema = Type.Object({
+  productId: Type.String(),
+  name: Type.String(),
+  quantity: Type.Integer(),
+  unitPriceCents: Type.Integer(),
+  totalPriceCents: Type.Integer(),
+});
+
+/** Schema de cotação do carrinho */
+const CartQuoteSchema = Type.Object({
+  items: Type.Array(QuotedItemSchema),
+  subtotalCents: Type.Integer(),
+  deliveryFeeCents: Type.Integer(),
+  discountCents: Type.Integer(),
+  totalCents: Type.Integer(),
+  etaMinutes: Type.Union([Type.Integer(), Type.Null()]),
+  validUntil: Type.String(),
+});
+
+/** Schema de retorno ao criar pedido */
+const OrderCreatedSchema = Type.Object({
+  publicId: Type.String(),
+  totalCents: Type.Integer(),
+  status: Type.String(),
+});
+
+/** Schema de item do pedido */
+const OrderItemSchema = Type.Object({
+  id: Type.String(),
+  productId: Type.String(),
+  productName: Type.String(),
+  quantity: Type.Integer(),
+  unitPriceCents: Type.Integer(),
+  totalPriceCents: Type.Integer(),
+});
+
+/** Schema de evento da timeline */
+const TimelineEventSchema = Type.Object({
+  type: Type.String(),
+  label: Type.String(),
+  createdAt: Type.String(),
+});
+
+/** Schema completo do pedido para rastreamento */
+const OrderTrackingSchema = Type.Object({
+  id: Type.String(),
+  publicId: Type.String(),
+  status: Type.String(),
+  channel: Type.String(),
+  paymentMethod: Type.String(),
+  customerName: Type.String(),
+  customerPhone: Type.String(),
+  subtotalCents: Type.Integer(),
+  deliveryFeeCents: Type.Integer(),
+  discountCents: Type.Integer(),
+  totalCents: Type.Integer(),
+  notes: Type.Union([Type.String(), Type.Null()]),
+  placedAt: Type.Unsafe<Date | string>({}),
+  items: Type.Array(OrderItemSchema),
+  events: Type.Array(Type.Object({ id: Type.String(), type: Type.String(), createdAt: Type.Unsafe<Date | string>({}) })),
+  timeline: Type.Array(TimelineEventSchema),
+});
+
+/** Schema de cliente resumido */
+const CustomerRefSchema = Type.Union([
+  Type.Object({ id: Type.String(), name: Type.String() }),
+  Type.Null(),
+]);
+
+/** Schema de item do pedido no histórico do cliente */
+const ClienteOrderItemSchema = Type.Object({
+  id: Type.String(),
+  productId: Type.String(),
+  productName: Type.String(),
+  quantity: Type.Integer(),
+  unitPriceCents: Type.Integer(),
+  totalPriceCents: Type.Integer(),
+});
+
+/** Schema de evento de timeline no histórico do cliente */
+const ClienteTimelineEventSchema = Type.Object({
+  type: Type.String(),
+  label: Type.String(),
+  createdAt: Type.String(),
+});
+
+/** Schema de pedido no histórico do cliente */
+const ClienteOrderSchema = Type.Object({
+  id: Type.String(),
+  publicId: Type.String(),
+  status: Type.String(),
+  statusLabel: Type.String(),
+  paymentMethod: Type.String(),
+  subtotalCents: Type.Integer(),
+  deliveryFeeCents: Type.Integer(),
+  totalCents: Type.Integer(),
+  placedAt: Type.String(),
+  items: Type.Array(ClienteOrderItemSchema),
+  events: Type.Array(Type.Object({ id: Type.String(), type: Type.String(), createdAt: Type.Unsafe<Date | string>({}) })),
+  timeline: Type.Array(ClienteTimelineEventSchema),
+});
+
+/** Schema de pedidos do cliente */
+const ClientePedidosSchema = Type.Object({
+  customer: CustomerRefSchema,
+  orders: Type.Array(ClienteOrderSchema),
+  total: Type.Integer(),
+  page: Type.Integer(),
+  pageSize: Type.Integer(),
+  totalPages: Type.Integer(),
+});
+
+/** Schema de resultado de cálculo de frete (zona encontrada) */
+const FreteZonaSchema = Type.Object({
+  zonaId: Type.String(),
+  label: Type.String(),
+  feeCents: Type.Integer(),
+  etaMinutes: Type.Integer(),
+  minimumOrderCents: Type.Integer(),
+  freeShippingAboveCents: Type.Integer(),
+});
+
+/** Schema de resultado de cálculo de frete (fora da área) */
+const FreteForaSchema = Type.Object({
+  fora: Type.Literal(true),
+  motivo: Type.Optional(Type.String()),
+});
+
+/** Schema de bootstrap (config + categorias + produtos) */
+const BootstrapSchema = Type.Object({
+  config: StorefrontConfigSchema,
+  categories: Type.Array(CategorySchema),
+  products: Type.Array(StorefrontProductSchema),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const ProductFiltersSchema = Type.Object({
   category: Type.Optional(Type.String()),
   search: Type.Optional(Type.String()),
@@ -93,7 +326,7 @@ async function resolveStoreId(): Promise<string> {
 }
 
 export const storefrontRoutes: FastifyPluginAsync = async (app) => {
-  app.get("/storefront/config", { schema: { response: { 200: envelopeSchema(Type.Any()) } } }, async () => {
+  app.get("/storefront/config", { schema: { response: { 200: envelopeSchema(StorefrontConfigSchema) } } }, async () => {
     const storeSlug = process.env.STORE_SLUG;
     if (!storeSlug) throw new Error("STORE_SLUG não configurado.");
     const config = await getStorefrontConfig(storeSlug);
@@ -101,7 +334,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     return ok(config, { stub: false });
   });
 
-  app.get("/storefront/bootstrap", { schema: { response: { 200: envelopeSchema(Type.Any()) } } }, async () => {
+  app.get("/storefront/bootstrap", { schema: { response: { 200: envelopeSchema(BootstrapSchema) } } }, async () => {
     const storeSlug = process.env.STORE_SLUG;
     if (!storeSlug) throw new Error("STORE_SLUG não configurado.");
     const bootstrap = await getBootstrap(storeSlug);
@@ -109,7 +342,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     return ok(bootstrap, { stub: false });
   });
 
-  app.get("/catalog/categories", { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } }, async () => {
+  app.get("/catalog/categories", { schema: { response: { 200: envelopeSchema(Type.Array(CategorySchema)) } } }, async () => {
     const storeId = await resolveStoreId();
     const categories = await getCategories(storeId);
     return ok(categories, { stub: false });
@@ -120,7 +353,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         querystring: ProductFiltersSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ProductsListSchema) },
       },
     },
     async ({ query }) => {
@@ -135,7 +368,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         params: Type.Object({ slug: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(StorefrontProductDetailSchema) },
       },
     },
     async ({ params }, reply) => {
@@ -153,7 +386,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         body: QuoteBodySchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CartQuoteSchema) },
       },
     },
     async ({ body }, reply) => {
@@ -173,7 +406,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
       config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
       schema: {
         body: CreateOrderBodySchema,
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(OrderCreatedSchema) },
       },
     },
     async ({ body }, reply) => {
@@ -189,7 +422,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         params: Type.Object({ publicId: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(OrderTrackingSchema) },
       },
     },
     async ({ params }, reply) => {
@@ -217,7 +450,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
       config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
       schema: {
         querystring: ClientePedidosQuerySchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ClientePedidosSchema) },
       },
     },
     async ({ query }) => {
@@ -246,7 +479,7 @@ export const storefrontRoutes: FastifyPluginAsync = async (app) => {
     {
       schema: {
         body: CalcularFreteBodySchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(Type.Union([FreteZonaSchema, FreteForaSchema])) },
       },
     },
     async ({ body }) => {

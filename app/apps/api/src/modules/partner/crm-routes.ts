@@ -18,6 +18,106 @@ import { type PartnerContext } from "./context.js";
 
 // ─── Schemas TypeBox ──────────────────────────────────────────────────────────
 
+// ─── Schemas de resposta ──────────────────────────────────────────────────────
+
+/** Schema de cliente resumido */
+const CustomerSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  phone: Type.String(),
+  email: Type.Union([Type.String(), Type.Null()]),
+  totalSpentCents: Type.Integer(),
+  isInactive: Type.Boolean(),
+  lastOrderAt: Type.Union([Type.String(), Type.Null()]),
+});
+
+/** Schema de listagem paginada de clientes */
+const CustomerListSchema = Type.Object({
+  items: Type.Array(CustomerSchema),
+  pagination: Type.Object({
+    page: Type.Integer(),
+    pageSize: Type.Integer(),
+    total: Type.Integer(),
+    totalPages: Type.Integer(),
+  }),
+});
+
+/** Schema de tag do cliente */
+const CustomerTagSchema = Type.Object({
+  id: Type.String(),
+  label: Type.String(),
+  createdAt: Type.Unsafe<Date | string>({}),
+});
+
+/** Schema de nota do cliente */
+const CustomerNoteSchema = Type.Object({
+  id: Type.String(),
+  body: Type.String(),
+  createdAt: Type.Unsafe<Date | string>({}),
+});
+
+/** Schema de resumo do dashboard */
+const DashboardSummarySchema = Type.Object({
+  ordersToday: Type.Integer(),
+  revenueCents: Type.Integer(),
+  averageTicketCents: Type.Integer(),
+  recurringCustomers: Type.Integer(),
+  newCustomers: Type.Integer(),
+});
+
+/** Schema de item de receita por dia */
+const RevenueByDaySchema = Type.Object({ date: Type.String(), revenueCents: Type.Integer() });
+
+/** Schema de produto top */
+const TopProductSchema = Type.Object({
+  name: Type.String(),
+  quantity: Type.Integer(),
+  revenueCents: Type.Integer(),
+});
+
+/** Schema de distribuição de pagamento */
+const PaymentDistributionSchema = Type.Object({ method: Type.String(), count: Type.Integer() });
+
+/** Schema de vendas por hora */
+const SalesByHourSchema = Type.Object({ hour: Type.Integer(), count: Type.Integer(), revenueCents: Type.Integer() });
+
+/** Schema de top cliente */
+const TopClienteSchema = Type.Object({
+  name: Type.String(),
+  totalOrders: Type.Integer(),
+  totalRevenueCents: Type.Integer(),
+  firstOrderDate: Type.String(),
+  lastOrderDate: Type.String(),
+});
+
+/** Schema de relatório partner */
+const PartnerReportSchema = Type.Object({
+  period: Type.Object({ from: Type.String(), to: Type.String() }),
+  totalRevenueCents: Type.Integer(),
+  totalOrders: Type.Integer(),
+  averageTicketCents: Type.Integer(),
+  newCustomers: Type.Integer(),
+  topProducts: Type.Array(TopProductSchema),
+  revenueByDay: Type.Array(RevenueByDaySchema),
+  cancelledOrders: Type.Integer(),
+  cancellationRate: Type.Number(),
+  repeatCustomers: Type.Integer(),
+  repeatRate: Type.Number(),
+  paymentDistribution: Type.Array(PaymentDistributionSchema),
+  salesByHour: Type.Array(SalesByHourSchema),
+  topClientes: Type.Array(TopClienteSchema),
+});
+
+/** Schema de remoção de tag */
+const RemovedTagSchema = Type.Object({ removed: Type.Literal(true) });
+
+/** Schema de perfil do usuário autenticado */
+const MeSchema = Type.Object({
+  userId: Type.String(),
+  storeId: Type.String(),
+  role: Type.String(),
+});
+
 const CustomerUpdateSchema = Type.Object({
   name: Type.Optional(Type.String()),
   isInactive: Type.Optional(Type.Boolean()),
@@ -43,7 +143,7 @@ function partnerContext(request: FastifyRequest) {
 export default async function crmRoutes(app: FastifyInstance) {
   // ─── Dashboard e Relatórios ───────────────────────────────────────────────
 
-  app.get("/partner/dashboard/summary", { schema: { response: { 200: envelopeSchema(Type.Any()) } } }, async (request) =>
+  app.get("/partner/dashboard/summary", { schema: { response: { 200: envelopeSchema(DashboardSummarySchema) } } }, async (request) =>
     ok(await getDashboardSummary(partnerContext(request))),
   );
 
@@ -55,7 +155,7 @@ export default async function crmRoutes(app: FastifyInstance) {
           from: Type.Optional(Type.String()),
           to: Type.Optional(Type.String()),
         }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(PartnerReportSchema) },
       },
     },
     async (request, reply) => {
@@ -81,7 +181,7 @@ export default async function crmRoutes(app: FastifyInstance) {
     {
       schema: {
         querystring: CustomerListQuerySchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CustomerListSchema) },
       },
     },
     async (request) =>
@@ -93,7 +193,7 @@ export default async function crmRoutes(app: FastifyInstance) {
     {
       schema: {
         params: Type.Object({ id: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CustomerSchema) },
       },
     },
     async (request, reply) => {
@@ -111,7 +211,7 @@ export default async function crmRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: CustomerUpdateSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CustomerSchema) },
       },
     },
     async (request, reply) => {
@@ -127,7 +227,7 @@ export default async function crmRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { id: string } }>(
     "/partner/customers/:id/tags",
-    { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Array(CustomerTagSchema)) } } },
     async (request, reply) => {
       const tags = await listCustomerTags(partnerContext(request), request.params.id);
       if (tags === null) return reply.code(404).send(notFound("Cliente nao encontrado."));
@@ -141,7 +241,7 @@ export default async function crmRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: Type.Object({ label: Type.String({ minLength: 1, maxLength: 50 }) }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CustomerTagSchema) },
       },
     },
     async (request, reply) => {
@@ -153,7 +253,7 @@ export default async function crmRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string; label: string } }>(
     "/partner/customers/:id/tags/:label",
-    { schema: { params: Type.Object({ id: Type.String(), label: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { params: Type.Object({ id: Type.String(), label: Type.String() }), response: { 200: envelopeSchema(RemovedTagSchema) } } },
     async (request, reply) => {
       const removed = await removeCustomerTag(
         partnerContext(request),
@@ -169,7 +269,7 @@ export default async function crmRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { id: string } }>(
     "/partner/customers/:id/notas",
-    { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { params: Type.Object({ id: Type.String() }), response: { 200: envelopeSchema(Type.Array(CustomerNoteSchema)) } } },
     async (request, reply) => {
       const notas = await listCustomerNotes(partnerContext(request), request.params.id);
       if (notas === null) return reply.code(404).send(notFound("Cliente nao encontrado."));
@@ -183,7 +283,7 @@ export default async function crmRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: Type.Object({ body: Type.String({ minLength: 1 }) }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CustomerNoteSchema) },
       },
     },
     async (request, reply) => {

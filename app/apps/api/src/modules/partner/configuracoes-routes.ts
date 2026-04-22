@@ -24,6 +24,84 @@ import { requireRole } from "./require-role.js";
 
 // ─── Schemas TypeBox ──────────────────────────────────────────────────────────
 
+// ─── Schemas de resposta ──────────────────────────────────────────────────────
+
+/** Schema de dados da loja */
+const LojaResponseSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  slug: Type.String(),
+  whatsappPhone: Type.Union([Type.String(), Type.Null()]),
+  status: Type.String(),
+  minimumOrderValueCents: Type.Integer(),
+});
+
+/** Schema de horário de funcionamento */
+const StoreHourResponseSchema = Type.Object({
+  dayOfWeek: Type.Integer(),
+  opensAt: Type.String(),
+  closesAt: Type.String(),
+  isClosed: Type.Boolean(),
+});
+
+/** Schema de conta bancária */
+const ContaBancariaResponseSchema = Type.Union([
+  Type.Object({
+    keyType: Type.String(),
+    lastFourDigits: Type.String(),
+    bankName: Type.Union([Type.String(), Type.Null()]),
+  }),
+  Type.Null(),
+]);
+
+/** Schema de perfil do usuário logado */
+const MeResponseSchema = Type.Object({
+  userId: Type.String(),
+  storeId: Type.String(),
+  role: Type.String(),
+});
+
+/** Schema de usuário da loja */
+const StoreUserResponseSchema = Type.Object({
+  id: Type.String(),
+  userId: Type.String(),
+  role: Type.String(),
+  user: Type.Object({
+    id: Type.String(),
+    name: Type.Union([Type.String(), Type.Null()]),
+    email: Type.String(),
+  }),
+});
+
+/** Schema de convite */
+const ConviteResponseSchema = Type.Object({
+  id: Type.String(),
+  email: Type.String(),
+  role: Type.String(),
+  storeId: Type.String(),
+  isActive: Type.Boolean(),
+  createdAt: Type.Unsafe<Date | string>({}),
+});
+
+/** Schema de revogação de usuário */
+const RevogarUsuarioResponseSchema = Type.Object({ revoked: Type.Literal(true), userId: Type.String() });
+
+/** Schema de zona de entrega */
+const DeliveryZoneResponseSchema = Type.Object({
+  id: Type.String(),
+  label: Type.String(),
+  mode: Type.String(),
+  radiusKm: Type.Number(),
+  neighborhoods: Type.Array(Type.String()),
+  centerLat: Type.Union([Type.Number(), Type.Null()]),
+  centerLng: Type.Union([Type.Number(), Type.Null()]),
+  feeCents: Type.Integer(),
+  etaMinutes: Type.Integer(),
+  minimumOrderCents: Type.Integer(),
+  freeShippingAboveCents: Type.Integer(),
+  isActive: Type.Boolean(),
+});
+
 const StoreHourSchema = Type.Object({
   dayOfWeek: Type.Integer({ minimum: 0, maximum: 6 }),
   opensAt: Type.String({ pattern: "^\\d{2}:\\d{2}$" }),
@@ -90,7 +168,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/configuracoes/loja",
-    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { response: { 200: envelopeSchema(LojaResponseSchema) } } },
     async (request) => ok(await getLoja(partnerContext(request))),
   );
 
@@ -100,7 +178,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner", "manager"),
       schema: {
         body: LojaUpdateSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(LojaResponseSchema) },
       },
     },
     async (request) => ok(await updateLoja(partnerContext(request), request.body)),
@@ -110,7 +188,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/configuracoes/horarios",
-    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { response: { 200: envelopeSchema(Type.Array(StoreHourResponseSchema)) } } },
     async (request) => ok(await getStoreHours(partnerContext(request))),
   );
 
@@ -118,7 +196,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
     "/partner/configuracoes/horarios",
     {
       preHandler: requireRole("owner", "manager"),
-      schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Any()) } },
+      schema: { body: StoreHoursBodySchema, response: { 200: envelopeSchema(Type.Array(StoreHourResponseSchema)) } },
     },
     async (request) => ok(await updateStoreHours(partnerContext(request), request.body)),
   );
@@ -127,7 +205,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/configuracoes/conta-bancaria",
-    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { response: { 200: envelopeSchema(ContaBancariaResponseSchema) } } },
     async (request) => ok(await getContaBancaria(partnerContext(request))),
   );
 
@@ -137,7 +215,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner"),
       schema: {
         body: ContaBancariaUpdateSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ContaBancariaResponseSchema) },
       },
     },
     async (request) => ok(await upsertContaBancaria(partnerContext(request), request.body)),
@@ -147,7 +225,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/me",
-    { schema: { response: { 200: envelopeSchema(Type.Any()) } } },
+    { schema: { response: { 200: envelopeSchema(MeResponseSchema) } } },
     async (request) => {
       const ctx = partnerContext(request);
       return ok({ userId: ctx.storeUserId, storeId: ctx.storeId, role: ctx.role });
@@ -158,7 +236,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/configuracoes/usuarios",
-    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    { schema: { response: { 200: envelopeSchema(Type.Array(StoreUserResponseSchema)) } } },
     async (request) => ok(await listUsuarios(partnerContext(request))),
   );
 
@@ -168,7 +246,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner", "manager"),
       schema: {
         body: ConviteSchema,
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(ConviteResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -189,7 +267,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner"),
       schema: {
         params: Type.Object({ id: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(RevogarUsuarioResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -205,7 +283,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/configuracoes/zonas-entrega",
-    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    { schema: { response: { 200: envelopeSchema(Type.Array(DeliveryZoneResponseSchema)) } } },
     async (request) => ok(await listDeliveryZones(partnerContext(request))),
   );
 
@@ -215,7 +293,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner", "manager"),
       schema: {
         body: DeliveryZoneBodySchema,
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(DeliveryZoneResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -243,7 +321,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: Type.Partial(DeliveryZoneBodySchema),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(DeliveryZoneResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -261,7 +339,7 @@ export default async function configuracoesRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(DeliveryZoneResponseSchema) },
       },
     },
     async (request, reply) => {

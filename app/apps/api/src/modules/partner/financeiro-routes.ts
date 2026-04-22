@@ -10,6 +10,78 @@ import {
 import { type PartnerContext } from "./context.js";
 import { requireRole } from "./require-role.js";
 
+// ─── Schemas de resposta ──────────────────────────────────────────────────────
+
+/** Schema de KPI com comparação de período anterior */
+const KpiComComparacaoSchema = Type.Object({
+  centavos: Type.Integer(),
+  comparacao: Type.Union([Type.Number(), Type.Null()]),
+});
+
+/** Schema de KPIs financeiros */
+const FinanceiroKpisSchema = Type.Object({
+  kpis: Type.Object({
+    receitaBruta: KpiComComparacaoSchema,
+    receitaLiquida: KpiComComparacaoSchema,
+    pedidosPagos: Type.Object({
+      count: Type.Integer(),
+      centavos: Type.Integer(),
+      comparacao: Type.Union([Type.Number(), Type.Null()]),
+    }),
+    pedidosPendentes: Type.Object({
+      count: Type.Integer(),
+      centavos: Type.Integer(),
+      pendentesAntigoCount: Type.Integer(),
+    }),
+    ticketMedio: KpiComComparacaoSchema,
+    cancelamentos: Type.Object({
+      count: Type.Integer(),
+      centavos: Type.Integer(),
+      comparacao: Type.Union([Type.Number(), Type.Null()]),
+    }),
+  }),
+  receitaPorDia: Type.Array(Type.Object({
+    date: Type.String(),
+    pagoCentavos: Type.Integer(),
+    totalCentavos: Type.Integer(),
+    pedidos: Type.Integer(),
+  })),
+  breakdownStatus: Type.Array(Type.Object({
+    status: Type.String(),
+    label: Type.String(),
+    count: Type.Integer(),
+    centavos: Type.Integer(),
+  })),
+  breakdownMetodo: Type.Array(Type.Object({
+    method: Type.String(),
+    label: Type.String(),
+    count: Type.Integer(),
+    centavos: Type.Integer(),
+  })),
+});
+
+/** Schema de item do extrato financeiro */
+const ExtratoItemSchema = Type.Object({
+  id: Type.String(),
+  publicId: Type.String(),
+  dataHora: Type.String(),
+  cliente: Type.String(),
+  valorBrutoCentavos: Type.Integer(),
+  taxasCentavos: Type.Integer(),
+  valorLiquidoCentavos: Type.Integer(),
+  metodoPagamento: Type.String(),
+  statusPagamento: Type.String(),
+});
+
+/** Schema de extrato paginado */
+const ExtratoFinanceiroSchema = Type.Object({
+  data: Type.Array(ExtratoItemSchema),
+  total: Type.Integer(),
+  page: Type.Integer(),
+  pageSize: Type.Integer(),
+  totalFiltradoCentavos: Type.Integer(),
+});
+
 function partnerContext(request: FastifyRequest) {
   if (!request.partnerContext) {
     throw new Error("Partner context not resolved.");
@@ -25,7 +97,7 @@ export default async function financeiroRoutes(app: FastifyInstance) {
     {
       schema: {
         querystring: Type.Object({ from: Type.Optional(Type.String()), to: Type.Optional(Type.String()) }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(FinanceiroKpisSchema) },
       },
     },
     async (request) => {
@@ -64,7 +136,7 @@ export default async function financeiroRoutes(app: FastifyInstance) {
           orderBy: Type.Optional(Type.String()),
           orderDir: Type.Optional(Type.String()),
         }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ExtratoFinanceiroSchema) },
       },
     },
     async (request) => {

@@ -22,6 +22,82 @@ import { requireRole } from "./require-role.js";
 
 // ─── Schemas TypeBox ──────────────────────────────────────────────────────────
 
+// ─── Schemas de resposta ──────────────────────────────────────────────────────
+
+/** Referência a categoria pai */
+const CategoryParentRefSchema = Type.Union([
+  Type.Object({ id: Type.String(), name: Type.String(), slug: Type.String() }),
+  Type.Null(),
+]);
+
+/** Schema de subcategoria (filho) */
+const SubCategoryResponseSchema = Type.Object({
+  id: Type.String(),
+  storeId: Type.String(),
+  parentCategoryId: Type.Union([Type.String(), Type.Null()]),
+  name: Type.String(),
+  slug: Type.String(),
+  sortOrder: Type.Integer(),
+  isActive: Type.Boolean(),
+  createdAt: Type.String(),
+  updatedAt: Type.String(),
+});
+
+/** Schema de categoria partner (com filhos) */
+const CategoryResponseSchema = Type.Object({
+  id: Type.String(),
+  storeId: Type.String(),
+  parentCategoryId: Type.Union([Type.String(), Type.Null()]),
+  name: Type.String(),
+  slug: Type.String(),
+  sortOrder: Type.Integer(),
+  isActive: Type.Boolean(),
+  createdAt: Type.String(),
+  updatedAt: Type.String(),
+  children: Type.Optional(Type.Array(SubCategoryResponseSchema)),
+});
+
+/** Schema de produto partner */
+const ProductResponseSchema = Type.Object({
+  id: Type.String(),
+  categoryId: Type.Union([Type.String(), Type.Null()]),
+  categorySlug: Type.Union([Type.String(), Type.Null()]),
+  categoryName: Type.Union([Type.String(), Type.Null()]),
+  parentCategoryId: Type.Union([Type.String(), Type.Null()]),
+  parentCategoryName: Type.Union([Type.String(), Type.Null()]),
+  parentCategorySlug: Type.Union([Type.String(), Type.Null()]),
+  name: Type.String(),
+  slug: Type.String(),
+  description: Type.String(),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
+  listPriceCents: Type.Integer(),
+  salePriceCents: Type.Integer(),
+  isAvailable: Type.Boolean(),
+  isFeatured: Type.Boolean(),
+  barcode: Type.Union([Type.String(), Type.Null()]),
+  offer: Type.Boolean(),
+});
+
+/** Schema de listagem paginada de produtos partner */
+const ProductsListResponseSchema = Type.Object({
+  produtos: Type.Array(ProductResponseSchema),
+  total: Type.Integer(),
+  pagina: Type.Integer(),
+  limite: Type.Integer(),
+  totalPaginas: Type.Integer(),
+});
+
+/** Schema de resultado de deleção de categoria */
+const DeleteCategoryResponseSchema = Type.Object({ deleted: Type.Literal(true) });
+
+/** Schema de URL assinada para upload */
+const SignedUrlResponseSchema = Type.Object({
+  signedUrl: Type.String(),
+  token: Type.String(),
+  path: Type.String(),
+  publicUrl: Type.String(),
+});
+
 const ProductUpsertSchema = Type.Object({
   name: Type.String(),
   slug: Type.String(),
@@ -91,7 +167,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
 
   app.get(
     "/partner/categories",
-    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    { schema: { response: { 200: envelopeSchema(Type.Array(CategoryResponseSchema)) } } },
     async (request) => ok(await listPartnerCategories(partnerContext(request))),
   );
 
@@ -100,7 +176,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     {
       schema: {
         body: CategoryCreateSchema,
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(CategoryResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -124,7 +200,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: CategoryPatchSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(CategoryResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -142,7 +218,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(DeleteCategoryResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -161,7 +237,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     {
       schema: {
         querystring: ProductFiltersSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ProductsListResponseSchema) },
       },
     },
     async (request) => ok(await listPartnerProducts(partnerContext(request), request.query)),
@@ -194,7 +270,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     {
       schema: {
         body: ProductUpsertSchema,
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(ProductResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -209,7 +285,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: Type.Partial(ProductUpsertSchema),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ProductResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -227,7 +303,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: AvailabilitySchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ProductResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -249,7 +325,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(ProductResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -299,7 +375,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
           ext: Type.String(),
           productId: Type.Optional(Type.String()),
         }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(SignedUrlResponseSchema) },
       },
     },
     async (request, reply) => {

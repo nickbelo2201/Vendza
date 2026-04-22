@@ -9,6 +9,47 @@ import {
 } from "./estoque-service.js";
 import { type PartnerContext } from "./context.js";
 
+// ─── Schemas de resposta ──────────────────────────────────────────────────────
+
+/** Schema de item de estoque */
+const EstoqueItemSchema = Type.Object({
+  id: Type.String(),
+  productId: Type.String(),
+  productName: Type.String(),
+  currentStock: Type.Integer(),
+  safetyStock: Type.Integer(),
+  status: Type.Union([Type.Literal("critico"), Type.Literal("atencao"), Type.Literal("ok")]),
+  giro: Type.Number(),
+  curvaABC: Type.Union([Type.Literal("A"), Type.Literal("B"), Type.Literal("C")]),
+});
+
+/** Schema de movimentação registrada */
+const MovimentacaoResponseSchema = Type.Object({
+  id: Type.String(),
+  productId: Type.String(),
+  quantityDelta: Type.Integer(),
+  reason: Type.String(),
+  currentStock: Type.Integer(),
+  createdAt: Type.String(),
+});
+
+/** Schema de item do histórico de movimentações */
+const HistoricoItemSchema = Type.Object({
+  id: Type.String(),
+  type: Type.String(),
+  quantityDelta: Type.Integer(),
+  reason: Type.String(),
+  createdAt: Type.String(),
+});
+
+/** Schema de histórico paginado */
+const HistoricoEstoqueSchema = Type.Object({
+  data: Type.Array(HistoricoItemSchema),
+  total: Type.Integer(),
+  page: Type.Integer(),
+  pageSize: Type.Integer(),
+});
+
 function partnerContext(request: FastifyRequest) {
   if (!request.partnerContext) {
     throw new Error("Partner context not resolved.");
@@ -21,7 +62,7 @@ function partnerContext(request: FastifyRequest) {
 export default async function estoqueRoutes(app: FastifyInstance) {
   app.get(
     "/partner/estoque",
-    { schema: { response: { 200: envelopeSchema(Type.Array(Type.Any())) } } },
+    { schema: { response: { 200: envelopeSchema(Type.Array(EstoqueItemSchema)) } } },
     async (request) => ok(await getEstoque(partnerContext(request))),
   );
 
@@ -44,7 +85,7 @@ export default async function estoqueRoutes(app: FastifyInstance) {
           motivo: Type.Optional(Type.String()),
           dataHora: Type.Optional(Type.String()),
         }),
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(MovimentacaoResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -72,7 +113,7 @@ export default async function estoqueRoutes(app: FastifyInstance) {
           page: Type.Optional(Type.Integer({ minimum: 1 })),
           pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
         }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(HistoricoEstoqueSchema) },
       },
     },
     async (request, reply) => {

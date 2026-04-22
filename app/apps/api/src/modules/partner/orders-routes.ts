@@ -13,6 +13,70 @@ import { type PartnerContext } from "./context.js";
 
 // ─── Schemas TypeBox ──────────────────────────────────────────────────────────
 
+// ─── Schemas de resposta ──────────────────────────────────────────────────────
+
+/** Schema de item de pedido partner */
+const PartnerOrderItemSchema = Type.Object({
+  productId: Type.String(),
+  title: Type.String(),
+  quantity: Type.Integer(),
+  unitPriceCents: Type.Integer(),
+  totalCents: Type.Integer(),
+});
+
+/** Schema de endereço de entrega */
+const PartnerOrderAddressSchema = Type.Object({
+  line1: Type.String(),
+  number: Type.Optional(Type.String()),
+  neighborhood: Type.String(),
+  city: Type.String(),
+  state: Type.String(),
+});
+
+/** Schema de evento de timeline de pedido partner */
+const PartnerOrderTimelineEventSchema = Type.Object({
+  type: Type.String(),
+  label: Type.String(),
+  createdAt: Type.String(),
+  note: Type.Optional(Type.String()),
+  operadorId: Type.Union([Type.String(), Type.Null()]),
+});
+
+/** Schema completo de pedido partner */
+const PartnerOrderSchema = Type.Object({
+  id: Type.String(),
+  publicId: Type.String(),
+  status: Type.String(),
+  channel: Type.String(),
+  customerId: Type.String(),
+  customerName: Type.String(),
+  customerPhone: Type.String(),
+  paymentMethod: Type.String(),
+  subtotalCents: Type.Integer(),
+  deliveryFeeCents: Type.Integer(),
+  discountCents: Type.Integer(),
+  totalCents: Type.Integer(),
+  placedAt: Type.String(),
+  note: Type.Union([Type.String(), Type.Null()]),
+  address: PartnerOrderAddressSchema,
+  items: Type.Array(PartnerOrderItemSchema),
+  timeline: Type.Array(PartnerOrderTimelineEventSchema),
+});
+
+/** Schema de pedido criado com URL de rastreamento */
+const PartnerOrderCreatedSchema = Type.Intersect([
+  PartnerOrderSchema,
+  Type.Object({ trackingUrl: Type.String() }),
+]);
+
+/** Schema de listagem de pedidos partner */
+const PartnerOrderListSchema = Type.Object({
+  orders: Type.Array(PartnerOrderSchema),
+  total: Type.Integer(),
+  page: Type.Integer(),
+  pageSize: Type.Integer(),
+});
+
 const OrderFiltersSchema = Type.Object({
   status: Type.Optional(Type.String()),
   search: Type.Optional(Type.String()),
@@ -81,14 +145,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
       schema: {
         querystring: OrderFiltersSchema,
         response: {
-          200: envelopeSchema(
-            Type.Object({
-              orders: Type.Array(Type.Any()),
-              total: Type.Integer(),
-              page: Type.Integer(),
-              pageSize: Type.Integer(),
-            }),
-          ),
+          200: envelopeSchema(PartnerOrderListSchema),
         },
       },
     },
@@ -100,7 +157,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     {
       schema: {
         params: Type.Object({ id: Type.String() }),
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(PartnerOrderSchema) },
       },
     },
     async (request, reply) => {
@@ -118,7 +175,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
       schema: {
         params: Type.Object({ id: Type.String() }),
         body: StatusUpdateSchema,
-        response: { 200: envelopeSchema(Type.Any()) },
+        response: { 200: envelopeSchema(PartnerOrderSchema) },
       },
     },
     async (request, reply) => {
@@ -135,7 +192,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     {
       schema: {
         body: ManualOrderSchema,
-        response: { 201: envelopeSchema(Type.Any()) },
+        response: { 201: envelopeSchema(PartnerOrderCreatedSchema) },
       },
     },
     async (request, reply) => {
