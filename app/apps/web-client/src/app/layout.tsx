@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 };
 
 type StorefrontConfig = {
-  branding: { name: string };
+  branding: { name: string; logoUrl?: string | null };
 };
 
 export default async function RootLayout({
@@ -49,9 +49,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let nomeLoja = "Vendza";
+  let logoUrl: string | null = null;
   try {
     const config = await fetchStorefrontConfig<StorefrontConfig>("/storefront/config");
     nomeLoja = config.branding.name;
+    logoUrl = config.branding.logoUrl ?? null;
   } catch {
     // silencia erros no layout para não travar toda a app
   }
@@ -72,7 +74,7 @@ export default async function RootLayout({
         <CarrinhoProvider>
           <div className="wc-shell">
             <Suspense fallback={<header className="wc-header" />}>
-              <Header nomeLoja={nomeLoja} />
+              <Header nomeLoja={nomeLoja} logoUrl={logoUrl} />
             </Suspense>
             <div className="wc-content-area">
               <main className="wc-main">{children}</main>

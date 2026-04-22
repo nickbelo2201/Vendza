@@ -1,9 +1,36 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
 
+import { createClient } from "../../../utils/supabase/client";
 import { salvarConfiguracoes } from "./actions";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function fetchComAuth<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? null;
+
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || `HTTP ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data as T;
+}
 
 type Props = {
   settings: {
@@ -12,6 +39,7 @@ type Props = {
     whatsappPhone: string;
     status: string;
     minimumOrderValueCents: number;
+    logoUrl: string | null;
   };
 };
 
@@ -36,6 +64,11 @@ export function FormConfiguracoes({ settings }: Props) {
   const [erros, setErros] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Upload de logo
+  const fileInputLogoRef = useRef<HTMLInputElement>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(settings.logoUrl ?? null);
+  const [uploadandoLogo, setUploadandoLogo] = useState(false);
+
   // Máscara WhatsApp
   const [whatsappRaw, setWhatsappRaw] = useState(
     settings.whatsappPhone.replace(/\D/g, "")
@@ -49,6 +82,7 @@ export function FormConfiguracoes({ settings }: Props) {
 
   // Sincroniza quando o Server Component re-renderiza com novo status (via revalidatePath)
   useEffect(() => { setStatusAtual(settings.status); }, [settings.status]);
+  useEffect(() => { setLogoUrl(settings.logoUrl ?? null); }, [settings.logoUrl]);
 
   // Aviso de alterações não salvas ao sair da página
   useEffect(() => {
@@ -82,6 +116,45 @@ export function FormConfiguracoes({ settings }: Props) {
     setFeedback(null);
   }
 
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadandoLogo(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+
+      const { signedUrl, token, path, publicUrl } = await fetchComAuth<{
+        signedUrl: string;
+        token: string;
+        path: string;
+        publicUrl: string;
+      }>("/partner/upload/logo-signed-url", {
+        method: "POST",
+        body: JSON.stringify({ ext }),
+      });
+
+      const supabase = createClient();
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .uploadToSignedUrl(path, token, file, { upsert: true });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      void signedUrl; // usado apenas para obter o token
+      setLogoUrl(publicUrl);
+      setHasChanges(true);
+      toast.success("Logo atualizada com sucesso");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar logo.");
+    } finally {
+      setUploadandoLogo(false);
+      if (fileInputLogoRef.current) fileInputLogoRef.current.value = "";
+    }
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -106,6 +179,7 @@ export function FormConfiguracoes({ settings }: Props) {
           whatsappPhone: whatsappRaw,
           status: String(data.get("status")) as "open" | "closed" | "paused",
           minimumOrderValueCents: minimumCents,
+          logoUrl: logoUrl ?? null,
         });
         setFeedback(null);
         toast.success("Dados salvos com sucesso");
@@ -297,6 +371,7 @@ export function FormConfiguracoes({ settings }: Props) {
                   gap: 12,
                 }}
               >
+                {/* Preview da logo */}
                 <div
                   style={{
                     width: 80,
@@ -307,29 +382,70 @@ export function FormConfiguracoes({ settings }: Props) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    overflow: "hidden",
+                    flexShrink: 0,
                   }}
                 >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
+                  {logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoUrl}
+                      alt="Logo da loja"
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    />
+                  ) : (
+                    <svg
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  )}
                 </div>
+
+                {/* Input file oculto */}
+                <input
+                  ref={fileInputLogoRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleLogoUpload}
+                />
+
+                {/* Botão de upload */}
                 <button
                   type="button"
                   className="wp-btn wp-btn-secondary"
-                  style={{ fontSize: 12 }}
+                  style={{ fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}
+                  disabled={uploadandoLogo || pending}
+                  onClick={() => fileInputLogoRef.current?.click()}
                 >
-                  Enviar logo
+                  {uploadandoLogo ? (
+                    "Enviando..."
+                  ) : (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      Enviar logo
+                    </>
+                  )}
                 </button>
+
+                {logoUrl && !uploadandoLogo && (
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "center" }}>
+                    Salve as configurações para confirmar a alteração da logo.
+                  </span>
+                )}
               </div>
             </div>
           </div>
