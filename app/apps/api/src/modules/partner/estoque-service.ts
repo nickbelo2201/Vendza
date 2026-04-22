@@ -1,5 +1,6 @@
 import { InventoryMovementType, prisma, type Prisma } from "@vendza/database";
 
+import { invalidateStorefrontCache } from "../storefront/cache.js";
 import type { PartnerContext } from "./context.js";
 
 // ─── Tipos internos ────────────────────────────────────────────────────────────
@@ -198,6 +199,9 @@ export async function registrarMovimentacao(context: PartnerContext, input: Movi
       createdAt: movimento.createdAt.toISOString(),
     };
   });
+
+  // Invalida cache do storefront: movimentação pode tornar produto disponível/indisponível
+  await invalidateStorefrontCache(context.storeId);
 
   return resultado;
 }

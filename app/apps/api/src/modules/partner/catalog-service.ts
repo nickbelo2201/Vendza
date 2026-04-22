@@ -418,6 +418,9 @@ export async function updatePartnerProduct(context: PartnerContext, id: string, 
     },
   });
 
+  // Invalida cache do storefront para refletir produto atualizado
+  await invalidateStorefrontCache(context.storeId);
+
   return mapProduct(product);
 }
 
@@ -434,6 +437,9 @@ export async function updateProductAvailability(context: PartnerContext, id: str
       category: categoryFullSelect,
     },
   });
+
+  // Invalida cache do storefront para refletir mudança de disponibilidade
+  await invalidateStorefrontCache(context.storeId);
 
   return mapProduct(product);
 }
@@ -499,6 +505,9 @@ export async function deletePartnerProduct(context: PartnerContext, productId: s
       category: categoryFullSelect,
     },
   });
+
+  // Invalida cache do storefront para remover produto excluído
+  await invalidateStorefrontCache(context.storeId);
 
   return mapProduct(product);
 }

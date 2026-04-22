@@ -1,5 +1,6 @@
 import { prisma, type Prisma } from "@vendza/database";
 
+import { invalidateStorefrontCache } from "../storefront/cache.js";
 import type { PartnerContext } from "./context.js";
 
 type StoreSettingsInput = {
@@ -115,6 +116,9 @@ export async function updateStoreSettings(context: PartnerContext, input: StoreS
     },
   });
 
+  // Invalida cache do storefront para refletir configurações da loja atualizadas
+  await invalidateStorefrontCache(context.storeId);
+
   return mapStoreSettings(store);
 }
 
@@ -158,6 +162,9 @@ export async function updateStoreHours(context: PartnerContext, input: StoreHour
     ),
   );
 
+  // Invalida cache do storefront para refletir horários atualizados
+  await invalidateStorefrontCache(context.storeId);
+
   return getStoreHours(context);
 }
 
@@ -194,6 +201,9 @@ export async function updateDeliveryZones(context: PartnerContext, input: Delive
       })),
     });
   });
+
+  // Invalida cache do storefront para refletir zonas de entrega atualizadas
+  await invalidateStorefrontCache(context.storeId);
 
   return getDeliveryZones(context);
 }
