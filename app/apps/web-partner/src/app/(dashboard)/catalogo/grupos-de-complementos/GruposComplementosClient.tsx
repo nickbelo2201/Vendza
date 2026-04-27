@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -167,13 +166,6 @@ export function GruposComplementosClient({ gruposIniciais }: Props) {
       <div className="wp-page-header">
         <div className="wp-row-between">
           <div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              <Link href="/catalogo" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                Produtos
-              </Link>
-              {" > "}
-              Grupos de Complementos
-            </div>
             <h1>Grupos de Complementos</h1>
             <p>Organize complementos em grupos para personalizar pedidos.</p>
           </div>

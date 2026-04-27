@@ -131,9 +131,15 @@ export function startWorkers() {
   orderPlacedWorker.on("failed", (job, err) => {
     console.error(`[worker] order.placed job ${job?.id} falhou:`, err.message);
   });
+  orderPlacedWorker.on("error", (err) => {
+    console.warn("[worker] order.placed erro de conexão:", err.message);
+  });
 
   orderStatusChangedWorker.on("failed", (job, err) => {
     console.error(`[worker] order.status_changed job ${job?.id} falhou:`, err.message);
+  });
+  orderStatusChangedWorker.on("error", (err) => {
+    console.warn("[worker] order.status_changed erro de conexão:", err.message);
   });
 }
 

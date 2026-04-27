@@ -20,10 +20,7 @@ const redisPlugin: FastifyPluginAsync = async (app) => {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     lazyConnect: true,
-    retryStrategy: (times: number) => {
-      if (times > 10) return null; // desistir após 10 tentativas
-      return Math.min(times * 200, 3000); // backoff: 200ms, 400ms, ..., 3000ms
-    },
+    retryStrategy: () => null, // não retentar — falhar rápido
   });
 
   redis.on("error", (err: Error) => {
@@ -34,7 +31,17 @@ const redisPlugin: FastifyPluginAsync = async (app) => {
     app.log.info("[redis] Conectado ao Redis");
   });
 
-  redisInstance = redis;
+  // Testar conectividade antes de expor a instância para BullMQ
+  try {
+    await redis.connect();
+    await redis.ping();
+    redisInstance = redis;
+    app.log.info("[redis] Redis verificado e pronto.");
+  } catch {
+    app.log.warn("[redis] Não foi possível conectar ao Redis — filas e workers desabilitados.");
+    await redis.quit().catch(() => {});
+    // redisInstance permanece null → startWorkers/initQueues são no-op
+  }
 
   app.addHook("onClose", async () => {
     await redis.quit();

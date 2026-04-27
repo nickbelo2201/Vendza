@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { formatCurrency } from "@vendza/utils";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
@@ -260,13 +259,6 @@ export function CombosClient({ combosIniciais }: Props) {
       <div className="wp-page-header">
         <div className="wp-row-between">
           <div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              <Link href="/catalogo" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                Produtos
-              </Link>
-              {" > "}
-              Combos
-            </div>
             <h1>Combos</h1>
             <p>Crie e administre conjuntos de produtos com preco especial.</p>
           </div>

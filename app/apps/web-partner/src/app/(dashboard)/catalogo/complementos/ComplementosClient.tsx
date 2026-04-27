@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { formatCurrency } from "@vendza/utils";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
@@ -218,13 +217,6 @@ export function ComplementosClient({ gruposIniciais, complementosIniciais }: Pro
       <div className="wp-page-header">
         <div className="wp-row-between">
           <div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              <Link href="/catalogo" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                Produtos
-              </Link>
-              {" > "}
-              Complementos
-            </div>
             <h1>Complementos</h1>
             <p>Gerencie complementos vinculados a grupos de personalizacao.</p>
           </div>

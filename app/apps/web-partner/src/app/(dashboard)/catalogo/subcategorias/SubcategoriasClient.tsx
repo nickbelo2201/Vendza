@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import type { Categoria, CategoriaFilha } from "@vendza/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -207,14 +206,6 @@ export function SubcategoriasClient({ categorias: categoriasIniciais }: Props) {
     <>
       <div className="wp-stack-lg">
         <div className="wp-page-header">
-          <div style={{ marginBottom: 4 }}>
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              <Link href="/catalogo" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                Produtos
-              </Link>
-              {" > Subcategorias"}
-            </span>
-          </div>
           <div className="wp-row-between">
             <div>
               <h1>Subcategorias</h1>
