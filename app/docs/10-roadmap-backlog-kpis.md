@@ -1,6 +1,6 @@
 # Roadmap, Backlog e KPIs
 
-> Atualizado em 2026-04-07. Alinhado ao modelo de negócio premium consultivo (ver `17-modelo-de-negocio.md`).
+> Atualizado em 2026-04-22. Alinhado ao modelo de negócio premium consultivo (ver `17-modelo-de-negocio.md`).
 
 ---
 
@@ -10,57 +10,59 @@
 |--------|--------|------|
 | V1 (plataforma base) | ✅ Completa | 2026-04-06 |
 | V2 (CRUD, CRM, relatórios, deploy) | ✅ Completa | 2026-04-06 |
-| Plataforma P3-P5 (deploy, QA, polish) | 🔄 Em progresso | — |
+| Polish pré-lançamento (P2-P5) | 🔄 Em progresso | — |
+| IA e Automação | ⏳ Aguardando cliente fechar | — |
+
+---
+
+## O que falta para apresentar ao cliente
+
+Todos os itens abaixo estão no Linear (SOF-95 a SOF-102) como **Todo**:
+
+### Infraestrutura
+| Card | Descrição | Prioridade |
+|------|-----------|------------|
+| SOF-95 | GitHub Actions CI — typecheck + build em todo PR | High |
+| SOF-96 | Testes Playwright — fluxo completo do cliente | High |
+| SOF-97 | Testes Playwright — fluxo completo do parceiro | High |
+| SOF-98 | Validação mobile e responsividade | High |
+| SOF-99 | Logo oficial substituindo placeholders | High |
+| SOF-100 | Revisão final de design — og:image, tipografia, espaçamentos | Medium |
+
+### Storefront
+| Card | Descrição | Prioridade |
+|------|-----------|------------|
+| SOF-101 | Perfil do cliente salvo em localStorage (auto-fill no checkout) | Medium |
+| SOF-102 | Endereços favoritos — até 3 endereços para checkout rápido | Medium |
+
+Após esses 8 itens, a plataforma está pronta para apresentação e onboarding do primeiro cliente.
 
 ---
 
 ## Roadmap de Produto
 
-### Onda 1 — Plataforma Completa (P3–P5) ← estamos aqui
-Objetivo: produto pronto para apresentar ao primeiro cliente.
+### Módulos de IA e Automação ← próxima fase (pós cliente fechar)
+Objetivo: habilitar automação e inteligência — implementado conforme demanda de cada cliente.
 
-- Deploy automático (Vercel + Railway + GitHub Actions CI)
-- Testes Playwright (fluxo cliente + parceiro)
-- QA de segurança e performance
-- Onboarding self-service (wizard de setup da loja)
-- Mercado Pago — Pix + cartão online ← **P0 CRÍTICO** (antecipar do backlog IA)
+> **Regra:** nenhum módulo abaixo é iniciado antes do cliente fechar e solicitar explicitamente.
 
-### Onda 2 — Automação WhatsApp (ticket R$ 1.500/mês)
-Objetivo: habilitar o tier Plataforma + Automação — principal gerador de MRR.
-
-- WhatsApp oficial (Baileys/WAHA)
-  - Confirmação automática de pedido ao cliente
-  - Notificação de status em tempo real
+- **WhatsApp automação** (Baileys/WAHA)
+  - Notificação de status do pedido ao cliente
+  - Confirmação automática de pedido
   - Atendimento automatizado 24h
   - Fluxos personalizados por evento
-- Multi-tenant / onboarding self-service completo
-- CRM acionável com campanhas por evento
-- Segmentação RFM
-- Fidelidade e cupons
+- **IA generativa** — descrição de produtos, copy de campanhas
+- **Multi-tenant / onboarding self-service** — cadastrar qualquer lojista sem tocar no código
+- **Mobile app** (React Native / Expo)
+- **Mercado Pago** — PIX e cartão online (última feature de todas)
 
-### Onda 3 — IA e Escala (ticket R$ 2.500–3.000/mês)
-Objetivo: habilitar o tier Premium — máximo de valor por cliente.
-
-- IA generativa: descrição de produtos, copy de campanhas
+### Onda futura — IA e Escala (ticket R$ 2.500–3.000/mês)
 - IA no atendimento: sugestões por perfil de compra
 - Insights automáticos de estoque e giro
 - Relatórios preditivos
-- Mobile app (React Native / Expo)
+- Segmentação RFM
+- Fidelidade e cupons
 - Multi-loja
-
----
-
-## Prioridade Crítica: Mercado Pago
-
-**O Mercado Pago deve ser implementado antes de qualquer cliente piloto.**
-
-Motivo: sem Pix automático integrado, o lojista ainda cobra manualmente — isso dilui o momento "aha" do produto e é o principal motivo de churn nos primeiros 30 dias.
-
-Escopo mínimo:
-- Geração de QR Code Pix
-- Webhook de confirmação de pagamento
-- Atualização automática do status do pedido após pagamento confirmado
-- Tela de confirmação para o cliente
 
 ---
 

@@ -18,16 +18,20 @@
   "roadmap": {
     "plataforma": {
       "objetivo": "Plataforma 100% funcional — mesmas features do Zé Delivery e Neemo. Nenhuma IA até este bloco estar validado e aprovado para apresentação.",
-      "blocos": [
-        "P1",
-        "P2",
-        "P3",
-        "P4",
-        "P5"
+      "status": "FEATURE_COMPLETE",
+      "pendentes_pre_lancamento": [
+        "SOF-95: GitHub Actions CI — typecheck + build em todo PR",
+        "SOF-96: Testes Playwright — fluxo completo do cliente",
+        "SOF-97: Testes Playwright — fluxo completo do parceiro",
+        "SOF-98: Validação mobile e responsividade",
+        "SOF-99: Logo oficial substituindo placeholders",
+        "SOF-100: Revisão final de design — og:image, tipografia, espaçamentos",
+        "SOF-101: Storefront — perfil do cliente em localStorage",
+        "SOF-102: Storefront — endereços favoritos para checkout rápido"
       ]
     },
     "ia_automacao": {
-      "objetivo": "Só iniciar após P5 aprovado e plataforma apresentada.",
+      "objetivo": "Só iniciar quando cliente fechar e solicitar explicitamente. Implementado sob demanda por cliente.",
       "items": [
         "IA-01: WhatsApp automação (Baileys/WAHA) — notificação de status ao cliente",
         "IA-02: IA generativa — descrição de produtos, copy de campanhas",

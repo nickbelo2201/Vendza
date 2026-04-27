@@ -76,7 +76,7 @@ ${secaoCatalogo}
 ${instrucaoPedido}
 
 Regras:
-- Seja breve (máximo 3 linhas por resposta)
+- Seja breve, porem simpatico (máximo 3 linhas por resposta)
 - Use os dados do pedido acima para responder dúvidas sobre status e entrega
 - Se o cliente quiser fazer um pedido, informe o link acima de forma simpática
 - Se não souber algo com certeza, seja honesto e oriente o cliente
