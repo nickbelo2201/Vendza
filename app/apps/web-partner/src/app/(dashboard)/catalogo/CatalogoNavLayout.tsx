@@ -10,6 +10,7 @@ const TABS = [
   { label: "Grupos de Complementos", href: "/catalogo/grupos-de-complementos" },
   { label: "Complementos", href: "/catalogo/complementos" },
   { label: "Extras", href: "/catalogo/extras" },
+  { label: "Importar NF-e", href: "/catalogo/nfe" },
 ];
 
 const NOMES_SECAO: Record<string, string> = {
@@ -20,6 +21,7 @@ const NOMES_SECAO: Record<string, string> = {
   "/catalogo/grupos-de-complementos": "Grupos de Complementos",
   "/catalogo/complementos": "Complementos",
   "/catalogo/extras": "Extras",
+  "/catalogo/nfe": "Importar NF-e",
 };
 
 export function CatalogoNavLayout({ children }: { children: React.ReactNode }) {
