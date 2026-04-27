@@ -104,6 +104,10 @@ model Store {
   inventoryMovements InventoryMovement[]
   orders             Order[]
   caixaTurnos        CaixaTurno[]
+  combos             Combo[]
+  complementGroups   ComplementGroup[]
+  complements        Complement[]
+  extras             Extra[]
 
   @@index([tenantId])
   @@map("stores")
@@ -317,6 +321,7 @@ model Product {
   bundles       ProductBundle[]
   inventoryItem InventoryItem?
   orderItems    OrderItem[]
+  comboItems    ComboItem[]
 
   @@unique([storeId, slug])
   @@index([storeId, categoryId, isAvailable])
@@ -494,4 +499,93 @@ model OrderPayment {
 
   @@index([orderId, status])
   @@map("order_payments")
+}
+
+model Combo {
+  id          String   @id @default(uuid()) @db.Uuid
+  storeId     String   @map("store_id") @db.Uuid
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?  @map("image_url")
+  priceCents  Int      @map("price_cents")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  store Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items ComboItem[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, isActive])
+  @@map("combos")
+}
+
+model ComboItem {
+  id        String @id @default(uuid()) @db.Uuid
+  comboId   String @map("combo_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  quantity  Int    @default(1)
+
+  combo   Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([comboId, productId])
+  @@map("combo_items")
+}
+
+model ComplementGroup {
+  id           String   @id @default(uuid()) @db.Uuid
+  storeId      String   @map("store_id") @db.Uuid
+  name         String
+  description  String?
+  minSelection Int      @default(0) @map("min_selection")
+  maxSelection Int      @default(1) @map("max_selection")
+  isRequired   Boolean  @default(false) @map("is_required")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  store       Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  complements Complement[]
+
+  @@index([storeId, isActive])
+  @@map("complement_groups")
+}
+
+model Complement {
+  id                   String   @id @default(uuid()) @db.Uuid
+  storeId              String   @map("store_id") @db.Uuid
+  complementGroupId    String   @map("complement_group_id") @db.Uuid
+  name                 String
+  description          String?
+  imageUrl             String?  @map("image_url")
+  additionalPriceCents Int      @default(0) @map("additional_price_cents")
+  isAvailable          Boolean  @default(true) @map("is_available")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  store           Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  complementGroup ComplementGroup @relation(fields: [complementGroupId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, isAvailable])
+  @@index([complementGroupId])
+  @@map("complements")
+}
+
+model Extra {
+  id          String   @id @default(uuid()) @db.Uuid
+  storeId     String   @map("store_id") @db.Uuid
+  name        String
+  description String?
+  priceCents  Int      @default(0) @map("price_cents")
+  imageUrl    String?  @map("image_url")
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, isAvailable])
+  @@map("extras")
 }

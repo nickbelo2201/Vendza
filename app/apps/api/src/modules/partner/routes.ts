@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 
 import catalogRoutes from "./catalog-routes.js";
+import catalogExtrasRoutes from "./catalog-extras-routes.js";
 import ordersRoutes from "./orders-routes.js";
 import crmRoutes from "./crm-routes.js";
 import configuracoesRoutes from "./configuracoes-routes.js";
@@ -8,6 +9,7 @@ import estoqueRoutes from "./estoque-routes.js";
 import financeiroRoutes from "./financeiro-routes.js";
 import caixaRoutes from "./caixa-routes.js";
 import promocoesRoutes from "./promocoes-routes.js";
+import nfeRoutes from "./nfe-routes.js";
 
 /**
  * Orquestrador de rotas partner — registra o hook de autenticação
@@ -19,6 +21,7 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
 
   // Sub-routers por domínio
   app.register(catalogRoutes);
+  app.register(catalogExtrasRoutes);
   app.register(ordersRoutes);
   app.register(crmRoutes);
   app.register(configuracoesRoutes);
@@ -26,4 +29,5 @@ export const partnerRoutes: FastifyPluginAsync = async (app) => {
   app.register(financeiroRoutes);
   app.register(caixaRoutes);
   app.register(promocoesRoutes);
+  app.register(nfeRoutes);
 };
