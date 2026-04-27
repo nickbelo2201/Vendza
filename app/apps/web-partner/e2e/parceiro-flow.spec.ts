@@ -269,7 +269,7 @@ test.describe("Passo 3 — Gestão de pedidos", () => {
     await page.goto(`${BASE_URL}/pedidos`, { waitUntil: "networkidle", timeout: 30000 });
 
     // O cabeçalho da página de pedidos tem o texto "Pedidos"
-    const h1 = page.locator("h1", { hasText: "Pedidos" });
+    const h1 = page.locator("h1", { hasText: "Pedidos" }).first();
     await expect(h1).toBeVisible({ timeout: 15000 });
 
     // O badge com contagem de pedidos deve estar visível
@@ -288,7 +288,7 @@ test.describe("Passo 3 — Gestão de pedidos", () => {
 
     // Os filtros de status são chips — verificar que a área de filtros existe
     // FiltroStatus renderiza os chips de status
-    await expect(page.locator("h1", { hasText: "Pedidos" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Pedidos" }).first()).toBeVisible({ timeout: 15000 });
 
     // A tabela ou lista de pedidos deve existir
     // Se não houver pedidos, exibe estado vazio
@@ -313,7 +313,7 @@ test.describe("Passo 4 — Catálogo de produtos", () => {
     await page.goto(`${BASE_URL}/catalogo`, { waitUntil: "networkidle", timeout: 30000 });
 
     // O título da página do catálogo
-    await expect(page.locator("h1", { hasText: "Catalogo" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Catalogo" }).first()).toBeVisible({ timeout: 15000 });
 
     // O botão "Novo Produto" para abrir o modal
     const novoProdutoBtn = page.locator("button.wp-btn.wp-btn-primary", {
@@ -330,14 +330,13 @@ test.describe("Passo 4 — Catálogo de produtos", () => {
     }
 
     await page.goto(`${BASE_URL}/catalogo`, { waitUntil: "networkidle", timeout: 30000 });
-    await expect(page.locator("h1", { hasText: "Catalogo" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Catalogo" }).first()).toBeVisible({ timeout: 15000 });
 
     // Clica em "Novo Produto"
     await page.locator("button.wp-btn.wp-btn-primary", { hasText: "Novo Produto" }).click();
 
-    // O modal de produto deve aparecer — contém um campo de nome
-    // ProdutoModal usa uma estrutura de dialog/modal
-    const campoNomeProduto = page.locator('input[name="name"]');
+    // O modal de produto deve aparecer — contém um campo de nome do produto
+    const campoNomeProduto = page.locator('input[placeholder*="Vinho"]');
     await expect(campoNomeProduto).toBeVisible({ timeout: 10000 });
   });
 
@@ -349,7 +348,7 @@ test.describe("Passo 4 — Catálogo de produtos", () => {
     }
 
     await page.goto(`${BASE_URL}/catalogo`, { waitUntil: "networkidle", timeout: 30000 });
-    await expect(page.locator("h1", { hasText: "Catalogo" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Catalogo" }).first()).toBeVisible({ timeout: 15000 });
 
     // Tabela de produtos ou estado vazio
     const tabelaOuVazio = page.locator(".wp-table, .wp-empty");
@@ -364,7 +363,7 @@ test.describe("Passo 4 — Catálogo de produtos", () => {
     }
 
     await page.goto(`${BASE_URL}/catalogo`, { waitUntil: "networkidle", timeout: 30000 });
-    await expect(page.locator("h1", { hasText: "Catalogo" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Catalogo" }).first()).toBeVisible({ timeout: 15000 });
 
     // Campo de busca de produto
     const campoBusca = page.locator('input.wp-input[placeholder="Buscar produto..."]');
@@ -392,7 +391,7 @@ test.describe("Passo 5 — CRM de clientes", () => {
     await page.goto(`${BASE_URL}/clientes`, { waitUntil: "networkidle", timeout: 30000 });
 
     // Título da página
-    await expect(page.locator("h1", { hasText: "Clientes" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Clientes" }).first()).toBeVisible({ timeout: 15000 });
 
     // Subtítulo informativo
     await expect(
@@ -412,7 +411,7 @@ test.describe("Passo 5 — CRM de clientes", () => {
     }
 
     await page.goto(`${BASE_URL}/clientes`, { waitUntil: "networkidle", timeout: 30000 });
-    await expect(page.locator("h1", { hasText: "Clientes" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Clientes" }).first()).toBeVisible({ timeout: 15000 });
 
     // Campo de busca usa placeholder "Buscar por nome ou telefone..."
     const campoBusca = page.locator(
@@ -429,7 +428,7 @@ test.describe("Passo 5 — CRM de clientes", () => {
     }
 
     await page.goto(`${BASE_URL}/clientes`, { waitUntil: "networkidle", timeout: 30000 });
-    await expect(page.locator("h1", { hasText: "Clientes" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Clientes" }).first()).toBeVisible({ timeout: 15000 });
 
     // Verifica se há clientes na tabela
     const linhasCliente = page.locator(".wp-table tbody tr");
@@ -483,7 +482,7 @@ test.describe("Passo 6 — Configurações da loja", () => {
     await page.goto(`${BASE_URL}/configuracoes`, { waitUntil: "networkidle", timeout: 30000 });
 
     // Título da página
-    await expect(page.locator("h1", { hasText: "Configurações" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Configurações" }).first()).toBeVisible({ timeout: 15000 });
 
     // Subtítulo
     await expect(
@@ -502,7 +501,7 @@ test.describe("Passo 6 — Configurações da loja", () => {
     }
 
     await page.goto(`${BASE_URL}/configuracoes`, { waitUntil: "networkidle", timeout: 30000 });
-    await expect(page.locator("h1", { hasText: "Configurações" })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1", { hasText: "Configurações" }).first()).toBeVisible({ timeout: 15000 });
 
     // O formulário de dados da loja (FormConfiguracoes) contém o campo "name"
     const campoNomeLoja = page.locator('input#name[name="name"]');
