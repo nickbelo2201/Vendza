@@ -390,3 +390,89 @@ export interface OrderTrackingSummary extends MoneyBreakdown {
   status: OrderStatus;
   placedAt: string;
 }
+
+// ─── Combo ───────────────────────────────────────────────────────────────────
+
+export interface ComboItem {
+  id: string;
+  comboId: string;
+  productId: string;
+  quantity: number;
+  productName: string;
+  productSlug: string;
+  productListPriceCents: number;
+}
+
+export interface Combo {
+  id: string;
+  storeId: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  priceCents: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  items: ComboItem[];
+}
+
+// ─── Grupos de Complementos ──────────────────────────────────────────────────
+
+export interface GrupoDeComplementos {
+  id: string;
+  storeId: string;
+  name: string;
+  description: string | null;
+  minSelection: number;
+  maxSelection: number;
+  isRequired: boolean;
+  isActive: boolean;
+  complementsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Complemento ─────────────────────────────────────────────────────────────
+
+export interface Complemento {
+  id: string;
+  storeId: string;
+  complementGroupId: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  additionalPriceCents: number;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Extra ───────────────────────────────────────────────────────────────────
+
+export interface Extra {
+  id: string;
+  storeId: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  imageUrl: string | null;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── ProductBundle (Fardo) ───────────────────────────────────────────────────
+
+export interface ProductBundle {
+  id: string;
+  productId: string;
+  productName?: string;
+  name: string;
+  slug: string;
+  bundlePriceCents: number;
+  itemsJson: unknown;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
