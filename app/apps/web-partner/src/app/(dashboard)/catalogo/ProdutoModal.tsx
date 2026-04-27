@@ -68,6 +68,25 @@ type Props = {
   categorias: Categoria[];
 };
 
+type ProductBundle = {
+  id: string;
+  productId: string;
+  productName?: string;
+  name: string;
+  slug: string;
+  bundlePriceCents: number;
+  itemsJson: { quantity: number };
+  isAvailable: boolean;
+};
+
+type FardoForm = {
+  name: string;
+  slug: string;
+  bundlePriceCents: number;
+  quantity: number;
+  isAvailable: boolean;
+};
+
 function gerarSlug(nome: string): string {
   return nome
     .toLowerCase()
@@ -86,6 +105,14 @@ function reaisParaCentavos(valor: string): number {
   const limpo = valor.replace(/[^\d,]/g, "").replace(",", ".");
   const num = parseFloat(limpo);
   return isNaN(num) ? 0 : Math.round(num * 100);
+}
+
+function gerarSlugFardo(nome: string): string {
+  return nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function formatarPrecoCents(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
@@ -114,6 +141,15 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   const [isFeatured, setIsFeatured] = useState(false);
   const [barcode, setBarcode] = useState("");
   const [scannerAberto, setScannerAberto] = useState(false);
+
+  const [fardosAberto, setFardosAberto] = useState(false);
+  const [fardos, setFardos] = useState<ProductBundle[]>([]);
+  const [fardosCarregando, setFardosCarregando] = useState(false);
+  const [fardoModal, setFardoModal] = useState(false);
+  const [fardoEditando, setFardoEditando] = useState<ProductBundle | null>(null);
+  const [fardoForm, setFardoForm] = useState<FardoForm>({ name: "", slug: "", bundlePriceCents: 0, quantity: 1, isAvailable: true });
+  const [fardoSalvando, setFardoSalvando] = useState(false);
+  const [fardoErro, setFardoErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (!aberto) return;
@@ -156,6 +192,41 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
     if (!slugManual) {
       setSlug(gerarSlug(v));
     }
+  }
+
+  async function carregarFardos(productId: string) {
+    setFardosCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/v1/partner/product-bundles?productId=${productId}`, { credentials: "include", cache: "no-store" });
+      if (res.ok) { const json = await res.json(); setFardos(json.data ?? []); }
+    } catch { /* silencioso */ } finally { setFardosCarregando(false); }
+  }
+
+  function handleToggleFardos() {
+    if (!fardosAberto && produto?.id) carregarFardos(produto.id);
+    setFardosAberto((v) => !v);
+  }
+
+  async function salvarFardo() {
+    if (!produto?.id) return;
+    if (!fardoForm.name.trim()) { setFardoErro("Nome é obrigatório."); return; }
+    setFardoSalvando(true); setFardoErro(null);
+    try {
+      const body = { productId: produto.id, name: fardoForm.name, slug: fardoForm.slug || gerarSlugFardo(fardoForm.name), bundlePriceCents: fardoForm.bundlePriceCents, itemsJson: { quantity: fardoForm.quantity }, isAvailable: fardoForm.isAvailable };
+      const url = fardoEditando ? `${API_URL}/v1/partner/product-bundles/${fardoEditando.id}` : `${API_URL}/v1/partner/product-bundles`;
+      const res = await fetch(url, { method: fardoEditando ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) { const t = await res.text().catch(() => ""); throw new Error(t || `Erro ${res.status}`); }
+      setFardoModal(false); setFardoEditando(null);
+      if (produto?.id) carregarFardos(produto.id);
+    } catch (e) { setFardoErro(e instanceof Error ? e.message : "Erro ao salvar."); } finally { setFardoSalvando(false); }
+  }
+
+  async function deletarFardo(f: ProductBundle) {
+    if (!confirm(`Excluir o fardo "${f.name}"?`)) return;
+    try {
+      await fetch(`${API_URL}/v1/partner/product-bundles/${f.id}`, { method: "DELETE", credentials: "include" });
+      if (produto?.id) carregarFardos(produto.id);
+    } catch { /* silencioso */ }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -258,6 +329,9 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
           width: "100%", maxWidth: 520,
           boxShadow: "0 24px 64px rgba(15,23,42,.18)",
           overflow: "hidden",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* Header */}
@@ -279,7 +353,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+        <form onSubmit={handleSubmit} style={{ padding: 24, overflowY: "auto", flex: 1 }}>
           <div className="wp-stack">
             <div className="wp-form-group">
               <label className="wp-label">Nome *</label>
@@ -466,6 +540,55 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
               </div>
             </div>
 
+            {produto?.id && (
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginTop: 4 }}>
+                {/* Toggle colapsavel */}
+                <button
+                  type="button"
+                  onClick={handleToggleFardos}
+                  style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, color: "var(--carbon)", width: "100%" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                    style={{ transform: fardosAberto ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s", flexShrink: 0 }}>
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                  Fardos e Pacotes
+                  {fardos.length > 0 && !fardosAberto && (
+                    <span className="wp-badge wp-badge-muted" style={{ marginLeft: 4 }}>{fardos.length}</span>
+                  )}
+                </button>
+
+                {fardosAberto && (
+                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                    {fardosCarregando ? (
+                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Carregando...</span>
+                    ) : fardos.length === 0 ? (
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "8px 0" }}>Nenhum fardo cadastrado para este produto.</div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {fardos.map((f) => (
+                          <div key={f.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "var(--cream)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div>
+                              <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{f.itemsJson.quantity} un. — {formatarPrecoCents(f.bundlePriceCents)}</div>
+                            </div>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button type="button" className="wp-btn wp-btn-secondary" onClick={() => { setFardoEditando(f); setFardoForm({ name: f.name, slug: f.slug, bundlePriceCents: f.bundlePriceCents, quantity: f.itemsJson.quantity, isAvailable: f.isAvailable }); setFardoErro(null); setFardoModal(true); }} style={{ fontSize: 11, padding: "3px 8px" }}>Editar</button>
+                              <button type="button" className="wp-btn wp-btn-secondary" onClick={() => deletarFardo(f)} style={{ fontSize: 11, padding: "3px 8px", color: "var(--red, #dc2626)" }}>Excluir</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button type="button" className="wp-btn wp-btn-secondary" onClick={() => { setFardoEditando(null); setFardoForm({ name: "", slug: "", bundlePriceCents: 0, quantity: 1, isAvailable: true }); setFardoErro(null); setFardoModal(true); }} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, alignSelf: "flex-start" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Novo Fardo
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {erro && (
               <div style={{
                 background: "#fef2f2", border: "1px solid #fecaca",
@@ -496,6 +619,49 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
           }}
           onFechar={() => setScannerAberto(false)}
         />
+      )}
+
+      {fardoModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(10,10,14,0.65)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setFardoModal(false); setFardoEditando(null); } }}>
+          <div style={{ background: "var(--surface)", borderRadius: 12, width: "100%", maxWidth: 440, padding: 24, boxShadow: "0 24px 64px rgba(15,23,42,.2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{fardoEditando ? "Editar Fardo" : "Novo Fardo"}</h3>
+              <button type="button" onClick={() => { setFardoModal(false); setFardoEditando(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="wp-form-group">
+                <label className="wp-label">Nome do fardo *</label>
+                <input className="wp-input" value={fardoForm.name}
+                  onChange={(e) => setFardoForm((f) => ({ ...f, name: e.target.value, slug: fardoEditando ? f.slug : gerarSlugFardo(e.target.value) }))}
+                  placeholder="Ex: Fardo 12 un." autoFocus />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="wp-form-group">
+                  <label className="wp-label">Quantidade</label>
+                  <input type="number" className="wp-input" min={1} value={fardoForm.quantity}
+                    onChange={(e) => setFardoForm((f) => ({ ...f, quantity: Math.max(1, parseInt(e.target.value || "1", 10)) }))} />
+                </div>
+                <div className="wp-form-group">
+                  <label className="wp-label">Preço (R$)</label>
+                  <input type="number" className="wp-input" step="0.01" min="0" value={fardoForm.bundlePriceCents / 100}
+                    onChange={(e) => setFardoForm((f) => ({ ...f, bundlePriceCents: Math.round(parseFloat(e.target.value || "0") * 100) }))} />
+                </div>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
+                <input type="checkbox" checked={fardoForm.isAvailable} onChange={(e) => setFardoForm((f) => ({ ...f, isAvailable: e.target.checked }))} />
+                Disponível
+              </label>
+              {fardoErro && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#dc2626" }}>{fardoErro}</div>}
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button type="button" className="wp-btn wp-btn-secondary" onClick={() => { setFardoModal(false); setFardoEditando(null); }} disabled={fardoSalvando}>Cancelar</button>
+                <button type="button" className="wp-btn wp-btn-primary" onClick={salvarFardo} disabled={fardoSalvando}>{fardoSalvando ? "Salvando..." : (fardoEditando ? "Salvar" : "Criar fardo")}</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
