@@ -2,7 +2,26 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { fetchAPI } from "../../../../lib/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    method: opts.method ?? "GET",
+    credentials: "include",
+    cache: "no-store",
+    ...(opts.body !== undefined ? {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts.body),
+    } : {}),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const msg = (json?.error?.message ?? json?.message ?? `Erro ${res.status}`) as string;
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  return json.data as T;
+}
 
 type ComplementGroup = {
   id: string;
@@ -50,7 +69,7 @@ export function GruposComplementosClient({ gruposIniciais }: Props) {
 
   async function recarregar() {
     try {
-      const lista = await fetchAPI<ComplementGroup[]>("/partner/complement-groups");
+      const lista = await apiFetch<ComplementGroup[]>("/partner/complement-groups");
       setGrupos(lista);
     } catch {
       // silencioso
@@ -108,9 +127,9 @@ export function GruposComplementosClient({ gruposIniciais }: Props) {
       };
 
       if (editando) {
-        await fetchAPI<ComplementGroup>(`/partner/complement-groups/${editando.id}`, { method: "PATCH", body });
+        await apiFetch<ComplementGroup>(`/partner/complement-groups/${editando.id}`, { method: "PATCH", body });
       } else {
-        await fetchAPI<ComplementGroup>("/partner/complement-groups", { method: "POST", body });
+        await apiFetch<ComplementGroup>("/partner/complement-groups", { method: "POST", body });
       }
 
       await recarregar();
@@ -126,7 +145,7 @@ export function GruposComplementosClient({ gruposIniciais }: Props) {
   async function deletar(grupo: ComplementGroup) {
     if (!confirm(`Excluir o grupo "${grupo.name}"? Esta acao nao pode ser desfeita.`)) return;
     try {
-      await fetchAPI(`/partner/complement-groups/${grupo.id}`, { method: "DELETE" });
+      await apiFetch(`/partner/complement-groups/${grupo.id}`, { method: "DELETE" });
       await recarregar();
     } catch (e: unknown) {
       let msg = "Erro ao excluir grupo.";

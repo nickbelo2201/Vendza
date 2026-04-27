@@ -3,7 +3,26 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@vendza/utils";
-import { fetchAPI } from "../../../../lib/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    method: opts.method ?? "GET",
+    credentials: "include",
+    cache: "no-store",
+    ...(opts.body !== undefined ? {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts.body),
+    } : {}),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const msg = (json?.error?.message ?? json?.message ?? `Erro ${res.status}`) as string;
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  return json.data as T;
+}
 
 type ComboItem = {
   id: string;
@@ -86,7 +105,7 @@ export function CombosClient({ combosIniciais }: Props) {
 
   async function recarregar() {
     try {
-      const lista = await fetchAPI<Combo[]>("/partner/combos");
+      const lista = await apiFetch<Combo[]>("/partner/combos");
       setCombos(lista);
     } catch {
       // silencioso
@@ -97,7 +116,7 @@ export function CombosClient({ combosIniciais }: Props) {
     if (produtosBuscadosRef.current) return;
     produtosBuscadosRef.current = true;
     try {
-      const resp = await fetchAPI<{ produtos: ProdutoSimples[] }>("/partner/products?limite=500");
+      const resp = await apiFetch<{ produtos: ProdutoSimples[] }>("/partner/products?limite=500");
       setProdutos(resp.produtos ?? []);
     } catch {
       // silencioso
@@ -197,9 +216,9 @@ export function CombosClient({ combosIniciais }: Props) {
       };
 
       if (editando) {
-        await fetchAPI<Combo>(`/partner/combos/${editando.id}`, { method: "PATCH", body });
+        await apiFetch<Combo>(`/partner/combos/${editando.id}`, { method: "PATCH", body });
       } else {
-        await fetchAPI<Combo>("/partner/combos", { method: "POST", body });
+        await apiFetch<Combo>("/partner/combos", { method: "POST", body });
       }
 
       await recarregar();
@@ -214,7 +233,7 @@ export function CombosClient({ combosIniciais }: Props) {
 
   async function toggleAtivo(combo: Combo) {
     try {
-      await fetchAPI<Combo>(`/partner/combos/${combo.id}/active`, {
+      await apiFetch<Combo>(`/partner/combos/${combo.id}/active`, {
         method: "PATCH",
         body: { isActive: !combo.isActive },
       });
@@ -227,7 +246,7 @@ export function CombosClient({ combosIniciais }: Props) {
   async function deletar(combo: Combo) {
     if (!confirm(`Excluir o combo "${combo.name}"? Esta acao nao pode ser desfeita.`)) return;
     try {
-      await fetchAPI<{ deleted: true }>(`/partner/combos/${combo.id}`, { method: "DELETE" });
+      await apiFetch<{ deleted: true }>(`/partner/combos/${combo.id}`, { method: "DELETE" });
       await recarregar();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro ao excluir combo.";

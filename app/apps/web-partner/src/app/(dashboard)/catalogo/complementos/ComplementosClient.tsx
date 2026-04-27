@@ -3,7 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@vendza/utils";
-import { fetchAPI } from "../../../../lib/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    method: opts.method ?? "GET",
+    credentials: "include",
+    cache: "no-store",
+    ...(opts.body !== undefined ? {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts.body),
+    } : {}),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const msg = (json?.error?.message ?? json?.message ?? `Erro ${res.status}`) as string;
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  return json.data as T;
+}
 
 type ComplementGroup = {
   id: string;
@@ -71,7 +90,7 @@ export function ComplementosClient({ gruposIniciais, complementosIniciais }: Pro
   async function recarregar(groupId?: string) {
     try {
       const path = groupId ? `/partner/complements?groupId=${groupId}` : "/partner/complements";
-      const lista = await fetchAPI<Complement[]>(path);
+      const lista = await apiFetch<Complement[]>(path);
       if (groupId) {
         // Mescla: mantém os de outros grupos e substitui os do grupo filtrado
         setComplementos((prev) => [
@@ -91,7 +110,7 @@ export function ComplementosClient({ gruposIniciais, complementosIniciais }: Pro
     if (id) {
       setCarregandoFiltro(true);
       try {
-        const lista = await fetchAPI<Complement[]>(`/partner/complements?groupId=${id}`);
+        const lista = await apiFetch<Complement[]>(`/partner/complements?groupId=${id}`);
         setComplementos((prev) => [
           ...prev.filter((c) => c.complementGroupId !== id),
           ...lista,
@@ -155,9 +174,9 @@ export function ComplementosClient({ gruposIniciais, complementosIniciais }: Pro
       };
 
       if (editando) {
-        await fetchAPI<Complement>(`/partner/complements/${editando.id}`, { method: "PATCH", body });
+        await apiFetch<Complement>(`/partner/complements/${editando.id}`, { method: "PATCH", body });
       } else {
-        await fetchAPI<Complement>("/partner/complements", { method: "POST", body });
+        await apiFetch<Complement>("/partner/complements", { method: "POST", body });
       }
 
       await recarregar();
@@ -172,7 +191,7 @@ export function ComplementosClient({ gruposIniciais, complementosIniciais }: Pro
 
   async function toggleDisponivel(complemento: Complement) {
     try {
-      await fetchAPI<Complement>(`/partner/complements/${complemento.id}/availability`, {
+      await apiFetch<Complement>(`/partner/complements/${complemento.id}/availability`, {
         method: "PATCH",
         body: { isAvailable: !complemento.isAvailable },
       });
@@ -185,7 +204,7 @@ export function ComplementosClient({ gruposIniciais, complementosIniciais }: Pro
   async function deletar(complemento: Complement) {
     if (!confirm(`Excluir o complemento "${complemento.name}"? Esta acao nao pode ser desfeita.`)) return;
     try {
-      await fetchAPI(`/partner/complements/${complemento.id}`, { method: "DELETE" });
+      await apiFetch(`/partner/complements/${complemento.id}`, { method: "DELETE" });
       await recarregar();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro ao excluir complemento.";

@@ -3,7 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@vendza/utils";
-import { fetchAPI } from "../../../../lib/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    method: opts.method ?? "GET",
+    credentials: "include",
+    cache: "no-store",
+    ...(opts.body !== undefined ? {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts.body),
+    } : {}),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const msg = (json?.error?.message ?? json?.message ?? `Erro ${res.status}`) as string;
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  return json.data as T;
+}
 
 type Extra = {
   id: string;
@@ -45,7 +64,7 @@ export function ExtrasClient({ extrasIniciais }: Props) {
 
   async function recarregar() {
     try {
-      const lista = await fetchAPI<Extra[]>("/partner/extras");
+      const lista = await apiFetch<Extra[]>("/partner/extras");
       setExtras(lista);
     } catch {
       // silencioso
@@ -95,9 +114,9 @@ export function ExtrasClient({ extrasIniciais }: Props) {
       };
 
       if (editando) {
-        await fetchAPI<Extra>(`/partner/extras/${editando.id}`, { method: "PATCH", body });
+        await apiFetch<Extra>(`/partner/extras/${editando.id}`, { method: "PATCH", body });
       } else {
-        await fetchAPI<Extra>("/partner/extras", { method: "POST", body });
+        await apiFetch<Extra>("/partner/extras", { method: "POST", body });
       }
 
       await recarregar();
@@ -112,7 +131,7 @@ export function ExtrasClient({ extrasIniciais }: Props) {
 
   async function toggleDisponivel(extra: Extra) {
     try {
-      await fetchAPI<Extra>(`/partner/extras/${extra.id}/availability`, {
+      await apiFetch<Extra>(`/partner/extras/${extra.id}/availability`, {
         method: "PATCH",
         body: { isAvailable: !extra.isAvailable },
       });
@@ -125,7 +144,7 @@ export function ExtrasClient({ extrasIniciais }: Props) {
   async function deletar(extra: Extra) {
     if (!confirm(`Excluir o extra "${extra.name}"? Esta acao nao pode ser desfeita.`)) return;
     try {
-      await fetchAPI(`/partner/extras/${extra.id}`, { method: "DELETE" });
+      await apiFetch(`/partner/extras/${extra.id}`, { method: "DELETE" });
       await recarregar();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro ao excluir extra.";

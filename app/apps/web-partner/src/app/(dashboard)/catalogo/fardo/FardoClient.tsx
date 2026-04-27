@@ -2,9 +2,26 @@
 
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
-import { fetchAPI } from "../../../../lib/api";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const res = await fetch(`${API_URL}/v1${path}`, {
+    method: opts.method ?? "GET",
+    credentials: "include",
+    cache: "no-store",
+    ...(opts.body !== undefined ? {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts.body),
+    } : {}),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const msg = (json?.error?.message ?? json?.message ?? `Erro ${res.status}`) as string;
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  return json.data as T;
+}
 
 type ProductBundle = {
   id: string;
@@ -91,7 +108,7 @@ export function FardoClient({ fardosIniciais, produtosIniciais }: Props) {
     if (produtosBuscadosRef.current) return;
     produtosBuscadosRef.current = true;
     try {
-      const resp = await fetchAPI<{ produtos: ProdutoSimples[] }>("/partner/products?limite=1000");
+      const resp = await apiFetch<{ produtos: ProdutoSimples[] }>("/partner/products?limite=1000");
       setProdutos(resp.produtos ?? []);
     } catch {
       // silencioso
@@ -103,7 +120,7 @@ export function FardoClient({ fardosIniciais, produtosIniciais }: Props) {
       const url = filtroProduto
         ? `/partner/product-bundles?productId=${filtroProduto}`
         : "/partner/product-bundles";
-      const lista = await fetchAPI<ProductBundle[]>(url);
+      const lista = await apiFetch<ProductBundle[]>(url);
       setFardos(lista);
     } catch {
       // silencioso
@@ -112,7 +129,7 @@ export function FardoClient({ fardosIniciais, produtosIniciais }: Props) {
 
   async function recarregarTodos() {
     try {
-      const lista = await fetchAPI<ProductBundle[]>("/partner/product-bundles");
+      const lista = await apiFetch<ProductBundle[]>("/partner/product-bundles");
       setFardos(lista);
     } catch {
       // silencioso
@@ -209,9 +226,9 @@ export function FardoClient({ fardosIniciais, produtosIniciais }: Props) {
       };
 
       if (editando) {
-        await fetchAPI<ProductBundle>(`/partner/product-bundles/${editando.id}`, { method: "PATCH", body });
+        await apiFetch<ProductBundle>(`/partner/product-bundles/${editando.id}`, { method: "PATCH", body });
       } else {
-        await fetchAPI<ProductBundle>("/partner/product-bundles", { method: "POST", body });
+        await apiFetch<ProductBundle>("/partner/product-bundles", { method: "POST", body });
       }
 
       await recarregarTodos();
@@ -227,7 +244,7 @@ export function FardoClient({ fardosIniciais, produtosIniciais }: Props) {
   async function deletar(fardo: ProductBundle) {
     if (!confirm(`Excluir o fardo "${fardo.name}"? Esta acao nao pode ser desfeita.`)) return;
     try {
-      await fetchAPI(`/partner/product-bundles/${fardo.id}`, { method: "DELETE" });
+      await apiFetch(`/partner/product-bundles/${fardo.id}`, { method: "DELETE" });
       await recarregarTodos();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro ao excluir fardo.";
