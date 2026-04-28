@@ -171,6 +171,8 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       setIsAvailable(produto.isAvailable);
       setIsFeatured(produto.isFeatured);
       setBarcode(produto.barcode ?? "");
+      // Carrega os fardos automaticamente ao abrir o modal de edição
+      if (produto.id) carregarFardos(produto.id);
     } else {
       setNome("");
       setSlug("");
@@ -183,9 +185,11 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
       setIsAvailable(true);
       setIsFeatured(false);
       setBarcode("");
+      setFardos([]);
     }
     setErro(null);
-  }, [aberto, produto, categorias]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, produto?.id]);
 
   function handleNomeChange(v: string) {
     setNome(v);
@@ -197,8 +201,8 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   async function carregarFardos(productId: string) {
     setFardosCarregando(true);
     try {
-      const res = await fetch(`${API_URL}/v1/partner/product-bundles?productId=${productId}`, { credentials: "include", cache: "no-store" });
-      if (res.ok) { const json = await res.json(); setFardos(json.data ?? []); }
+      const data = await fetchComAuth<ProductBundle[]>(`/partner/product-bundles?productId=${productId}`);
+      setFardos(data ?? []);
     } catch { /* silencioso */ } finally { setFardosCarregando(false); }
   }
 
@@ -212,10 +216,12 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
     if (!fardoForm.name.trim()) { setFardoErro("Nome é obrigatório."); return; }
     setFardoSalvando(true); setFardoErro(null);
     try {
-      const body = { productId: produto.id, name: fardoForm.name, slug: fardoForm.slug || gerarSlugFardo(fardoForm.name), bundlePriceCents: fardoForm.bundlePriceCents, itemsJson: { quantity: fardoForm.quantity }, isAvailable: fardoForm.isAvailable };
-      const url = fardoEditando ? `${API_URL}/v1/partner/product-bundles/${fardoEditando.id}` : `${API_URL}/v1/partner/product-bundles`;
-      const res = await fetch(url, { method: fardoEditando ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      if (!res.ok) { const t = await res.text().catch(() => ""); throw new Error(t || `Erro ${res.status}`); }
+      const body = JSON.stringify({ productId: produto.id, name: fardoForm.name, slug: fardoForm.slug || gerarSlugFardo(fardoForm.name), bundlePriceCents: fardoForm.bundlePriceCents, itemsJson: { quantity: fardoForm.quantity }, isAvailable: fardoForm.isAvailable });
+      if (fardoEditando) {
+        await fetchComAuth(`/partner/product-bundles/${fardoEditando.id}`, { method: "PATCH", body });
+      } else {
+        await fetchComAuth(`/partner/product-bundles`, { method: "POST", body });
+      }
       setFardoModal(false); setFardoEditando(null);
       if (produto?.id) carregarFardos(produto.id);
     } catch (e) { setFardoErro(e instanceof Error ? e.message : "Erro ao salvar."); } finally { setFardoSalvando(false); }
@@ -224,7 +230,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   async function deletarFardo(f: ProductBundle) {
     if (!confirm(`Excluir o fardo "${f.name}"?`)) return;
     try {
-      await fetch(`${API_URL}/v1/partner/product-bundles/${f.id}`, { method: "DELETE", credentials: "include" });
+      await fetchComAuth(`/partner/product-bundles/${f.id}`, { method: "DELETE" });
       if (produto?.id) carregarFardos(produto.id);
     } catch { /* silencioso */ }
   }

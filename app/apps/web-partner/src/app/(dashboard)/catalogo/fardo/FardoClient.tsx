@@ -2,17 +2,23 @@
 
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
+import { createClient } from "../../../../utils/supabase/client";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? null;
+
   const res = await fetch(`${API_URL}/v1${path}`, {
     method: opts.method ?? "GET",
-    credentials: "include",
     cache: "no-store",
-    ...(opts.body !== undefined ? {
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(opts.body),
-    } : {}),
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
   });
   if (!res.ok) {
     const json = await res.json().catch(() => null);
