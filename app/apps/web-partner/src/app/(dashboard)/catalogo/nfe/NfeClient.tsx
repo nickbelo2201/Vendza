@@ -60,45 +60,27 @@ export function NfeClient() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="wp-nfe-root">
 
       {/* Cabeçalho da seção */}
       <div>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", margin: "0 0 4px 0" }}>
-          Importar NF-e
-        </h2>
-        <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+        <h2 className="wp-nfe-heading-title">Importar NF-e</h2>
+        <p className="wp-nfe-heading-sub">
           Cole o XML da nota fiscal eletrônica para importar produtos automaticamente no catálogo.
         </p>
       </div>
 
       {/* Painel principal */}
-      <div style={{
-        background: "#ffffff",
-        border: "1px solid #e2e8f0",
-        borderRadius: 12,
-        padding: 24,
-        display: "flex",
-        flexDirection: "column",
-        gap: 20,
-      }}>
+      <div className="wp-nfe-panel">
 
         {/* Dica de uso */}
-        <div style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 12,
-          padding: "14px 16px",
-          background: "#f0fdf4",
-          borderRadius: 8,
-          border: "1px solid #bbf7d0",
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
+        <div className="wp-nfe-tip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span style={{ fontSize: 13, color: "#15803d", lineHeight: 1.5 }}>
+          <span>
             <strong>Como usar:</strong> Abra o arquivo XML da NF-e no Bloco de Notas ou editor de texto, selecione tudo (Ctrl+A), copie (Ctrl+C) e cole abaixo (Ctrl+V). O sistema extrai automaticamente os dados dos produtos.
           </span>
         </div>
@@ -106,28 +88,21 @@ export function NfeClient() {
         {/* Textarea XML */}
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>
+            <label className="wp-nfe-label">
               Conteúdo XML da NF-e
             </label>
             {xmlContent && (
               <button
                 type="button"
                 onClick={handleLimpar}
-                style={{
-                  fontSize: 12,
-                  color: "#6b7280",
-                  background: "none",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 6,
-                  padding: "3px 10px",
-                  cursor: "pointer",
-                }}
+                className="wp-nfe-btn-clear"
               >
                 Limpar
               </button>
             )}
           </div>
           <textarea
+            className="wp-nfe-textarea"
             value={xmlContent}
             onChange={(e) => {
               setXmlContent(e.target.value);
@@ -136,24 +111,9 @@ export function NfeClient() {
             }}
             placeholder={`<?xml version="1.0" encoding="UTF-8"?>\n<nfeProc ...>\n  ...\n</nfeProc>`}
             rows={16}
-            style={{
-              width: "100%",
-              resize: "vertical",
-              fontFamily: "'Space Grotesk', 'Courier New', monospace",
-              fontSize: 12,
-              lineHeight: 1.6,
-              color: "#0f172a",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-              padding: "12px 14px",
-              outline: "none",
-              minHeight: 320,
-              boxSizing: "border-box",
-            }}
           />
           {xmlContent && (
-            <span style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, display: "block" }}>
+            <span className="wp-nfe-counter">
               {xmlContent.length.toLocaleString("pt-BR")} caracteres
             </span>
           )}
@@ -161,46 +121,33 @@ export function NfeClient() {
 
         {/* Mensagem de erro */}
         {erro && (
-          <div style={{
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderRadius: 8,
-            padding: "12px 16px",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 10,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
+          <div className="wp-nfe-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
-            <span style={{ fontSize: 13, color: "#dc2626" }}>{erro}</span>
+            <span>{erro}</span>
           </div>
         )}
 
         {/* Resultado da importação */}
         {resultado && (
-          <div style={{
-            background: resultado.imported > 0 ? "#f0fdf4" : "#fefce8",
-            border: `1px solid ${resultado.imported > 0 ? "#bbf7d0" : "#fef08a"}`,
-            borderRadius: 8,
-            padding: "16px 20px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: resultado.errors.length > 0 ? 12 : 0 }}>
+          <div className={`wp-nfe-result ${resultado.imported > 0 ? "wp-nfe-result--success" : "wp-nfe-result--warning"}`}>
+            <div className="wp-nfe-result-title">
               {resultado.imported > 0 ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" style={{ flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" style={{ flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
               )}
-              <span style={{ fontSize: 14, fontWeight: 600, color: resultado.imported > 0 ? "#16a34a" : "#ca8a04" }}>
+              <span>
                 {resultado.imported > 0
                   ? `${resultado.imported} produto${resultado.imported !== 1 ? "s" : ""} importado${resultado.imported !== 1 ? "s" : ""} com sucesso`
                   : "Nenhum produto importado"}
@@ -208,12 +155,12 @@ export function NfeClient() {
             </div>
             {resultado.errors.length > 0 && (
               <div>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#92400e", marginBottom: 8 }}>
+                <p className="wp-nfe-result-errors-title">
                   {resultado.errors.length} erro{resultado.errors.length !== 1 ? "s" : ""} encontrado{resultado.errors.length !== 1 ? "s" : ""}:
                 </p>
-                <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+                <ul className="wp-nfe-result-errors-list">
                   {resultado.errors.map((e, i) => (
-                    <li key={i} style={{ fontSize: 12, color: "#92400e" }}>
+                    <li key={i}>
                       {e.line !== undefined && <span style={{ fontWeight: 600 }}>Linha {e.line}: </span>}
                       {e.message}
                     </li>
@@ -230,20 +177,7 @@ export function NfeClient() {
             type="button"
             onClick={handleImportar}
             disabled={importando || !xmlContent.trim()}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 20px",
-              background: importando || !xmlContent.trim() ? "#e2e8f0" : "#2d6a4f",
-              color: importando || !xmlContent.trim() ? "#94a3b8" : "#ffffff",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: importando || !xmlContent.trim() ? "not-allowed" : "pointer",
-              transition: "background 0.15s",
-            }}
+            className="wp-nfe-btn-import"
           >
             {importando ? (
               <>

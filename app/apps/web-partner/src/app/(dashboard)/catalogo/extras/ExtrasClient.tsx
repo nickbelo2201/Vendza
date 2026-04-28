@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
+import { StatusBadge } from "@/components/StatusBadge";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -234,9 +235,9 @@ export function ExtrasClient({ extrasIniciais }: Props) {
                       title={extra.isAvailable ? "Tornar indisponivel" : "Tornar disponivel"}
                     >
                       {extra.isAvailable ? (
-                        <span className="wp-badge wp-badge-green" style={{ fontSize: 11 }}>Disponivel</span>
+                        <StatusBadge variant="on" label="Disponível" />
                       ) : (
-                        <span className="wp-badge wp-badge-muted" style={{ fontSize: 11 }}>Indisponivel</span>
+                        <StatusBadge variant="off" label="Indisponível" />
                       )}
                     </button>
                   </td>
