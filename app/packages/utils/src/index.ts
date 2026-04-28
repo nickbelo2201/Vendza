@@ -1,4 +1,21 @@
-export { calcularPrecoComFardo } from "./fardo.js";
+export function calcularPrecoComFardo(params: {
+  quantidade: number;
+  precoAvulsoCents: number;
+  bundlePriceCents: number;
+  quantidadeFardo: number;
+}): {
+  totalCents: number;
+  fardosCompletos: number;
+  unidadesRestantes: number;
+  temDesconto: boolean;
+} {
+  const { quantidade, precoAvulsoCents, bundlePriceCents, quantidadeFardo } = params;
+  const fardosCompletos = Math.floor(quantidade / quantidadeFardo);
+  const unidadesRestantes = quantidade % quantidadeFardo;
+  const totalCents = fardosCompletos * bundlePriceCents + unidadesRestantes * precoAvulsoCents;
+  const temDesconto = fardosCompletos > 0 && bundlePriceCents < quantidadeFardo * precoAvulsoCents;
+  return { totalCents, fardosCompletos, unidadesRestantes, temDesconto };
+}
 
 export function formatCurrency(cents: number) {
   return new Intl.NumberFormat("pt-BR", {
