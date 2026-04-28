@@ -83,6 +83,7 @@ export async function buildApp() {
       }
     },
     credentials: true,
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
 
   app.register(sensible);
