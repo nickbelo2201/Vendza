@@ -3,17 +3,31 @@
 import { useState, useRef } from "react";
 import { formatCurrency } from "@vendza/utils";
 import { StatusBadge } from "@/components/StatusBadge";
+import { createClient } from "@/utils/supabase/client";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
+async function getToken(): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const token = await getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+
   const res = await fetch(`${API_URL}/v1${path}`, {
     method: opts.method ?? "GET",
-    credentials: "include",
+    headers,
     cache: "no-store",
-    ...(opts.body !== undefined ? {
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(opts.body),
-    } : {}),
+    ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
   });
   if (!res.ok) {
     const json = await res.json().catch(() => null);
