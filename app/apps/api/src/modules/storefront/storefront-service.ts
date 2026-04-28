@@ -192,6 +192,16 @@ async function _getProducts(
         category: {
           select: { id: true, name: true, slug: true },
         },
+        bundles: {
+          where: { isAvailable: true },
+          select: {
+            id: true,
+            name: true,
+            bundlePriceCents: true,
+            itemsJson: true,
+            isAvailable: true,
+          },
+        },
       },
       orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
     }),
@@ -199,10 +209,18 @@ async function _getProducts(
   ]);
 
   type ProductRow = (typeof products)[number];
+  type BundleRow = ProductRow["bundles"][number];
   return {
     items: products.map((p: ProductRow) => ({
       ...p,
       offer: p.salePriceCents !== null && p.salePriceCents < p.listPriceCents,
+      bundles: p.bundles.map((b: BundleRow) => ({
+        id: b.id,
+        name: b.name,
+        bundlePriceCents: b.bundlePriceCents,
+        quantity: (b.itemsJson as { quantity?: number } | null)?.quantity ?? 0,
+        isAvailable: b.isAvailable,
+      })),
     })),
     pagination: {
       page,
@@ -278,6 +296,16 @@ async function _getBootstrap(storeSlug: string) {
         category: {
           select: { id: true, name: true, slug: true },
         },
+        bundles: {
+          where: { isAvailable: true },
+          select: {
+            id: true,
+            name: true,
+            bundlePriceCents: true,
+            itemsJson: true,
+            isAvailable: true,
+          },
+        },
       },
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
       take: 20,
@@ -285,6 +313,7 @@ async function _getBootstrap(storeSlug: string) {
   ]);
 
   type ProductRow = (typeof products)[number];
+  type BundleRow = ProductRow["bundles"][number];
 
   return {
     config: {
@@ -305,6 +334,13 @@ async function _getBootstrap(storeSlug: string) {
     products: products.map((p: ProductRow) => ({
       ...p,
       offer: p.salePriceCents !== null && p.salePriceCents < p.listPriceCents,
+      bundles: p.bundles.map((b: BundleRow) => ({
+        id: b.id,
+        name: b.name,
+        bundlePriceCents: b.bundlePriceCents,
+        quantity: (b.itemsJson as { quantity?: number } | null)?.quantity ?? 0,
+        isAvailable: b.isAvailable,
+      })),
     })),
   };
 }
@@ -620,15 +656,34 @@ export async function getProductBySlugReal(storeId: string, slug: string) {
       category: {
         select: { id: true, name: true, slug: true },
       },
+      bundles: {
+        where: { isAvailable: true },
+        select: {
+          id: true,
+          name: true,
+          bundlePriceCents: true,
+          itemsJson: true,
+          isAvailable: true,
+        },
+      },
     },
   });
 
   if (!product) return null;
 
+  type BundleRow = (typeof product.bundles)[number];
+
   return {
     ...product,
     categorySlug: product.category?.slug ?? null,
     offer: product.salePriceCents !== null && product.salePriceCents < product.listPriceCents,
+    bundles: product.bundles.map((b: BundleRow) => ({
+      id: b.id,
+      name: b.name,
+      bundlePriceCents: b.bundlePriceCents,
+      quantity: (b.itemsJson as { quantity?: number } | null)?.quantity ?? 0,
+      isAvailable: b.isAvailable,
+    })),
   };
 }
 

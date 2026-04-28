@@ -65,6 +65,15 @@ const CategoryRefSchema = Type.Object({
   slug: Type.String(),
 });
 
+/** Schema de fardo público (bundle de produto) */
+const BundlePublicoSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  bundlePriceCents: Type.Integer(),
+  quantity: Type.Integer(),
+  isAvailable: Type.Boolean(),
+});
+
 /** Schema de produto público (listagem e detalhe) */
 const StorefrontProductSchema = Type.Object({
   id: Type.String(),
@@ -78,6 +87,7 @@ const StorefrontProductSchema = Type.Object({
   isFeatured: Type.Boolean(),
   offer: Type.Boolean(),
   category: Type.Union([CategoryRefSchema, Type.Null()]),
+  bundles: Type.Array(BundlePublicoSchema),
 });
 
 /** Schema de produto com campo categorySlug (retorno de getProductBySlugReal) */
@@ -94,6 +104,7 @@ const StorefrontProductDetailSchema = Type.Object({
   offer: Type.Boolean(),
   categorySlug: Type.Union([Type.String(), Type.Null()]),
   category: Type.Union([CategoryRefSchema, Type.Null()]),
+  bundles: Type.Array(BundlePublicoSchema),
 });
 
 /** Schema de paginação */
