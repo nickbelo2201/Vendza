@@ -123,7 +123,7 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
         let mensagem = `Erro ${res.status}`;
         try {
           const json = JSON.parse(text);
-          mensagem = json.message ?? json.error ?? mensagem;
+          mensagem = json.error?.message ?? json.message ?? mensagem;
         } catch {}
         setErro(mensagem);
         return;
@@ -156,7 +156,7 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
         let mensagem = `Erro ${res.status}`;
         try {
           const json = JSON.parse(text);
-          mensagem = json.message ?? json.error ?? mensagem;
+          mensagem = json.error?.message ?? json.message ?? mensagem;
         } catch {}
         window.alert(mensagem);
         return;

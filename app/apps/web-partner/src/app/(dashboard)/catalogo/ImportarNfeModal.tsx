@@ -44,7 +44,7 @@ export function ImportarNfeModal({ aberto, onFechar, onConcluido }: Props) {
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         let msg = `Erro ${res.status}`;
-        try { const json = JSON.parse(text); msg = json.message ?? json.error ?? msg; } catch { /* ignorar parse error */ }
+        try { const json = JSON.parse(text); msg = json.error?.message ?? json.message ?? msg; } catch { /* ignorar parse error */ }
         setErro(msg); return;
       }
       const json = await res.json();
