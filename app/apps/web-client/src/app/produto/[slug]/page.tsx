@@ -128,6 +128,7 @@ export default async function ProductPage({
             slug={produto.slug}
             imageUrl={produto.imageUrl}
             unitPriceCents={preco}
+            bundles={produto.bundles}
           />
 
           <a href="/checkout" className="wc-btn wc-btn-secondary" style={{ textAlign: "center" }}>

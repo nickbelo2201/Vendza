@@ -114,9 +114,18 @@ export interface Produto {
   parentCategorySlug: string | null;
 }
 
+/** Fardo/bundle público retornado pelo storefront. */
+export interface BundlePublico {
+  id: string;
+  name: string;
+  bundlePriceCents: number;
+  quantity: number;
+  isAvailable: boolean;
+}
+
 /**
  * Produto retornado pelo storefront público.
- * Inclui campo `offer` calculado pela API.
+ * Inclui campo `offer` calculado pela API e `bundles` de fardo.
  */
 export interface ProdutoStorefront {
   id: string;
@@ -131,6 +140,7 @@ export interface ProdutoStorefront {
   offer: boolean;
   categorySlug: string | null;
   category: { id: string; name: string; slug: string } | null;
+  bundles?: BundlePublico[];
 }
 
 /** Produto resumido para uso no PDV e modal de pedido manual. */

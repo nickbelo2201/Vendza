@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { calcularPrecoComFardo } from "@vendza/utils";
+import type { BundlePublico } from "@vendza/types";
 import { encryptData, decryptData, looksEncrypted } from "@/lib/crypto";
 
 const STORAGE_KEY = "vendza_carrinho";
@@ -13,7 +15,32 @@ export type CarrinhoItem = {
   imagemUrl: string | null;
   unitPriceCents: number;
   quantity: number;
+  bundles?: BundlePublico[];
 };
+
+/** Retorna o bundle ativo de menor tamanho que se aplica à quantidade. */
+export function melhorBundleParaQtd(
+  bundles: BundlePublico[] | undefined,
+  quantidade: number,
+): BundlePublico | null {
+  if (!bundles || bundles.length === 0) return null;
+  const ativos = bundles
+    .filter((b) => b.isAvailable && b.quantity >= 1)
+    .sort((a, b) => a.quantity - b.quantity);
+  return ativos.find((b) => quantidade >= b.quantity) ?? null;
+}
+
+/** Calcula o total real de um item considerando desconto de fardo. */
+export function calcularTotalItem(item: CarrinhoItem): number {
+  const bundle = melhorBundleParaQtd(item.bundles, item.quantity);
+  if (!bundle) return item.unitPriceCents * item.quantity;
+  return calcularPrecoComFardo({
+    quantidade: item.quantity,
+    precoAvulsoCents: item.unitPriceCents,
+    bundlePriceCents: bundle.bundlePriceCents,
+    quantidadeFardo: bundle.quantity,
+  }).totalCents;
+}
 
 type CarrinhoContextType = {
   items: CarrinhoItem[];
@@ -100,7 +127,7 @@ export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
         if (existing) {
           return prev.map((i) =>
             i.productId === item.productId
-              ? { ...i, quantity: i.quantity + (item.quantity ?? 1) }
+              ? { ...i, quantity: i.quantity + (item.quantity ?? 1), bundles: item.bundles ?? i.bundles }
               : i,
           );
         }
@@ -136,7 +163,7 @@ export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const totalItens = items.reduce((sum, i) => sum + i.quantity, 0);
-  const subtotalCents = items.reduce((sum, i) => sum + i.unitPriceCents * i.quantity, 0);
+  const subtotalCents = items.reduce((sum, i) => sum + calcularTotalItem(i), 0);
 
   return (
     <CarrinhoContext.Provider

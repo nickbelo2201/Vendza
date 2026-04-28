@@ -2,7 +2,7 @@
 
 import { formatCurrency } from "@vendza/utils";
 
-import { useCarrinho } from "../context/CarrinhoContext";
+import { useCarrinho, calcularTotalItem, melhorBundleParaQtd } from "../context/CarrinhoContext";
 
 type Props = {
   open: boolean;
@@ -77,8 +77,21 @@ export function CartSheet({ open, onClose }: Props) {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: "0 0 4px", fontWeight: 600, color: "var(--carbon)" }}>
+                    <p style={{ margin: "0 0 4px", fontWeight: 600, color: "var(--carbon)", display: "flex", alignItems: "center", gap: 6 }}>
                       {item.name}
+                      {melhorBundleParaQtd(item.bundles, item.quantity) && (
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          background: "color-mix(in srgb, var(--green) 15%, transparent)",
+                          color: "var(--green)",
+                          letterSpacing: "0.03em",
+                        }}>
+                          FARDO
+                        </span>
+                      )}
                     </p>
                     <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
                       {formatCurrency(item.unitPriceCents)} / un
@@ -124,7 +137,7 @@ export function CartSheet({ open, onClose }: Props) {
                     </button>
                   </div>
                   <p style={{ margin: 0, fontWeight: 700, color: "var(--green)", fontFamily: "'Space Grotesk', sans-serif" }}>
-                    {formatCurrency(item.unitPriceCents * item.quantity)}
+                    {formatCurrency(calcularTotalItem(item))}
                   </p>
                   <button
                     onClick={() => removerItem(item.productId)}
