@@ -516,6 +516,7 @@ model Combo {
   store            Store                   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   items            ComboItem[]
   complementGroups ComboComplementGroup[]
+  extras           ComboExtra[]
 
   @@unique([storeId, slug])
   @@index([storeId, isActive])
@@ -604,8 +605,22 @@ model Extra {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store  Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  combos ComboExtra[]
 
   @@index([storeId, isAvailable])
   @@map("extras")
+}
+
+model ComboExtra {
+  id        String @id @default(uuid()) @db.Uuid
+  comboId   String @map("combo_id") @db.Uuid
+  extraId   String @map("extra_id") @db.Uuid
+  sortOrder Int    @default(0) @map("sort_order")
+
+  combo Combo @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  extra Extra @relation(fields: [extraId], references: [id], onDelete: Cascade)
+
+  @@unique([comboId, extraId])
+  @@map("combo_extras")
 }

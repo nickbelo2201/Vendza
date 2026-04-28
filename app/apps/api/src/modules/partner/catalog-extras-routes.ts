@@ -65,6 +65,17 @@ const ComboComplementGroupResponseSchema = Type.Object({
   complements: Type.Array(ComboComplementResponseSchema),
 });
 
+const ComboExtraResponseSchema = Type.Object({
+  id: Type.String(),
+  extraId: Type.String(),
+  name: Type.String(),
+  description: NullableString,
+  priceCents: Type.Integer(),
+  imageUrl: NullableString,
+  isAvailable: Type.Boolean(),
+  sortOrder: Type.Integer(),
+});
+
 const ComboResponseSchema = Type.Object({
   id: Type.String(),
   storeId: Type.String(),
@@ -78,6 +89,7 @@ const ComboResponseSchema = Type.Object({
   updatedAt: Type.String(),
   items: Type.Array(ComboItemResponseSchema),
   complementGroups: Type.Array(ComboComplementGroupResponseSchema),
+  extras: Type.Array(ComboExtraResponseSchema),
 });
 
 const ComboItemInputSchema = Type.Object({
@@ -93,6 +105,11 @@ const ComboComplementGroupInputSchema = Type.Object({
   maxSelectionOverride: Type.Optional(Type.Integer({ minimum: 1 })),
 });
 
+const ComboExtraInputSchema = Type.Object({
+  extraId: Type.String({ format: "uuid" }),
+  sortOrder: Type.Optional(Type.Integer({ minimum: 0 })),
+});
+
 const ComboCreateSchema = Type.Object({
   name: Type.String({ minLength: 1 }),
   slug: Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" }),
@@ -102,6 +119,7 @@ const ComboCreateSchema = Type.Object({
   isActive: Type.Optional(Type.Boolean()),
   items: Type.Array(ComboItemInputSchema, { minItems: 1 }),
   complementGroups: Type.Optional(Type.Array(ComboComplementGroupInputSchema)),
+  extras: Type.Optional(Type.Array(ComboExtraInputSchema)),
 });
 
 const ComboPatchSchema = Type.Object({
@@ -113,6 +131,7 @@ const ComboPatchSchema = Type.Object({
   isActive: Type.Optional(Type.Boolean()),
   items: Type.Optional(Type.Array(ComboItemInputSchema, { minItems: 1 })),
   complementGroups: Type.Optional(Type.Array(ComboComplementGroupInputSchema)),
+  extras: Type.Optional(Type.Array(ComboExtraInputSchema)),
 });
 
 const ComboActiveSchema = Type.Object({ isActive: Type.Boolean() });

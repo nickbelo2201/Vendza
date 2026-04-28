@@ -38,6 +38,21 @@ async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown
   return json.data as T;
 }
 
+// Tipos para extras
+
+type ExtraSimples = {
+  id: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  isAvailable: boolean;
+};
+
+type ExtraForm = {
+  extraId: string;
+  sortOrder: number;
+};
+
 // Tipos para grupos de complementos
 
 type ComplementGroupOption = {
@@ -96,6 +111,16 @@ type Combo = {
   updatedAt: string;
   items: ComboItem[];
   complementGroups?: ComboComplementGroupResponse[];
+  extras?: Array<{
+    id: string;
+    extraId: string;
+    name: string;
+    description: string | null;
+    priceCents: number;
+    imageUrl: string | null;
+    isAvailable: boolean;
+    sortOrder: number;
+  }>;
 };
 
 type ProdutoSimples = {
@@ -118,6 +143,7 @@ type FormState = {
   isActive: boolean;
   items: ItemForm[];
   complementGroups: ComboComplementGroupInput[];
+  extras: ExtraForm[];
 };
 
 function gerarSlug(nome: string) {
@@ -138,6 +164,7 @@ const FORM_INICIAL: FormState = {
   isActive: true,
   items: [],
   complementGroups: [],
+  extras: [],
 };
 
 type Props = {
@@ -160,6 +187,10 @@ export function CombosClient({ combosIniciais }: Props) {
 
   // Controla o select de adição de grupo (valor temporário do dropdown)
   const [grupoSelecionadoId, setGrupoSelecionadoId] = useState<string>("");
+
+  const [extras, setExtras] = useState<ExtraSimples[]>([]);
+  const extrasBuscadosRef = useRef(false);
+  const [extraSelecionadoId, setExtraSelecionadoId] = useState<string>("");
 
   async function recarregar() {
     try {
@@ -192,14 +223,27 @@ export function CombosClient({ combosIniciais }: Props) {
     }
   }
 
+  async function buscarExtras() {
+    if (extrasBuscadosRef.current) return;
+    extrasBuscadosRef.current = true;
+    try {
+      const lista = await apiFetch<ExtraSimples[]>("/partner/extras");
+      setExtras(lista ?? []);
+    } catch {
+      // silencioso
+    }
+  }
+
   function abrirCriar() {
     setEditando(null);
     setForm(FORM_INICIAL);
     setErro(null);
     setGrupoSelecionadoId("");
+    setExtraSelecionadoId("");
     setModalAberto(true);
     buscarProdutos();
     buscarGrupos();
+    buscarExtras();
   }
 
   function abrirEditar(combo: Combo) {
@@ -215,12 +259,18 @@ export function CombosClient({ combosIniciais }: Props) {
         complementGroupId: g.groupId,
         sortOrder: g.sortOrder ?? idx,
       })),
+      extras: (combo.extras ?? []).map((e, idx) => ({
+        extraId: e.extraId,
+        sortOrder: e.sortOrder ?? idx,
+      })),
     });
     setErro(null);
     setGrupoSelecionadoId("");
+    setExtraSelecionadoId("");
     setModalAberto(true);
     buscarProdutos();
     buscarGrupos();
+    buscarExtras();
   }
 
   function fecharModal() {
@@ -228,6 +278,7 @@ export function CombosClient({ combosIniciais }: Props) {
     setEditando(null);
     setErro(null);
     setGrupoSelecionadoId("");
+    setExtraSelecionadoId("");
   }
 
   function handleNomeChange(valor: string) {
@@ -287,6 +338,32 @@ export function CombosClient({ combosIniciais }: Props) {
     }));
   }
 
+  function adicionarExtra() {
+    if (!extraSelecionadoId) return;
+    const jaAdicionado = form.extras.some((e) => e.extraId === extraSelecionadoId);
+    if (jaAdicionado) {
+      setExtraSelecionadoId("");
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      extras: [
+        ...f.extras,
+        { extraId: extraSelecionadoId, sortOrder: f.extras.length },
+      ],
+    }));
+    setExtraSelecionadoId("");
+  }
+
+  function removerExtra(extraId: string) {
+    setForm((f) => ({
+      ...f,
+      extras: f.extras
+        .filter((e) => e.extraId !== extraId)
+        .map((e, idx) => ({ ...e, sortOrder: idx })),
+    }));
+  }
+
   async function salvar() {
     setErro(null);
 
@@ -318,6 +395,7 @@ export function CombosClient({ combosIniciais }: Props) {
         isActive: form.isActive,
         items: form.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         ...(form.complementGroups.length > 0 ? { complementGroups: form.complementGroups } : {}),
+        ...(form.extras.length > 0 ? { extras: form.extras } : {}),
       };
 
       if (editando) {
@@ -364,9 +442,19 @@ export function CombosClient({ combosIniciais }: Props) {
     return gruposDisponiveis.find((g) => g.id === complementGroupId);
   }
 
+  // Resolve os dados de exibicao de um extra a partir do ID
+  function resolverExtra(extraId: string): ExtraSimples | undefined {
+    return extras.find((e) => e.id === extraId);
+  }
+
   // Grupos ainda nao adicionados ao combo (para o select)
   const gruposNaoAdicionados = gruposDisponiveis.filter(
     (g) => !form.complementGroups.some((fg) => fg.complementGroupId === g.id)
+  );
+
+  // Extras ainda nao adicionados ao combo (para o select)
+  const extrasNaoAdicionados = extras.filter(
+    (e) => !form.extras.some((fe) => fe.extraId === e.id)
   );
 
   return (
@@ -791,6 +879,119 @@ export function CombosClient({ combosIniciais }: Props) {
                 ) : (
                   <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>
                     Todos os grupos disponiveis ja foram adicionados.
+                  </p>
+                )}
+              </div>
+
+              {/* Divisor */}
+              <div style={{ borderTop: "1px solid var(--border)" }} />
+
+              {/* Extras */}
+              <div>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 2 }}>
+                    Extras
+                    <span style={{ fontWeight: 400, color: "var(--text-muted)", marginLeft: 6 }}>(opcional)</span>
+                  </label>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
+                    Adicione extras opcionais disponíveis para este combo.
+                  </p>
+                </div>
+
+                {/* Lista de extras ja adicionados */}
+                {form.extras.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                    {form.extras.map((fe) => {
+                      const extra = resolverExtra(fe.extraId);
+                      return (
+                        <div
+                          key={fe.extraId}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 12px",
+                            borderRadius: 8,
+                            border: "1px solid var(--border)",
+                            background: "var(--surface)",
+                            gap: 10,
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--carbon)" }}>
+                              {extra?.name ?? fe.extraId}
+                            </div>
+                            {extra && (
+                              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                                <span className="wp-badge wp-badge-muted">
+                                  {formatCurrency(extra.priceCents)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="wp-btn wp-btn-secondary"
+                            onClick={() => removerExtra(fe.extraId)}
+                            style={{ padding: "4px 8px", color: "var(--red, #dc2626)", flexShrink: 0 }}
+                            title="Remover extra"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Selector para adicionar extra */}
+                {extrasNaoAdicionados.length > 0 ? (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <select
+                      className="wp-input"
+                      value={extraSelecionadoId}
+                      onChange={(e) => setExtraSelecionadoId(e.target.value)}
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">Selecione um extra...</option>
+                      {extrasNaoAdicionados.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name} — {formatCurrency(e.priceCents)}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="wp-btn wp-btn-secondary"
+                      onClick={adicionarExtra}
+                      disabled={!extraSelecionadoId}
+                      style={{ fontSize: 12, padding: "4px 12px", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Adicionar
+                    </button>
+                  </div>
+                ) : extras.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>
+                    Nenhum extra cadastrado.{" "}
+                    <a
+                      href="/catalogo/extras"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--green)", textDecoration: "underline" }}
+                    >
+                      Criar extra
+                    </a>
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>
+                    Todos os extras disponiveis ja foram adicionados.
                   </p>
                 )}
               </div>

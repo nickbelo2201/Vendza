@@ -1,8 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function getToken(): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 type ErroImportacao = { line?: number; message: string };
 type ResultadoImportacao = { imported: number; errors: ErroImportacao[] };
@@ -21,9 +32,13 @@ export function ImportarNfeModal({ aberto, onFechar, onConcluido }: Props) {
     if (!xmlContent.trim()) { setErro("Cole o conteúdo XML da NF-e antes de importar."); return; }
     setImportando(true); setErro(null); setResultado(null);
     try {
+      const token = await getToken();
       const res = await fetch(`${API_URL}/v1/partner/nfe/import`, {
-        method: "POST", credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ xmlContent }),
       });
       if (!res.ok) {

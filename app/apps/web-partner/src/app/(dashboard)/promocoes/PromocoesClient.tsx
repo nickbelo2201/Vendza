@@ -3,6 +3,17 @@
 import { useState } from "react";
 import { formatCurrency } from "@vendza/utils";
 import type { PromocoesResultado } from "@vendza/types";
+import { createClient } from "@/utils/supabase/client";
+
+async function getToken(): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /* ─── tipos ─────────────────────────────────────────────────────── */
 
@@ -51,10 +62,13 @@ function ModalPreco({ produto, onFechar }: ModalPrecoProps) {
     setSalvando(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const token = await getToken();
       const res = await fetch(`${API_URL}/v1/partner/products/${produto.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ salePriceCents: centavos }),
       });
       if (!res.ok) {
@@ -172,10 +186,13 @@ function ModalCriarPromocao({ produtos, onFechar }: ModalCriarProps) {
     setSalvando(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const token = await getToken();
       const res = await fetch(`${API_URL}/v1/partner/products/${produtoId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ salePriceCents: centavos }),
       });
       if (!res.ok) {

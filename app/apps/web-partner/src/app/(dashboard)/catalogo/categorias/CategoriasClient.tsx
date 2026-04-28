@@ -2,8 +2,19 @@
 
 import { useState } from "react";
 import type { Categoria } from "@vendza/types";
+import { createClient } from "@/utils/supabase/client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function getToken(): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function gerarSlug(nome: string): string {
   return nome
@@ -34,8 +45,9 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
 
   async function recarregar() {
     try {
+      const token = await getToken();
       const res = await fetch(`${API_URL}/v1/partner/categories`, {
-        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: "no-store",
       });
       if (res.ok) {
@@ -96,10 +108,13 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
         ? { name: form.name, slug: form.slug, isActive: form.isActive }
         : { name: form.name, slug: form.slug, isActive: form.isActive };
 
+      const token = await getToken();
       const res = await fetch(url, {
         method: editando ? "PATCH" : "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(body),
       });
 
@@ -130,9 +145,10 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
     if (!confirmado) return;
 
     try {
+      const token = await getToken();
       const res = await fetch(`${API_URL}/v1/partner/categories/${categoria.id}`, {
         method: "DELETE",
-        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (!res.ok) {

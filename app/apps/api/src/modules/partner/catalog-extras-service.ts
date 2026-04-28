@@ -18,6 +18,11 @@ type ComboComplementGroupInput = {
   maxSelectionOverride?: number;
 };
 
+type ComboExtraInput = {
+  extraId: string;
+  sortOrder?: number;
+};
+
 type ComboCreateInput = {
   name: string;
   slug: string;
@@ -27,6 +32,7 @@ type ComboCreateInput = {
   isActive?: boolean;
   items: ComboItemInput[];
   complementGroups?: ComboComplementGroupInput[];
+  extras?: ComboExtraInput[];
 };
 
 type ComboPatchInput = Partial<{
@@ -38,6 +44,7 @@ type ComboPatchInput = Partial<{
   isActive: boolean;
   items: ComboItemInput[];
   complementGroups: ComboComplementGroupInput[];
+  extras: ComboExtraInput[];
 }>;
 
 type ComplementGroupCreateInput = {
@@ -152,6 +159,18 @@ function mapCombo(combo: {
       }>;
     };
   }>;
+  extras?: Array<{
+    id: string;
+    extraId: string;
+    sortOrder: number;
+    extra: {
+      name: string;
+      description: string | null;
+      priceCents: number;
+      imageUrl: string | null;
+      isAvailable: boolean;
+    };
+  }>;
 }) {
   return {
     id: combo.id,
@@ -184,6 +203,19 @@ function mapCombo(combo: {
               imageUrl: c.imageUrl,
               additionalPriceCents: c.additionalPriceCents,
             })),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder) ?? [],
+    extras:
+      combo.extras
+        ?.map((ce) => ({
+          id: ce.id,
+          extraId: ce.extraId,
+          name: ce.extra.name,
+          description: ce.extra.description,
+          priceCents: ce.extra.priceCents,
+          imageUrl: ce.extra.imageUrl,
+          isAvailable: ce.extra.isAvailable,
+          sortOrder: ce.sortOrder,
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder) ?? [],
   };
@@ -285,6 +317,10 @@ const comboInclude = {
     },
     orderBy: { sortOrder: "asc" as const },
   },
+  extras: {
+    orderBy: { sortOrder: "asc" as const },
+    include: { extra: true },
+  },
 } as const;
 
 async function validateComboItemsOwnership(
@@ -322,6 +358,21 @@ async function validateComplementGroupsOwnership(
   }
 }
 
+async function validateExtrasOwnership(
+  tx: Prisma.TransactionClient,
+  storeId: string,
+  extras: ComboExtraInput[],
+) {
+  const ids = extras.map((e) => e.extraId);
+  const found = await tx.extra.findMany({
+    where: { id: { in: ids }, storeId },
+    select: { id: true },
+  });
+  if (found.length !== new Set(ids).size) {
+    throw new Error("Um ou mais extras não pertencem a esta loja.");
+  }
+}
+
 export async function listCombos(context: PartnerContext) {
   const combos = await prisma.combo.findMany({
     where: { storeId: context.storeId },
@@ -341,6 +392,10 @@ export async function createCombo(context: PartnerContext, input: ComboCreateInp
         context.storeId,
         input.complementGroups,
       );
+    }
+
+    if (input.extras && input.extras.length > 0) {
+      await validateExtrasOwnership(tx, context.storeId, input.extras);
     }
 
     const created = await tx.combo.create({
@@ -375,7 +430,17 @@ export async function createCombo(context: PartnerContext, input: ComboCreateInp
       });
     }
 
-    // Re-fetch com os complementGroups incluídos
+    if (input.extras && input.extras.length > 0) {
+      await tx.comboExtra.createMany({
+        data: input.extras.map((e, idx) => ({
+          comboId: created.id,
+          extraId: e.extraId,
+          sortOrder: e.sortOrder ?? idx,
+        })),
+      });
+    }
+
+    // Re-fetch com complementGroups e extras incluídos
     return tx.combo.findUniqueOrThrow({
       where: { id: created.id },
       include: comboInclude,
@@ -430,6 +495,22 @@ export async function updateCombo(
             isRequiredOverride: cg.isRequiredOverride ?? null,
             minSelectionOverride: cg.minSelectionOverride ?? null,
             maxSelectionOverride: cg.maxSelectionOverride ?? null,
+          })),
+        });
+      }
+    }
+
+    if (input.extras !== undefined) {
+      if (input.extras.length > 0) {
+        await validateExtrasOwnership(tx, context.storeId, input.extras);
+      }
+      await tx.comboExtra.deleteMany({ where: { comboId: existing.id } });
+      if (input.extras.length > 0) {
+        await tx.comboExtra.createMany({
+          data: input.extras.map((e, idx) => ({
+            comboId: existing.id,
+            extraId: e.extraId,
+            sortOrder: e.sortOrder ?? idx,
           })),
         });
       }

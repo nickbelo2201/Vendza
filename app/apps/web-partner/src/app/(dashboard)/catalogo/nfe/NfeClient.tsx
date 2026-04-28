@@ -1,8 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+
+async function getToken(): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 type ErroImportacao = {
   line?: number;
@@ -29,10 +40,13 @@ export function NfeClient() {
     setErro(null);
     setResultado(null);
     try {
+      const token = await getToken();
       const res = await fetch(`${API_URL}/v1/partner/nfe/import`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ xmlContent }),
       });
       if (!res.ok) {

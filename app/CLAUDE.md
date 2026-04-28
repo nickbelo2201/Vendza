@@ -246,9 +246,14 @@ font-family: 'Space Grotesk', sans-serif; /* valores numéricos, slugs */
 
 8. **pnpm sempre via corepack:** Usar `corepack pnpm` não `pnpm` diretamente.
 
-9. **Após mudança de schema Prisma:** Rodar `corepack pnpm db:generate` do diretório `app/`.
+9. **Após mudança de schema Prisma:** Rodar DOIS comandos do diretório `app/`:
+   ```bash
+   corepack pnpm db:generate                          # Regenera os tipos TypeScript
+   corepack pnpm --filter @vendza/database build      # Recompila o dist/ (obrigatório!)
+   ```
+   Se pular o `build`, a API usa o `dist/` antigo e `prisma.novoModelo` fica `undefined`.
 
-10. **`db:push` não `db:migrate`:** O projeto usa `db:push` para sincronizar schema sem criar migration files.
+10. **`db:migrate` (não `db:push`):** O projeto usa migrations (`db:migrate` para produção, `db:migrate:dev` para dev). O `db:push` foi desativado.
 
 11. **JSX errors no typecheck do web-client:** Se aparecerem erros `TS7026: JSX element implicitly has type 'any'` ou `TS2591: Cannot find name 'process'`, verificar se o arquivo `apps/web-client/.next/types/routes.d.ts` existe. Se não existir, copiar de `apps/web-partner/.next/types/routes.d.ts`. NUNCA adicionar `"types": ["node", "react", "react-dom"]` ao tsconfig — isso quebra os imports do Next.js.
 
