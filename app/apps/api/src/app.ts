@@ -64,11 +64,17 @@ export async function buildApp() {
 
   app.register(cors, {
     origin: (origin, cb) => {
+      const extraOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       const allowed = [
         process.env.NEXT_PUBLIC_PARTNER_URL,
         process.env.NEXT_PUBLIC_CLIENT_URL,
         "http://localhost:3000",
         "http://localhost:3001",
+        "https://web-partner-three.vercel.app",
+        ...extraOrigins,
       ].filter(Boolean) as string[];
       if (!origin || allowed.includes(origin)) {
         cb(null, true);

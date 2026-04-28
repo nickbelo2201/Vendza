@@ -142,7 +142,7 @@ export function ProdutoModal({ aberto, onFechar, produto, categorias }: Props) {
   const [barcode, setBarcode] = useState("");
   const [scannerAberto, setScannerAberto] = useState(false);
 
-  const [fardosAberto, setFardosAberto] = useState(false);
+  const [fardosAberto, setFardosAberto] = useState(true);
   const [fardos, setFardos] = useState<ProductBundle[]>([]);
   const [fardosCarregando, setFardosCarregando] = useState(false);
   const [fardoModal, setFardoModal] = useState(false);
