@@ -10,6 +10,14 @@ type ComboItemInput = {
   quantity: number;
 };
 
+type ComboComplementGroupInput = {
+  complementGroupId: string;
+  sortOrder?: number;
+  isRequiredOverride?: boolean;
+  minSelectionOverride?: number;
+  maxSelectionOverride?: number;
+};
+
 type ComboCreateInput = {
   name: string;
   slug: string;
@@ -18,6 +26,7 @@ type ComboCreateInput = {
   priceCents: number;
   isActive?: boolean;
   items: ComboItemInput[];
+  complementGroups?: ComboComplementGroupInput[];
 };
 
 type ComboPatchInput = Partial<{
@@ -28,6 +37,7 @@ type ComboPatchInput = Partial<{
   priceCents: number;
   isActive: boolean;
   items: ComboItemInput[];
+  complementGroups: ComboComplementGroupInput[];
 }>;
 
 type ComplementGroupCreateInput = {
@@ -120,6 +130,28 @@ function mapCombo(combo: {
     quantity: number;
     product: { id: string; name: string; slug: string; listPriceCents: number };
   }>;
+  complementGroups?: Array<{
+    id: string;
+    sortOrder: number;
+    isRequiredOverride: boolean | null;
+    minSelectionOverride: number | null;
+    maxSelectionOverride: number | null;
+    complementGroup: {
+      id: string;
+      name: string;
+      description: string | null;
+      minSelection: number;
+      maxSelection: number;
+      isRequired: boolean;
+      complements: Array<{
+        id: string;
+        name: string;
+        imageUrl: string | null;
+        additionalPriceCents: number;
+        isAvailable: boolean;
+      }>;
+    };
+  }>;
 }) {
   return {
     id: combo.id,
@@ -133,6 +165,27 @@ function mapCombo(combo: {
     createdAt: combo.createdAt.toISOString(),
     updatedAt: combo.updatedAt.toISOString(),
     items: combo.items.map(mapComboItem),
+    complementGroups:
+      combo.complementGroups
+        ?.map((ccg) => ({
+          id: ccg.id,
+          groupId: ccg.complementGroup.id,
+          name: ccg.complementGroup.name,
+          description: ccg.complementGroup.description,
+          minSelection: ccg.minSelectionOverride ?? ccg.complementGroup.minSelection,
+          maxSelection: ccg.maxSelectionOverride ?? ccg.complementGroup.maxSelection,
+          isRequired: ccg.isRequiredOverride ?? ccg.complementGroup.isRequired,
+          sortOrder: ccg.sortOrder,
+          complements: ccg.complementGroup.complements
+            .filter((c) => c.isAvailable)
+            .map((c) => ({
+              id: c.id,
+              name: c.name,
+              imageUrl: c.imageUrl,
+              additionalPriceCents: c.additionalPriceCents,
+            })),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder) ?? [],
   };
 }
 
@@ -224,6 +277,14 @@ const comboInclude = {
       },
     },
   },
+  complementGroups: {
+    include: {
+      complementGroup: {
+        include: { complements: true },
+      },
+    },
+    orderBy: { sortOrder: "asc" as const },
+  },
 } as const;
 
 async function validateComboItemsOwnership(
@@ -244,6 +305,23 @@ async function validateComboItemsOwnership(
   }
 }
 
+async function validateComplementGroupsOwnership(
+  tx: Prisma.TransactionClient,
+  storeId: string,
+  complementGroups: ComboComplementGroupInput[],
+) {
+  const ids = complementGroups.map((cg) => cg.complementGroupId);
+  const found = await tx.complementGroup.findMany({
+    where: { id: { in: ids }, storeId },
+    select: { id: true },
+  });
+  if (found.length !== new Set(ids).size) {
+    throw new Error(
+      "Um ou mais grupos de complementos não pertencem a esta loja.",
+    );
+  }
+}
+
 export async function listCombos(context: PartnerContext) {
   const combos = await prisma.combo.findMany({
     where: { storeId: context.storeId },
@@ -256,6 +334,14 @@ export async function listCombos(context: PartnerContext) {
 export async function createCombo(context: PartnerContext, input: ComboCreateInput) {
   const combo = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await validateComboItemsOwnership(tx, context.storeId, input.items);
+
+    if (input.complementGroups && input.complementGroups.length > 0) {
+      await validateComplementGroupsOwnership(
+        tx,
+        context.storeId,
+        input.complementGroups,
+      );
+    }
 
     const created = await tx.combo.create({
       data: {
@@ -276,7 +362,24 @@ export async function createCombo(context: PartnerContext, input: ComboCreateInp
       include: comboInclude,
     });
 
-    return created;
+    if (input.complementGroups && input.complementGroups.length > 0) {
+      await tx.comboComplementGroup.createMany({
+        data: input.complementGroups.map((cg) => ({
+          comboId: created.id,
+          complementGroupId: cg.complementGroupId,
+          sortOrder: cg.sortOrder ?? 0,
+          isRequiredOverride: cg.isRequiredOverride ?? null,
+          minSelectionOverride: cg.minSelectionOverride ?? null,
+          maxSelectionOverride: cg.maxSelectionOverride ?? null,
+        })),
+      });
+    }
+
+    // Re-fetch com os complementGroups incluídos
+    return tx.combo.findUniqueOrThrow({
+      where: { id: created.id },
+      include: comboInclude,
+    });
   });
 
   await invalidateStorefrontCache(context.storeId);
@@ -307,6 +410,29 @@ export async function updateCombo(
           quantity: it.quantity,
         })),
       });
+    }
+
+    if (input.complementGroups !== undefined) {
+      if (input.complementGroups.length > 0) {
+        await validateComplementGroupsOwnership(
+          tx,
+          context.storeId,
+          input.complementGroups,
+        );
+      }
+      await tx.comboComplementGroup.deleteMany({ where: { comboId: existing.id } });
+      if (input.complementGroups.length > 0) {
+        await tx.comboComplementGroup.createMany({
+          data: input.complementGroups.map((cg) => ({
+            comboId: existing.id,
+            complementGroupId: cg.complementGroupId,
+            sortOrder: cg.sortOrder ?? 0,
+            isRequiredOverride: cg.isRequiredOverride ?? null,
+            minSelectionOverride: cg.minSelectionOverride ?? null,
+            maxSelectionOverride: cg.maxSelectionOverride ?? null,
+          })),
+        });
+      }
     }
 
     return tx.combo.update({

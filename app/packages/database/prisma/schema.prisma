@@ -513,8 +513,9 @@ model Combo {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  store Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  items ComboItem[]
+  store            Store                   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items            ComboItem[]
+  complementGroups ComboComplementGroup[]
 
   @@unique([storeId, slug])
   @@index([storeId, isActive])
@@ -546,11 +547,30 @@ model ComplementGroup {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  store       Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store       Store                   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   complements Complement[]
+  combos      ComboComplementGroup[]
 
   @@index([storeId, isActive])
   @@map("complement_groups")
+}
+
+model ComboComplementGroup {
+  id                   String  @id @default(uuid()) @db.Uuid
+  comboId              String  @map("combo_id") @db.Uuid
+  complementGroupId    String  @map("complement_group_id") @db.Uuid
+  sortOrder            Int     @default(0) @map("sort_order")
+  isRequiredOverride   Boolean? @map("is_required_override")
+  minSelectionOverride Int?    @map("min_selection_override")
+  maxSelectionOverride Int?    @map("max_selection_override")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  combo           Combo           @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  complementGroup ComplementGroup @relation(fields: [complementGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([comboId, complementGroupId])
+  @@index([comboId, sortOrder])
+  @@map("combo_complement_groups")
 }
 
 model Complement {

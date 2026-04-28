@@ -46,6 +46,25 @@ const ComboItemResponseSchema = Type.Object({
   productListPriceCents: Type.Integer(),
 });
 
+const ComboComplementResponseSchema = Type.Object({
+  id: Type.String(),
+  name: Type.String(),
+  imageUrl: NullableString,
+  additionalPriceCents: Type.Integer(),
+});
+
+const ComboComplementGroupResponseSchema = Type.Object({
+  id: Type.String(),
+  groupId: Type.String(),
+  name: Type.String(),
+  description: NullableString,
+  minSelection: Type.Integer(),
+  maxSelection: Type.Integer(),
+  isRequired: Type.Boolean(),
+  sortOrder: Type.Integer(),
+  complements: Type.Array(ComboComplementResponseSchema),
+});
+
 const ComboResponseSchema = Type.Object({
   id: Type.String(),
   storeId: Type.String(),
@@ -58,11 +77,20 @@ const ComboResponseSchema = Type.Object({
   createdAt: Type.String(),
   updatedAt: Type.String(),
   items: Type.Array(ComboItemResponseSchema),
+  complementGroups: Type.Array(ComboComplementGroupResponseSchema),
 });
 
 const ComboItemInputSchema = Type.Object({
   productId: Type.String({ minLength: 1 }),
   quantity: Type.Integer({ minimum: 1 }),
+});
+
+const ComboComplementGroupInputSchema = Type.Object({
+  complementGroupId: Type.String({ format: "uuid" }),
+  sortOrder: Type.Optional(Type.Integer({ minimum: 0 })),
+  isRequiredOverride: Type.Optional(Type.Boolean()),
+  minSelectionOverride: Type.Optional(Type.Integer({ minimum: 0 })),
+  maxSelectionOverride: Type.Optional(Type.Integer({ minimum: 1 })),
 });
 
 const ComboCreateSchema = Type.Object({
@@ -73,6 +101,7 @@ const ComboCreateSchema = Type.Object({
   priceCents: Type.Integer({ minimum: 0 }),
   isActive: Type.Optional(Type.Boolean()),
   items: Type.Array(ComboItemInputSchema, { minItems: 1 }),
+  complementGroups: Type.Optional(Type.Array(ComboComplementGroupInputSchema)),
 });
 
 const ComboPatchSchema = Type.Object({
@@ -83,6 +112,7 @@ const ComboPatchSchema = Type.Object({
   priceCents: Type.Optional(Type.Integer({ minimum: 0 })),
   isActive: Type.Optional(Type.Boolean()),
   items: Type.Optional(Type.Array(ComboItemInputSchema, { minItems: 1 })),
+  complementGroups: Type.Optional(Type.Array(ComboComplementGroupInputSchema)),
 });
 
 const ComboActiveSchema = Type.Object({ isActive: Type.Boolean() });
