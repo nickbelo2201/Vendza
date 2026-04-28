@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { formatCurrency } from "@vendza/utils";
 import { StatusBadge } from "@/components/StatusBadge";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -24,6 +24,41 @@ async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown
   return json.data as T;
 }
 
+// Tipos para grupos de complementos
+
+type ComplementGroupOption = {
+  id: string;
+  name: string;
+  description: string | null;
+  minSelection: number;
+  maxSelection: number;
+  isRequired: boolean;
+};
+
+type ComboComplementGroupInput = {
+  complementGroupId: string;
+  sortOrder: number;
+};
+
+// Tipo retornado pelo backend no GET /partner/combos
+
+type ComboComplementGroupResponse = {
+  id: string;
+  groupId: string;
+  name: string;
+  description: string;
+  minSelection: number;
+  maxSelection: number;
+  isRequired: boolean;
+  sortOrder: number;
+  complements: Array<{
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    additionalPriceCents: number;
+  }>;
+};
+
 type ComboItem = {
   id: string;
   comboId: string;
@@ -46,6 +81,7 @@ type Combo = {
   createdAt: string;
   updatedAt: string;
   items: ComboItem[];
+  complementGroups?: ComboComplementGroupResponse[];
 };
 
 type ProdutoSimples = {
@@ -67,6 +103,7 @@ type FormState = {
   priceCents: number;
   isActive: boolean;
   items: ItemForm[];
+  complementGroups: ComboComplementGroupInput[];
 };
 
 function gerarSlug(nome: string) {
@@ -86,6 +123,7 @@ const FORM_INICIAL: FormState = {
   priceCents: 0,
   isActive: true,
   items: [],
+  complementGroups: [],
 };
 
 type Props = {
@@ -102,6 +140,12 @@ export function CombosClient({ combosIniciais }: Props) {
 
   const [produtos, setProdutos] = useState<ProdutoSimples[]>([]);
   const produtosBuscadosRef = useRef(false);
+
+  const [gruposDisponiveis, setGruposDisponiveis] = useState<ComplementGroupOption[]>([]);
+  const gruposBuscadosRef = useRef(false);
+
+  // Controla o select de adição de grupo (valor temporário do dropdown)
+  const [grupoSelecionadoId, setGrupoSelecionadoId] = useState<string>("");
 
   async function recarregar() {
     try {
@@ -123,12 +167,25 @@ export function CombosClient({ combosIniciais }: Props) {
     }
   }
 
+  async function buscarGrupos() {
+    if (gruposBuscadosRef.current) return;
+    gruposBuscadosRef.current = true;
+    try {
+      const lista = await apiFetch<ComplementGroupOption[]>("/partner/complement-groups");
+      setGruposDisponiveis(lista ?? []);
+    } catch {
+      // silencioso
+    }
+  }
+
   function abrirCriar() {
     setEditando(null);
     setForm(FORM_INICIAL);
     setErro(null);
+    setGrupoSelecionadoId("");
     setModalAberto(true);
     buscarProdutos();
+    buscarGrupos();
   }
 
   function abrirEditar(combo: Combo) {
@@ -140,16 +197,23 @@ export function CombosClient({ combosIniciais }: Props) {
       priceCents: combo.priceCents,
       isActive: combo.isActive,
       items: combo.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      complementGroups: (combo.complementGroups ?? []).map((g, idx) => ({
+        complementGroupId: g.groupId,
+        sortOrder: g.sortOrder ?? idx,
+      })),
     });
     setErro(null);
+    setGrupoSelecionadoId("");
     setModalAberto(true);
     buscarProdutos();
+    buscarGrupos();
   }
 
   function fecharModal() {
     setModalAberto(false);
     setEditando(null);
     setErro(null);
+    setGrupoSelecionadoId("");
   }
 
   function handleNomeChange(valor: string) {
@@ -183,6 +247,32 @@ export function CombosClient({ combosIniciais }: Props) {
     }));
   }
 
+  function adicionarGrupo() {
+    if (!grupoSelecionadoId) return;
+    const jaAdicionado = form.complementGroups.some((g) => g.complementGroupId === grupoSelecionadoId);
+    if (jaAdicionado) {
+      setGrupoSelecionadoId("");
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      complementGroups: [
+        ...f.complementGroups,
+        { complementGroupId: grupoSelecionadoId, sortOrder: f.complementGroups.length },
+      ],
+    }));
+    setGrupoSelecionadoId("");
+  }
+
+  function removerGrupo(complementGroupId: string) {
+    setForm((f) => ({
+      ...f,
+      complementGroups: f.complementGroups
+        .filter((g) => g.complementGroupId !== complementGroupId)
+        .map((g, idx) => ({ ...g, sortOrder: idx })),
+    }));
+  }
+
   async function salvar() {
     setErro(null);
 
@@ -213,6 +303,7 @@ export function CombosClient({ combosIniciais }: Props) {
         priceCents: form.priceCents,
         isActive: form.isActive,
         items: form.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        ...(form.complementGroups.length > 0 ? { complementGroups: form.complementGroups } : {}),
       };
 
       if (editando) {
@@ -253,6 +344,16 @@ export function CombosClient({ combosIniciais }: Props) {
       alert(msg);
     }
   }
+
+  // Resolve os dados de exibicao de um grupo a partir do ID
+  function resolverGrupo(complementGroupId: string): ComplementGroupOption | undefined {
+    return gruposDisponiveis.find((g) => g.id === complementGroupId);
+  }
+
+  // Grupos ainda nao adicionados ao combo (para o select)
+  const gruposNaoAdicionados = gruposDisponiveis.filter(
+    (g) => !form.complementGroups.some((fg) => fg.complementGroupId === g.id)
+  );
 
   return (
     <>
@@ -421,7 +522,7 @@ export function CombosClient({ combosIniciais }: Props) {
       {/* Modal */}
       {modalAberto && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-          <div className="wp-panel" style={{ width: "100%", maxWidth: 560, padding: 24, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
+          <div className="wp-panel" style={{ width: "100%", maxWidth: 580, padding: 24, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
             <h2 style={{ marginBottom: 20, fontSize: 18 }}>{editando ? "Editar Combo" : "Novo Combo"}</h2>
 
             {erro && (
@@ -554,6 +655,130 @@ export function CombosClient({ combosIniciais }: Props) {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Divisor */}
+              <div style={{ borderTop: "1px solid var(--border)", marginTop: 4 }} />
+
+              {/* Grupos de Complementos */}
+              <div>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 2 }}>
+                    Grupos de Complementos
+                    <span style={{ fontWeight: 400, color: "var(--text-muted)", marginLeft: 6 }}>(opcional)</span>
+                  </label>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
+                    Vincule grupos para que o cliente personalize o combo no checkout.
+                  </p>
+                </div>
+
+                {/* Lista de grupos ja adicionados */}
+                {form.complementGroups.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                    {form.complementGroups.map((fg) => {
+                      const grupo = resolverGrupo(fg.complementGroupId);
+                      return (
+                        <div
+                          key={fg.complementGroupId}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 12px",
+                            borderRadius: 8,
+                            border: "1px solid var(--border)",
+                            background: "var(--surface)",
+                            gap: 10,
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--carbon)" }}>
+                              {grupo?.name ?? fg.complementGroupId}
+                            </div>
+                            {grupo && (
+                              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                                min: {grupo.minSelection} · max: {grupo.maxSelection}
+                                {grupo.isRequired && (
+                                  <span style={{
+                                    marginLeft: 8,
+                                    fontWeight: 600,
+                                    color: "var(--green)",
+                                    background: "color-mix(in srgb, var(--green) 10%, transparent)",
+                                    borderRadius: 4,
+                                    padding: "1px 6px",
+                                    fontSize: 11,
+                                  }}>
+                                    obrigatorio
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="wp-btn wp-btn-secondary"
+                            onClick={() => removerGrupo(fg.complementGroupId)}
+                            style={{ padding: "4px 8px", color: "var(--red, #dc2626)", flexShrink: 0 }}
+                            title="Remover grupo"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Selector para adicionar grupo */}
+                {gruposNaoAdicionados.length > 0 ? (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <select
+                      className="wp-input"
+                      value={grupoSelecionadoId}
+                      onChange={(e) => setGrupoSelecionadoId(e.target.value)}
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">Selecione um grupo...</option>
+                      {gruposNaoAdicionados.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name} (min: {g.minSelection} · max: {g.maxSelection})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="wp-btn wp-btn-secondary"
+                      onClick={adicionarGrupo}
+                      disabled={!grupoSelecionadoId}
+                      style={{ fontSize: 12, padding: "4px 12px", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Adicionar
+                    </button>
+                  </div>
+                ) : gruposDisponiveis.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>
+                    Nenhum grupo de complementos cadastrado.{" "}
+                    <a
+                      href="/catalogo/grupos-de-complementos"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--green)", textDecoration: "underline" }}
+                    >
+                      Criar grupo
+                    </a>
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>
+                    Todos os grupos disponiveis ja foram adicionados.
+                  </p>
+                )}
               </div>
             </div>
 
