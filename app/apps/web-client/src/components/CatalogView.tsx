@@ -325,6 +325,15 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
                   )}
                 </div>
 
+                {product.bundles && product.bundles.length > 0 && product.bundles[0] && (
+                  <div style={{ fontSize: 11, color: "var(--green, #2D6A4F)", fontWeight: 600, marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                    Fardo {product.bundles[0].quantity} un. por {formatCurrency(product.bundles[0].bundlePriceCents)}
+                  </div>
+                )}
+
                 <button
                   className="wc-btn-cta"
                   onClick={() =>
@@ -334,6 +343,7 @@ export function CatalogView({ categories, products, categoriaInicial = null, ter
                       slug: product.slug,
                       imagemUrl: product.imageUrl,
                       unitPriceCents: preco,
+                      bundles: product.bundles,
                     })
                   }
                 >
