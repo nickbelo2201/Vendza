@@ -37,6 +37,32 @@ function tocarBeep() {
   }
 }
 
+function imprimirComanda(publicId: string) {
+  // Cria iframe oculto que carrega a página de impressão.
+  // O ImprimirAuto dentro da página chama window.print() após 300ms.
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;width:1px;height:1px;border:0;top:-100px;left:-100px;opacity:0;";
+  iframe.src = `/pedidos/${publicId}/imprimir`;
+  document.body.appendChild(iframe);
+
+  const remover = () => {
+    try {
+      document.body.removeChild(iframe);
+    } catch {
+      // já removido
+    }
+  };
+
+  iframe.addEventListener("load", () => {
+    // Remove após tempo suficiente para o print dialog fechar
+    setTimeout(remover, 30000);
+  });
+
+  // Fallback: remove em 60s caso não carregue
+  setTimeout(remover, 60000);
+}
+
 export function OrderNotification({ storeId }: Props) {
   const router = useRouter();
   const [count, setCount] = useState(0);
@@ -45,8 +71,17 @@ export function OrderNotification({ storeId }: Props) {
     if (typeof window === "undefined") return true;
     return localStorage.getItem("vendza_som_notif") !== "false";
   });
+  const [impressaoAuto, setImpressaoAuto] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("vendza_impressao_auto") === "true";
+  });
   const socketRef = useRef<ReturnType<typeof io> | null>(null);
   const interagiu = useRef(false);
+  const impressaoAutoRef = useRef(impressaoAuto);
+
+  useEffect(() => {
+    impressaoAutoRef.current = impressaoAuto;
+  }, [impressaoAuto]);
 
   useEffect(() => {
     const marcarInteracao = () => {
@@ -64,6 +99,9 @@ export function OrderNotification({ storeId }: Props) {
       setCount((prev) => prev + 1);
       setLastOrder(payload);
       if (somAtivo && interagiu.current) tocarBeep();
+      if (impressaoAutoRef.current) {
+        imprimirComanda(payload.publicId);
+      }
     },
     [somAtivo]
   );
@@ -102,6 +140,14 @@ export function OrderNotification({ storeId }: Props) {
     });
   }
 
+  function alternarImpressaoAuto() {
+    setImpressaoAuto((prev) => {
+      const proximo = !prev;
+      localStorage.setItem("vendza_impressao_auto", proximo ? "true" : "false");
+      return proximo;
+    });
+  }
+
   if (count === 0) return null;
 
   return (
@@ -122,6 +168,7 @@ export function OrderNotification({ storeId }: Props) {
         animation: "wp-slide-in 0.3s ease",
       }}
     >
+      {/* Botão principal — abre página de pedidos */}
       <button
         onClick={() => {
           setCount(0);
@@ -168,6 +215,82 @@ export function OrderNotification({ storeId }: Props) {
         </div>
       </button>
 
+      {/* Botão imprimir último pedido manualmente */}
+      {lastOrder && (
+        <button
+          onClick={() => imprimirComanda(lastOrder.publicId)}
+          title="Imprimir comanda"
+          style={{
+            background: "rgba(255,255,255,0.15)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            color: "#fff",
+            cursor: "pointer",
+            padding: "4px 8px",
+            borderRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {/* Ícone impressora */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+        </button>
+      )}
+
+      {/* Toggle impressão automática */}
+      <button
+        onClick={alternarImpressaoAuto}
+        title={impressaoAuto ? "Impressão automática ativada — clique para desativar" : "Ativar impressão automática"}
+        style={{
+          background: impressaoAuto ? "rgba(255,255,255,0.25)" : "none",
+          border: impressaoAuto ? "1px solid rgba(255,255,255,0.5)" : "1px solid transparent",
+          color: "#fff",
+          cursor: "pointer",
+          padding: 4,
+          borderRadius: 6,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          opacity: impressaoAuto ? 1 : 0.6,
+        }}
+      >
+        {/* Ícone impressora com raio (auto) */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="6 9 6 2 18 2 18 9" />
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+          <rect x="6" y="14" width="12" height="8" />
+          <line x1="18" y1="1" x2="22" y2="5" />
+          <line x1="22" y1="1" x2="18" y2="5" />
+        </svg>
+      </button>
+
+      {/* Toggle som */}
       <button
         onClick={alternarSom}
         title={somAtivo ? "Desativar som" : "Ativar som"}
@@ -177,16 +300,14 @@ export function OrderNotification({ storeId }: Props) {
           color: "#fff",
           cursor: "pointer",
           padding: 4,
-          marginLeft: 4,
-          opacity: 0.85,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
+          opacity: 0.85,
         }}
       >
         {somAtivo ? (
-          // Ícone sino ativo
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="18"
@@ -202,7 +323,6 @@ export function OrderNotification({ storeId }: Props) {
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
         ) : (
-          // Ícone sino com risco (mudo)
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="18"
