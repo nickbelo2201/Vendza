@@ -116,8 +116,9 @@ export default async function PartnerHomePage() {
       ]
     : [];
 
-  // Pedidos entregues há menos de 24h ficam visíveis no kanban; os demais só aparecem na aba Pedidos
+  // Janelas de visibilidade do kanban — pedidos mais antigos ficam só na aba Pedidos
   const VINTE_QUATRO_HORAS_MS = 24 * 60 * 60 * 1000;
+  const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
   const agora = Date.now();
 
   // Agrupar pedidos por status para o Kanban
@@ -125,18 +126,24 @@ export default async function PartnerHomePage() {
     {
       label: "Preparando",
       items: orders
-        .filter((o) => ["pending", "confirmed", "preparing"].includes(o.status))
+        .filter((o) => {
+          if (!["pending", "confirmed", "preparing"].includes(o.status)) return false;
+          return agora - new Date(o.placedAt).getTime() < SETE_DIAS_MS;
+        })
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
           cliente: o.customerName,
-          tempo: o.placedAt, // ISO timestamp — KanbanBoard calcula o tempo decorrido
+          tempo: o.placedAt,
         })),
     },
     {
       label: "Entregando",
       items: orders
-        .filter((o) => ["ready_for_delivery", "out_for_delivery"].includes(o.status))
+        .filter((o) => {
+          if (!["ready_for_delivery", "out_for_delivery"].includes(o.status)) return false;
+          return agora - new Date(o.placedAt).getTime() < SETE_DIAS_MS;
+        })
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
