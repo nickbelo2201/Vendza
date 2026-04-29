@@ -76,7 +76,8 @@ export async function buildApp() {
         "https://web-partner-three.vercel.app",
         ...extraOrigins,
       ].filter(Boolean) as string[];
-      if (!origin || allowed.includes(origin)) {
+      const isVercelPreview = /^https:\/\/[a-zA-Z0-9-]+-[a-zA-Z0-9]+-projects\.vercel\.app$/.test(origin ?? "");
+      if (!origin || allowed.includes(origin) || isVercelPreview) {
         cb(null, true);
       } else {
         cb(new Error("CORS: origin não permitida"), false);
