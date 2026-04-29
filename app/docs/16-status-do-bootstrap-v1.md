@@ -1,116 +1,94 @@
-# Status do Bootstrap V1
+# Status do Bootstrap V1 — Documento Histórico
 
-## Objetivo
+> Este documento é um registro histórico. O bootstrap da V1 foi concluído em **2026-04-06** (commit `f2c7c23`).
+> A V2 também foi concluída na mesma data (commit `ad8c35f`).
+> O produto está em produção. O primeiro cliente (Adega Ideal) está em onboarding ativo desde 2026-04-29.
 
-Este documento existe para alinhar o time sobre o que ja foi implementado no scaffold da V1 e o que ainda precisa entrar na fase de integracao real.
+---
 
-## Ja implementado
+## O que foi bootstrapado e está em produção
 
-### Workspace
+### Workspace e Monorepo
 
-- monorepo com `pnpm workspace`
-- orquestracao com `turbo`
-- `tsconfig` compartilhado
-- `.env.example` com as variaveis do projeto
-- `AGENTS.md` com regras do produto e do time
+- Monorepo com `pnpm workspaces` + `Turbo 2.5`
+- `tsconfig` compartilhado entre todos os pacotes
+- `.env.example` com todas as variáveis do projeto
+- Scripts unificados de dev, build, typecheck e banco
 
-### Infra e dados
+### Infraestrutura
 
-- decisao atual:
-  - `Supabase Auth` para identidade
-  - `Supabase Postgres` como banco principal
-  - `Prisma` como ORM oficial da API
-- `infra/docker/docker-compose.yml` continua disponivel para desenvolvimento offline com:
-  - `Postgres 16`
-  - `Redis 7`
+- Supabase Auth para identidade (Bearer tokens)
+- Supabase PostgreSQL como banco principal
+- Prisma 7 como ORM oficial da API
+- Docker Compose disponível para desenvolvimento offline (Postgres 16, Redis 7)
+- Deploy: Railway (API em `https://vendza-production.up.railway.app`) + Vercel (web-partner e web-client)
 
-### Banco
+### Banco de Dados
 
-- schema Prisma tenant-ready em `packages/database/prisma/schema.prisma`
-- client Prisma gerado em `packages/database/generated/client`
-- seed inicial da loja piloto em `packages/database/prisma/seed.ts`
-- regra nova: `DATABASE_URL` e `DIRECT_URL` devem apontar para o Postgres do projeto Supabase nos ambientes oficiais
+- Schema Prisma tenant-ready em `packages/database/prisma/schema.prisma`
+- Client Prisma gerado em `packages/database/generated/client`
+- Seed inicial da loja piloto em `packages/database/prisma/seed.ts`
+- `DATABASE_URL` e `DIRECT_URL` apontam para o Postgres do Supabase nos ambientes de produção
 
-### API
+### API (Fastify 5)
 
-- servidor Fastify com CORS e respostas tipadas
-- auth partner via bearer token do Supabase com resolucao `auth_user_id -> store_users`
-- rotas publicas do MVP:
-  - `POST /v1/coverage/validate`
-  - `GET /v1/storefront/config`
-  - `GET /v1/catalog/categories`
-  - `GET /v1/catalog/products`
-  - `GET /v1/catalog/products/:slug`
-  - `POST /v1/cart/quote`
-  - `POST /v1/orders`
-  - `GET /v1/orders/:publicId`
-- rotas parceiras do MVP:
-  - `POST /v1/auth/login`
-  - `POST /v1/auth/refresh`
-  - `GET /v1/partner/dashboard/summary`
-  - `GET /v1/partner/orders`
-  - `GET /v1/partner/orders/:id`
-  - `PATCH /v1/partner/orders/:id/status`
-  - `POST /v1/partner/orders/manual`
-  - `GET /v1/partner/products`
-  - `POST /v1/partner/products`
-  - `PATCH /v1/partner/products/:id`
-  - `PATCH /v1/partner/products/:id/availability`
-  - `GET /v1/partner/inventory`
-  - `POST /v1/partner/inventory/movements`
-  - `GET /v1/partner/customers`
-  - `GET /v1/partner/customers/:id`
-  - `PATCH /v1/partner/customers/:id`
-  - `GET /v1/partner/store/settings`
-  - `PATCH /v1/partner/store/settings`
-  - `PATCH /v1/partner/store/hours`
-  - `PATCH /v1/partner/store/delivery-zones`
+- Servidor com CORS configurado e respostas tipadas (envelope `{ data, meta, error }`)
+- Auth parceiro via Bearer token do Supabase com resolução `auth_user_id → store_users`
 
-### Frontend estrutural
+**Rotas públicas:**
+- `POST /v1/coverage/validate`
+- `GET /v1/storefront/config`
+- `GET /v1/catalog/categories`
+- `GET /v1/catalog/products`
+- `GET /v1/catalog/products/:slug`
+- `POST /v1/cart/quote`
+- `POST /v1/orders`
+- `GET /v1/orders/:publicId`
 
-- `web-client` com home, produto, checkout e tracking
-- `web-partner` com home, login, pedidos, catalogo, clientes e configuracoes
-- layout responsivo basico
-- design gate mantido de forma explicita
+**Rotas parceiras:**
+- `POST /v1/auth/login`
+- `POST /v1/auth/refresh`
+- `GET /v1/partner/dashboard/summary`
+- `GET /v1/partner/orders`
+- `GET /v1/partner/orders/:id`
+- `PATCH /v1/partner/orders/:id/status`
+- `POST /v1/partner/orders/manual`
+- `GET /v1/partner/products`
+- `POST /v1/partner/products`
+- `PATCH /v1/partner/products/:id`
+- `PATCH /v1/partner/products/:id/availability`
+- `GET /v1/partner/inventory`
+- `POST /v1/partner/inventory/movements`
+- `GET /v1/partner/customers`
+- `GET /v1/partner/customers/:id`
+- `PATCH /v1/partner/customers/:id`
+- `GET /v1/partner/store/settings`
+- `PATCH /v1/partner/store/settings`
+- `PATCH /v1/partner/store/hours`
+- `PATCH /v1/partner/store/delivery-zones`
 
-## Ainda nao implementado
+### Frontend
 
-### Integracoes reais
+- `web-client` (Next.js 15): vitrine, busca, produto com combos/extras, carrinho, checkout, rastreamento
+- `web-partner` (Next.js 15): login, dashboard, pedidos com drawer de detalhe, catálogo com CRUD, CRM, configurações, relatórios, exportação CSV
+- Autenticação via Supabase SSR em ambos os apps
+- Design system aplicado (Inter + Space Grotesk, tokens de cor: cream, green, amber, blue, carbon)
 
-- `DATABASE_URL` do ambiente ainda precisa ser migrado do Postgres local para o Postgres do Supabase
-- Mercado Pago no checkout
-- storage real para imagens
+---
 
-### Operacao real
-
-- smoke ponta a ponta com usuario real do Supabase vinculado em `store_users.auth_user_id`
-- seed e validacao no banco do Supabase
-- dashboard com agregacoes reais validadas em ambiente com dados
-
-### Produto visual
-
-- direcao criativa final do `web-client`
-- direcao criativa final do `web-partner`
-- polimento visual final aprovado pelo usuario
-
-## Ordem tecnica recomendada agora
-
-1. Ligar `Supabase Auth`
-2. Apontar `DATABASE_URL` para o Postgres do Supabase
-3. Rodar Prisma no banco do Supabase
-4. Conectar os frontends a API real
-5. Validar fluxo ponta a ponta
-6. So depois iniciar a fase visual final
-
-## Criterio de pronto desta etapa
-
-O bootstrap da V1 esta pronto quando:
+## Critérios de pronto — todos atingidos
 
 - `corepack pnpm install` passa
-- `corepack pnpm typecheck` passa
+- `corepack pnpm typecheck` passa com 0 erros
 - `corepack pnpm build` passa
 - `corepack pnpm db:generate` passa
-- existe conectividade real com o Postgres do Supabase
-- a estrutura da V1 esta clara para o time
-- o design gate continua bloqueando a camada visual final
-- Definir se vai usar mercado pago como metodo de pagamento ou pix
+- Conectividade com o Postgres do Supabase validada
+- Fluxo ponta a ponta validado (cliente → checkout → pedido → painel parceiro)
+- Deploy em produção funcional (Railway + Vercel)
+- Primeiro cliente em onboarding
+
+---
+
+## O que permanece como backlog
+
+Ver `15-backlog-de-implementacao.md` para a lista completa de pendências da próxima sprint (CI, testes Playwright, logo, revisão visual, perfil do cliente em localStorage, endereços favoritos).

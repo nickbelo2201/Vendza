@@ -1,7 +1,7 @@
 # 18 — Deploy, Produção e Boas Práticas
 
 > Documento vivo. Atualizar sempre que houver mudança em infraestrutura ou workflow.
-> Última atualização: 2026-04-09
+> Última atualização: 2026-04-29
 
 ---
 
@@ -11,31 +11,77 @@
 |---|---|---|---|
 | API (backend) | `https://vendza-production.up.railway.app` | `main` | Railway |
 | Painel parceiro | `https://web-partner-three.vercel.app` | `main` | Vercel |
-| Vitrine cliente | _(deploy pendente)_ | `main` | Vercel |
+| Vitrine cliente | _(URL a confirmar após primeiro deploy)_ | `main` | Vercel |
 
 ---
 
 ## Estratégia de Branches
 
 ```
-main    ← branch principal de trabalho e produção
-feat/*  ← branches temporárias para mudanças em teste
+main    ← produção. Ninguém faz push direto aqui.
+feat/*  ← todo desenvolvimento acontece aqui.
 ```
 
-**Regra:** todo desenvolvimento acontece direto no `main`. Quando quiser testar uma mudança isolada sem afetar produção, crie uma feature branch:
+**Regra fundamental:** nenhum push vai direto para `main`. Todo código novo passa por uma feature branch, gera uma preview URL automática no Vercel, é testada pelo fundador e só então é mergeada.
+
+**O fundador é o único responsável pelo merge e push para `main`.** Agentes autônomos e colaboradores externos nunca fazem push direto para `main`.
+
+### Fluxo padrão de desenvolvimento
 
 ```bash
-# trabalho do dia a dia
-git push origin main          # deploya Railway + Vercel automaticamente
+# 1. Criar branch para a mudança
+git checkout -b feat/nome-da-mudanca
 
-# para testar algo sem afetar produção
-git checkout -b feat/minha-mudanca
-git push origin feat/minha-mudanca
-# → Vercel gera preview URL automática para essa branch
-# → quando aprovado, merge na main
+# 2. Desenvolver, commitar normalmente
+git add <arquivos>
+git commit -m "feat(escopo): descrição"
+
+# 3. Subir a branch — Vercel gera preview URL automaticamente
+git push origin feat/nome-da-mudanca
+# → URL de preview: https://web-partner-git-feat-nome-da-mudanca-nick.vercel.app
+
+# 4. Fundador testa na preview URL
+
+# 5. Fundador cria PR no GitHub (nickbelo2201/Vendza)
+# → PR template é aplicado automaticamente
+
+# 6. Após aprovação, fundador faz o merge e push para main
+git checkout main
+git merge feat/nome-da-mudanca
+git push origin main
+# → Deploy automático no Railway e Vercel (produção)
 ```
 
-> **Não existe mais branch `master`.** O `main` é o único branch permanente.
+---
+
+## Pre-push Hook — Proteção do Main
+
+O repositório possui um hook Git em `.git/hooks/pre-push` que **bloqueia qualquer push direto para `main`**.
+
+Se alguém tentar:
+```bash
+git push origin main   # ← este comando é bloqueado pelo hook
+```
+
+O hook aborta o push e exibe uma mensagem de erro. Isso garante que nenhuma mudança vá para produção sem passar pelo fluxo de review.
+
+**O fundador é o único que faz push para main**, e faz isso somente após merge do PR que foi testado na preview.
+
+### Como o hook funciona
+
+O arquivo `.git/hooks/pre-push` verifica o branch de destino e rejeita o push se for `main`. Ele não impede o desenvolvimento normal em feature branches.
+
+---
+
+## Pull Request Template
+
+O arquivo `.github/pull_request_template.md` é aplicado automaticamente ao abrir um PR no GitHub. Ele orienta o autor a descrever:
+
+- O que foi feito
+- Como testar na preview URL
+- Checklist antes do merge
+
+Preencher o template corretamente é obrigatório para que o fundador possa testar e aprovar com segurança.
 
 ---
 
@@ -63,6 +109,7 @@ git push origin feat/minha-mudanca
 ```
 
 Tipos:
+
 | Tipo | Quando usar |
 |---|---|
 | `feat` | nova funcionalidade |
@@ -79,11 +126,9 @@ git commit -m "fix(api): corrigir cálculo de frete em zonas sobrepostas"
 git commit -m "chore: atualizar pnpm-lock.yaml após adicionar socket.io-client"
 ```
 
-### Após commitar
+### Commits atômicos
 
-```bash
-git push origin main    # sempre — deploya tudo automaticamente
-```
+Sempre commitar TODOS os arquivos relacionados à mudança juntos. Arquivos modificados mas não commitados ficam fora do deploy e causam inconsistências em produção.
 
 ---
 
@@ -101,13 +146,14 @@ git push origin main    # sempre — deploya tudo automaticamente
 
 ### Preview Deployments
 
-O Vercel gera automaticamente uma URL de preview para qualquer branch que não seja `main`. Use isso para testar mudanças antes de ir pra produção:
+O Vercel gera automaticamente uma URL de preview para qualquer branch que não seja `main`. Use isso para validar mudanças antes de ir para produção:
 
 ```bash
-git checkout -b feat/novo-layout
 git push origin feat/novo-layout
 # Vercel notifica com URL: https://web-partner-git-feat-novo-layout-nick.vercel.app
 ```
+
+A preview URL é o ambiente de homologação do projeto. O fundador testa aqui antes de autorizar o merge.
 
 ### Variáveis de ambiente (Vercel)
 
@@ -130,8 +176,6 @@ git push origin feat/novo-layout
 
 O arquivo `app/railway.toml` contém toda a configuração de build da API. Nunca alterar sem testar localmente.
 
-> **Atenção:** após a migração de `master` → `main`, atualizar o branch no painel do Railway para `main`.
-
 ---
 
 ## Problemas conhecidos e soluções
@@ -142,7 +186,7 @@ O arquivo `app/railway.toml` contém toda a configuração de build da API. Nunc
 
 ### `outputFileTracingRoot` quebra o deploy no Vercel
 **Causa:** essa config é exclusiva para `output: 'standalone'`. Sem ela, confunde o file tracing do Vercel e o `next` não é incluído no bundle de runtime.
-**Solução aplicada:** removida do `next.config.ts` do web-partner.
+**Solução aplicada:** removida do `next.config.ts` do web-partner. Regra: nunca adicionar `outputFileTracingRoot` sem `output: 'standalone'`.
 
 ### `No Output Directory named "public" found`
 **Causa:** Framework Preset configurado como "Other" no Vercel (espera `public/`) em vez de "Next.js" (espera `.next/`).
@@ -160,13 +204,17 @@ O arquivo `app/railway.toml` contém toda a configuração de build da API. Nunc
 
 ## Checklist de publicação
 
-Antes de fazer `git push origin main`:
+Antes de abrir o PR e solicitar merge para `main`:
 
+- [ ] Feature branch criada a partir do `main` atualizado
 - [ ] `corepack pnpm typecheck` passa sem erros
 - [ ] Nenhum `meta.stub: true` em endpoints que deveriam estar funcionais
 - [ ] Variáveis de ambiente novas foram adicionadas no Vercel/Railway
-- [ ] Migrações de banco executadas (`corepack pnpm db:migrate` ou `db:push`)
+- [ ] Migrações de banco executadas (`corepack pnpm db:migrate`)
 - [ ] Não há arquivos `.env` ou secrets no commit
+- [ ] Todos os arquivos relacionados à mudança estão commitados
+- [ ] Preview URL testada pelo fundador
+- [ ] PR preenchido com o template do repositório
 
 ---
 
@@ -185,4 +233,10 @@ app/
     └── database/
         └── prisma/
             └── schema.prisma
+
+.github/
+└── pull_request_template.md  # template obrigatório para PRs
+
+.git/hooks/
+└── pre-push                  # bloqueia push direto para main
 ```

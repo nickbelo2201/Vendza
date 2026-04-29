@@ -1,64 +1,118 @@
-# Backlog de Implementacao
+# Backlog de Implementação — Log de Progresso
 
-## Sprint 0: Fundacao
+> Atualizado em 2026-04-29.
+> V1 e V2 estão completas. Este documento registra o histórico de sprints e lista as próximas entregas pendentes.
 
-- criar monorepo
-- criar configs base
-- configurar lint, typecheck e scripts
-- configurar env do Supabase Auth e do Supabase Postgres
-- manter Docker local apenas como opcao de dev offline
-- definir schema P0
+---
 
-## Sprint 1: Loja, cobertura e catalogo
+## V1 — Completa (2026-04-06, commit `f2c7c23`)
 
-- store settings
-- horarios
-- delivery zones
-- categorias
-- produtos
-- disponibilidade
-- inventario basico
+### Sprint 0: Fundação
 
-## Sprint 2: Cliente e checkout
+- Monorepo pnpm workspaces + Turbo
+- Configurações base de TypeScript, lint e scripts
+- Variáveis de ambiente (Supabase Auth + Supabase Postgres)
+- Docker Compose para desenvolvimento offline (Postgres 16, Redis 7)
+- Schema Prisma inicial tenant-ready
 
-- vitrine
-- busca
-- produto
-- carrinho
-- quote
-- checkout
-- criacao de pedido
+### Sprint 1: Loja, cobertura e catálogo
 
-## Sprint 3: Operacao parceiro
+- Configurações da loja (nome, horários, zonas de entrega)
+- Categorias e produtos
+- Controle de disponibilidade
+- Movimentação de inventário (append-only)
 
-- auth parceiro
-- board de pedidos
-- detalhe do pedido
-- mudanca de status
-- pedido assistido
-- notificacao sonora
+### Sprint 2: Cliente e checkout
 
-## Sprint 4: CRM e dashboard
+- Vitrine com listagem de produtos
+- Busca básica
+- Página de produto
+- Carrinho (localStorage)
+- Cálculo de frete por zona (quote)
+- Checkout e criação de pedido
 
-- lista de clientes
-- perfil do cliente
-- flags de inatividade
-- dashboard operacional
-- top produtos
+### Sprint 3: Operação parceiro
 
-## Sprint 5: Harden e go-live
+- Autenticação do parceiro (Supabase Auth → store_users)
+- Board de pedidos
+- Detalhe do pedido
+- Mudança de status com evento
+- Pedido manual (assistido)
+
+### Sprint 4: CRM e dashboard
+
+- Listagem de clientes
+- Perfil do cliente com histórico
+- Flags de inatividade
+- Dashboard operacional (resumo de vendas)
+- Top produtos
+
+### Sprint 5: Harden e go-live
 
 - QA ponta a ponta
-- revisao de logs
-- revisao de politicas
-- validar auth user -> store_users no banco do Supabase
-- treino da adega piloto
-- deploy
+- Revisão de logs e políticas
+- Validação auth_user_id → store_users no Supabase
+- Deploy Railway + Vercel configurados
 
-## Ordem de implementacao dentro de cada sprint
+---
 
-1. schema
-2. endpoint
-3. pagina
-4. estados
-5. verificacao
+## V2 — Completa (2026-04-06, commit `ad8c35f`)
+
+### Catálogo avançado
+- CRUD completo de produtos com upload de imagem
+- CRUD de categorias
+- Combos e extras vinculados a produtos
+- Controle de disponibilidade por produto
+
+### Pedidos avançados
+- Drawer de detalhe com timeline de eventos
+- Exportação CSV de pedidos por período
+- Criação manual de pedido melhorada
+
+### Storefront aprimorado
+- Busca de produtos
+- Filtros por categoria
+- Página de produto com combos e extras
+
+### CRM
+- Listagem com busca
+- Perfil do cliente com histórico completo de compras
+
+### Configurações completas da loja
+- Dados gerais
+- Horários de funcionamento por dia da semana
+- Zonas de entrega (bairro ou raio, taxa, ETA)
+
+### Relatórios
+- Vendas por período
+- Top produtos
+- Exportação CSV
+
+---
+
+## Próximas Entregas — Sprint Atual
+
+| ID | Descrição | Prioridade | Área |
+|----|-----------|------------|------|
+| P3-03 | GitHub Actions CI — typecheck + build em todo PR | Alta | Infra |
+| P4-01 | Testes Playwright — fluxo completo do cliente (storefront) | Alta | QA |
+| P4-03 | Testes Playwright — fluxo completo do parceiro (painel) | Alta | QA |
+| P5-01 | Logo oficial substituindo placeholders | Alta | Design |
+| P5-02 | Revisão visual final — og:image, tipografia, espaçamentos | Média | Design |
+| P2-08 | Perfil do cliente salvo em localStorage (auto-fill no checkout) | Média | Storefront |
+| P2-09 | Endereços favoritos — até 3 endereços para checkout rápido | Média | Storefront |
+
+---
+
+## Backlog Futuro (pós sprint atual)
+
+Itens que aguardam cliente fechar ou volume justificar:
+
+- WhatsApp automação (Meta Cloud API) — notificações de pedido, atendimento 24h
+- Multi-tenant / onboarding self-service
+- Mercado Pago (PIX e cartão online) — última feature do roadmap
+- IA generativa — descrição de produtos e copy
+- Mobile app (React Native / Expo)
+- Segmentação RFM e campanhas por comportamento
+- Fidelidade e cupons
+- Multi-loja

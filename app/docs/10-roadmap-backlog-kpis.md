@@ -1,6 +1,6 @@
 # Roadmap, Backlog e KPIs
 
-> Atualizado em 2026-04-22. Alinhado ao modelo de negócio premium consultivo (ver `17-modelo-de-negocio.md`).
+> Atualizado em 2026-04-29. Primeiro cliente ativo (Adega Ideal). Produto em produção.
 
 ---
 
@@ -8,55 +8,65 @@
 
 | Versão | Status | Data |
 |--------|--------|------|
-| V1 (plataforma base) | ✅ Completa | 2026-04-06 |
-| V2 (CRUD, CRM, relatórios, deploy) | ✅ Completa | 2026-04-06 |
-| Polish pré-lançamento (P2-P5) | 🔄 Em progresso | — |
-| IA e Automação | ⏳ Aguardando cliente fechar | — |
+| V1 — plataforma base | Completa | 2026-04-06 |
+| V2 — catálogo, pedidos, CRM, configurações, relatórios | Completa | 2026-04-06 |
+| Onboarding Adega Ideal | Em andamento | 2026-04-29 |
+| Próxima sprint — QA, CI e design | Em planejamento | — |
 
 ---
 
-## O que falta para apresentar ao cliente
+## Próxima Sprint — QA, CI e Design
 
-Todos os itens abaixo estão no Linear (SOF-95 a SOF-102) como **Todo**:
+Todos os itens abaixo estão pendentes e compõem a próxima sprint antes de novos onboardings:
 
 ### Infraestrutura
-| Card | Descrição | Prioridade |
-|------|-----------|------------|
-| SOF-95 | GitHub Actions CI — typecheck + build em todo PR | High |
-| SOF-96 | Testes Playwright — fluxo completo do cliente | High |
-| SOF-97 | Testes Playwright — fluxo completo do parceiro | High |
-| SOF-98 | Validação mobile e responsividade | High |
-| SOF-99 | Logo oficial substituindo placeholders | High |
-| SOF-100 | Revisão final de design — og:image, tipografia, espaçamentos | Medium |
+
+| ID | Descrição | Prioridade |
+|----|-----------|------------|
+| P3-03 | GitHub Actions CI — typecheck + build em todo PR | Alta |
+| P4-01 | Testes Playwright — fluxo completo do cliente (storefront) | Alta |
+| P4-03 | Testes Playwright — fluxo completo do parceiro (painel) | Alta |
+
+### Design e identidade
+
+| ID | Descrição | Prioridade |
+|----|-----------|------------|
+| P5-01 | Logo oficial substituindo placeholders | Alta |
+| P5-02 | Revisão visual final — og:image, tipografia, espaçamentos | Média |
 
 ### Storefront
-| Card | Descrição | Prioridade |
-|------|-----------|------------|
-| SOF-101 | Perfil do cliente salvo em localStorage (auto-fill no checkout) | Medium |
-| SOF-102 | Endereços favoritos — até 3 endereços para checkout rápido | Medium |
 
-Após esses 8 itens, a plataforma está pronta para apresentação e onboarding do primeiro cliente.
+| ID | Descrição | Prioridade |
+|----|-----------|------------|
+| P2-08 | Perfil do cliente salvo em localStorage (auto-fill no checkout) | Média |
+| P2-09 | Endereços favoritos — até 3 endereços para checkout rápido | Média |
 
 ---
 
 ## Roadmap de Produto
 
-### Módulos de IA e Automação ← próxima fase (pós cliente fechar)
-Objetivo: habilitar automação e inteligência — implementado conforme demanda de cada cliente.
+### Fase atual — Operação e refinamento (2026-Q2)
 
-> **Regra:** nenhum módulo abaixo é iniciado antes do cliente fechar e solicitar explicitamente.
+- Onboarding da Adega Ideal e coleta de feedback real
+- Correções e ajustes baseados no uso do primeiro cliente
+- Conclusão dos itens de QA e CI listados acima
 
-- **WhatsApp automação** (Baileys/WAHA)
+### Próxima fase — IA e Automação (pós fechamento de contrato)
+
+Iniciado apenas após o cliente solicitar explicitamente.
+
+- **WhatsApp automação** (Meta Cloud API)
   - Notificação de status do pedido ao cliente
   - Confirmação automática de pedido
   - Atendimento automatizado 24h
   - Fluxos personalizados por evento
 - **IA generativa** — descrição de produtos, copy de campanhas
-- **Multi-tenant / onboarding self-service** — cadastrar qualquer lojista sem tocar no código
+- **Multi-tenant / onboarding self-service** — cadastrar qualquer lojista sem intervenção técnica
 - **Mobile app** (React Native / Expo)
-- **Mercado Pago** — PIX e cartão online (última feature de todas)
+- **Mercado Pago** — PIX e cartão online (última feature do roadmap)
 
-### Onda futura — IA e Escala (ticket R$ 2.500–3.000/mês)
+### Fase futura — Escala (ticket R$ 2.500/mês)
+
 - IA no atendimento: sugestões por perfil de compra
 - Insights automáticos de estoque e giro
 - Relatórios preditivos
@@ -68,7 +78,7 @@ Objetivo: habilitar automação e inteligência — implementado conforme demand
 
 ## Backlog Comercial (paralelo ao produto)
 
-1. Landing page institucional (vendza.com.br ou similar)
+1. Landing page institucional (vendza.com.br)
 2. Deck de proposta com cálculo de ROI personalizado
 3. Contratos jurídicos (SaaS + LGPD + Termos de Uso)
 4. Processo documentado de onboarding de adega
@@ -102,13 +112,13 @@ Objetivo: habilitar automação e inteligência — implementado conforme demand
 
 ## KPIs de Negócio (Vendza)
 
-| KPI | Meta Q3-2026 | Meta Q1-2027 |
-|-----|-------------|-------------|
-| MRR | R$ 0 (piloto gratuito) | R$ 5.000 |
-| Clientes pagantes | 0 | 4 |
+| KPI | Situação atual (2026-Q2) | Meta Q1-2027 |
+|-----|--------------------------|--------------|
+| MRR | Em onboarding (piloto) | R$ 5.000 |
+| Clientes pagantes | 1 (Adega Ideal) | 4 |
 | Ticket médio por cliente | — | R$ 1.500 |
 | Churn mensal | — | < 5% |
-| NPS dos lojistas | > 40 (piloto) | > 60 |
+| NPS dos lojistas | A medir no piloto | > 60 |
 | CAC médio | — | < R$ 500 |
 | LTV:CAC | — | > 18x |
 
