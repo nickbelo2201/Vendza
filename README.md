@@ -1,41 +1,45 @@
-# Venza Oficial
+# Vendza
 
-[![CI](https://github.com/nicholasbelo/INF_Adega/actions/workflows/ci.yml/badge.svg)](https://github.com/nicholasbelo/INF_Adega/actions/workflows/ci.yml)
+Vendza é um Commerce OS para lojistas — canal direto de vendas, painel operacional, CRM nativo e automação por eventos, construídos para o comércio local brasileiro.
 
-Esta pasta consolida a fase de analise e transforma o material antigo em um pacote unico, orientado a execucao.
+O repositório está organizado em dois blocos:
 
-Ela foi organizada em dois blocos:
+- `app/` — workspace do produto (monorepo). Todo o desenvolvimento acontece aqui.
+- `empresa/` — estratégia comercial, pricing, onboarding, materiais de vendas e operação da empresa.
 
-- `app`: workspace oficial do produto. E aqui que o time deve entrar para iniciar a producao do aplicativo.
-- `empresa`: estrategia comercial, marketing, onboarding, pricing, metricas e operacao da empresa.
+---
 
-## Diagnostico consolidado
+## Como começar
 
-- `Neemo` e a melhor referencia para cobertura operacional, administracao, growth e analytics.
-- `Ze Delivery` e a melhor referencia para discovery, geolocalizacao, merchandising e conversao mobile-first.
-- O `Vendza` precisa unir os dois, mas vencer onde ambos deixam espaco:
-  - CRM realmente acionavel
-  - WhatsApp-first
-  - dados e marca do lojista
-  - operacao mais simples e mais clara
-  - regras nativas de adega, nao de restaurante generico
+1. Entre em `app/`.
+2. Leia `app/docs/` — a documentação técnica e estratégica está toda lá, em ordem numerada.
+3. Siga o quickstart em `app/README.md` para subir o ambiente local.
 
-## Decisao de produto
+---
 
-O produto oficial nao sera marketplace e nao sera um white-label dependente de fornecedor.
+## Workflow de branches
 
-Ele sera um `commerce OS para comercios locais`, com:
+`main` é o branch de produção. Qualquer push em `main` dispara deploy automático no Railway e na Vercel.
 
-- canal direto de venda
-- painel operacional proprio
-- CRM nativo
-- automacao por eventos
-- stack auditavel
-- caminho claro de V1 para V2
+**Regra obrigatória: nunca commitar ou fazer push direto em `main`.**
 
-## Como usar
+Todo desenvolvimento segue este fluxo:
 
-1. Entre em `app`.
-2. Leia os documentos em `app/docs`.
-3. Use a estrutura de pastas ja criada em `app/apps`, `app/packages` e `app/infra`.
-4. Use `empresa` para oferta, onboarding, vendas e execucao comercial.
+```
+git checkout -b feat/nome-da-mudanca
+# implementa, testa, faz commit
+git push origin feat/nome-da-mudanca
+# abre PR no GitHub
+# merge em main feito exclusivamente pelo fundador
+```
+
+A Vercel gera uma preview URL automática para cada branch, o que permite revisar a mudança antes do merge.
+
+---
+
+## Ambientes de produção
+
+| Servico     | URL                                              | Plataforma |
+|-------------|--------------------------------------------------|------------|
+| API         | https://vendza-production.up.railway.app         | Railway    |
+| web-partner | https://web-partner-three.vercel.app             | Vercel     |

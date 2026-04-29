@@ -1,117 +1,138 @@
-# INF Adega App
+# Vendza — Monorepo
 
-Esta e a raiz oficial do produto. A partir de agora, quando formos iniciar a producao do aplicativo, o ponto de entrada deve ser esta pasta.
+Vendza é um Commerce OS para lojistas: canal direto de vendas, painel operacional, CRM nativo e automação por eventos.
 
-## Objetivo do produto
+Este diretório é a raiz do monorepo. Todo o desenvolvimento do produto acontece aqui.
 
-Construir o melhor aplicativo proprio para adegas do mercado brasileiro, combinando:
+---
 
-- UX e conversao no nivel do Ze Delivery
-- cobertura operacional no nivel da Neemo
-- CRM, WhatsApp e ownership acima dos dois
+## Arquitetura
 
-## Principios do produto
-
-- `Adega-first`: horarios de madrugada, Pix-first, combos, kits, impulso visual e pedido assistido.
-- `Own the customer`: marca, dominio, base, historico e campanhas pertencem a adega.
-- `Ops before hype`: o V1 precisa operar a loja de verdade, nao apenas parecer bonito.
-- `WhatsApp as a surface`: o WhatsApp entra no fluxo operacional, nao so como link perdido.
-- `Clear cockpit`: painel mais leve e mais acionavel que o dos concorrentes.
-
-## Estrutura
-
-```text
+```
 app/
   apps/
-    api/
-    web-client/
-    web-partner/
-    mobile/
+    api/            Fastify 5 + TypeScript — porta 3333
+    web-client/     Next.js 15 — porta 3000 (vitrine do cliente)
+    web-partner/    Next.js 15 — porta 3001 (painel do parceiro)
   packages/
-    database/
-    ui/
-    types/
-    utils/
+    database/       Prisma 7 + schema + migrations + seed
+    types/          Tipos TypeScript compartilhados
+    ui/             Componentes compartilhados
+    utils/          Utilitários (formatCurrency, etc.)
   infra/
-    docker/
-    terraform/
-  docs/
-    01-visao-estrategica.md
-    02-prd-v1.md
-    03-prd-v2.md
-    04-matriz-de-funcionalidades.md
-    05-jornadas-e-operacao.md
-    06-arquitetura-de-produto.md
-    07-arquitetura-tecnica.md
-    08-modelo-de-dados-e-integracoes.md
-    09-design-system-e-ux.md
-    10-roadmap-backlog-kpis.md
-    11-plano-de-execucao-amanha.md
-    12-contratos-api.md
-    13-schema-inicial.md
-    14-compliance-adega.md
-    15-backlog-de-implementacao.md
-    16-status-do-bootstrap-v1.md
+    docker/         docker-compose (Postgres 16, Redis 7)
+    terraform/      IaC
+  docs/             Documentacao tecnica e estrategica (PT-BR)
+  prd.json          Stories V1 e V2 com status de conclusao
+  progress.txt      Log de progresso dos agentes
 ```
 
-## Ordem de leitura recomendada
+---
 
-1. `docs/01-visao-estrategica.md`
-2. `docs/02-prd-v1.md`
-3. `docs/04-matriz-de-funcionalidades.md`
-4. `docs/07-arquitetura-tecnica.md`
-5. `docs/12-contratos-api.md`
-6. `docs/13-schema-inicial.md`
-7. `docs/15-backlog-de-implementacao.md`
-8. `docs/16-status-do-bootstrap-v1.md`
+## Tech stack
+
+| Camada      | Tecnologia                                         |
+|-------------|----------------------------------------------------|
+| Backend     | Fastify 5, TypeScript 6, Node >=22                 |
+| ORM         | Prisma 7 (`@prisma/adapter-pg`)                    |
+| Banco       | Supabase PostgreSQL                                |
+| Auth        | Supabase Auth (Bearer tokens)                      |
+| Frontend    | Next.js 15, React 19, App Router                   |
+| Monorepo    | pnpm 10 + Turbo 2.5                                |
+| Validacao   | TypeBox (`@sinclair/typebox`)                      |
+| Packages    | `@vendza/database`, `@vendza/types`, `@vendza/ui`, `@vendza/utils` |
+
+---
 
 ## Status atual
 
-O monorepo da V1 ja esta bootstrapado e compilando com:
+**V1 — Concluida (2026-04-06)**
+Todas as 20 stories da V1 estao completas e em producao.
 
-- `Fastify + TypeScript` no `apps/api`
-- `Next.js App Router` no `apps/web-client`
-- `Next.js App Router` no `apps/web-partner`
-- `Prisma + Postgres do Supabase` no `packages/database`
-- `Supabase Auth` para identidade e sessao
-- `Docker Compose` local opcional para desenvolvimento offline
+**V2 — Concluida (2026-04-06)**
+Painel de pedidos, CRUD de produtos e categorias, CRM de clientes, configuracoes de loja, relatorios, notificacoes realtime, exportacao CSV e busca de produtos — todos entregues.
 
-O que ja existe no scaffold:
+**Pendente**
+- GitHub Actions CI
+- Testes Playwright (e2e)
+- Logo oficial
+- Responsividade mobile completa
 
-- schema tenant-ready para o MVP
-- seed inicial para a loja piloto
-- rotas estruturais da API para storefront, checkout, pedidos e painel parceiro
-- frontend estrutural com `design gate` preservado
-- workspace com `pnpm` e `turbo`
-
-O que ainda esta em mock ou pendente de integracao real:
-
-- uso do `DATABASE_URL` apontando para o Postgres do Supabase em todos os ambientes
-- integracao Mercado Pago
-- consumo real da API pelos frontends
-- design visual final aprovado pelo usuario
+---
 
 ## Quickstart
 
-1. Instale dependencias com `corepack pnpm install`
-2. Copie `.env.example` para `.env`
-3. Preencha `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-4. Aponte `DATABASE_URL` e `DIRECT_URL` para o Postgres do projeto Supabase
-5. Gere o client Prisma com `corepack pnpm db:generate`
-6. Rode migrations ou push no banco alvo e depois o seed com `corepack pnpm db:seed`
-7. Inicie o workspace com `corepack pnpm dev`
+### Pre-requisitos
 
-## Decisao atual de banco
+- Node >= 22
+- pnpm via corepack (`corepack enable`)
+- Projeto no Supabase com banco PostgreSQL e Auth ativados
 
-- `Supabase Auth` continua sendo a camada oficial de autenticacao
-- `Supabase Postgres` passa a ser o banco principal da aplicacao
-- `Prisma` continua sendo o ORM oficial do backend
-- o backend resolve `auth_user_id -> store_users` dentro do mesmo banco
-- `docker compose` local com Postgres deixa de ser requisito arquitetural; fica apenas como opcao de desenvolvimento offline
+### Passos
 
-## Regra de execucao
+```bash
+# 1. Instalar dependencias
+corepack pnpm install
 
-- backend primeiro
-- sem agentes na V1
-- cobertura do V1 fica em `bairro + raio`
-- Commit na Main
+# 2. Configurar variaveis de ambiente
+cp .env.example .env
+# Preencher: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
+#            DATABASE_URL, DIRECT_URL, STORE_SLUG
+
+# 3. Gerar o client Prisma
+corepack pnpm db:generate
+
+# 4. Rodar as migrations e o seed inicial
+corepack pnpm db:migrate
+corepack pnpm db:seed
+
+# 5. Iniciar todos os servidores
+corepack pnpm dev
+```
+
+---
+
+## Comandos principais
+
+```bash
+# Desenvolvimento
+corepack pnpm dev              Inicia api, web-client e web-partner em paralelo
+corepack pnpm dev:api          Somente a API (porta 3333)
+corepack pnpm dev:web-partner  Somente o painel parceiro (porta 3001)
+corepack pnpm dev:web-client   Somente a vitrine do cliente (porta 3000)
+
+# Qualidade
+corepack pnpm typecheck        Validacao TypeScript — deve passar com 0 erros
+corepack pnpm build            Build de todos os pacotes e apps
+corepack pnpm lint             Linting
+
+# Banco de dados
+corepack pnpm db:generate      Regenera o client Prisma apos mudancas no schema
+corepack pnpm db:migrate       Executa migrations pendentes
+corepack pnpm db:seed          Popula o banco com dados iniciais
+```
+
+---
+
+## Workflow de branches
+
+`main` e o branch de producao. Push em `main` dispara deploy automatico no Railway e na Vercel.
+
+**Regra obrigatoria: nunca commitar ou fazer push direto em `main`.**
+
+```bash
+git checkout -b feat/nome-da-mudanca
+# implementa, testa, faz commit
+corepack pnpm typecheck        # deve passar antes do push
+git push origin feat/nome-da-mudanca
+# abre PR — merge feito exclusivamente pelo fundador
+```
+
+---
+
+## Ambientes de producao
+
+| Servico     | URL                                              | Plataforma |
+|-------------|--------------------------------------------------|------------|
+| API         | https://vendza-production.up.railway.app         | Railway    |
+| web-partner | https://web-partner-three.vercel.app             | Vercel     |

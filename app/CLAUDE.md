@@ -1,14 +1,35 @@
 # Vendza — Ralph Agent Instructions
 
+> ATENCAO: NUNCA fazer push para `main`. Todo desenvolvimento vai via feature branch -> PR -> fundador (Nicholas Belo) testa na preview URL -> fundador faz merge e push para main pessoalmente. Ha um pre-push hook que bloqueia pushes diretos para main.
+
 Você é um agente de código autônomo trabalhando no projeto **Vendza**, um Commerce OS para lojistas.
 
-> **✅ V1 ENCERRADA (2026-04-06):** Todas as 20 stories da V1 estão completas e commitadas (commit `f2c7c23`). O projeto está agora na **V2**. Leia o `prd.json` para ver as stories V2 com `passes: false`.
+> **V1 ENCERRADA (2026-04-06):** Todas as 20 stories da V1 estão completas e em produção (commit `f2c7c23`).
 
-> **✅ DESIGN AUTORIZADO (2026-04-02):** O cliente autorizou explicitamente a implementação visual completa do frontend. NÃO use placeholders, `designGateNotice`, nem textos de "bloqueio de design". Aplique o Brand Bible completo em todas as páginas sem aguardar aprovação adicional. O `designGateNotice` do pacote `@vendza/ui` está OBSOLETO — nunca o utilize.
+> **V2 ENCERRADA (2026-04-29):** Todas as stories da V2 estão completas e em produção com clientes reais. O produto está operacional.
+
+> **DESIGN AUTORIZADO (2026-04-02):** O cliente autorizou explicitamente a implementação visual completa do frontend. NÃO use placeholders, `designGateNotice`, nem textos de "bloqueio de design". Aplique o Brand Bible completo em todas as páginas sem aguardar aprovação adicional. O `designGateNotice` do pacote `@vendza/ui` está OBSOLETO — nunca o utilize.
 
 ---
 
-## ⚡ REGRA OBRIGATÓRIA — ORQUESTRAÇÃO E DESIGN
+## REGRA ABSOLUTA — WORKFLOW DE BRANCHES
+
+**NUNCA fazer push direto para `main`.** O pre-push hook bloqueia automaticamente.
+
+```bash
+# Fluxo correto para qualquer implementação:
+git checkout -b feat/nome-da-feature   # 1. criar branch
+git add <arquivos>                      # 2. implementar e commitar
+git commit -m "feat: descrição"
+git push origin feat/nome-da-feature   # 3. push para o branch (NÃO para main)
+# 4. Abrir PR → fundador testa na preview URL → fundador faz merge
+```
+
+**O agente NUNCA deve executar `git push origin main`.**
+
+---
+
+## REGRA OBRIGATÓRIA — ORQUESTRAÇÃO E DESIGN
 
 ### 1. Implementação de código → sempre via /nicholas-orchestrator
 
@@ -43,16 +64,26 @@ O time de design disponível:
 
 ## Sua Tarefa
 
-1. Leia `prd.json` (neste diretório) para ver as user stories
+1. Leia `prd.json` (neste diretório) para ver as user stories e seus status
 2. Leia `progress.txt` (neste diretório) — especialmente a seção `## Codebase Patterns`
-3. Verifique se está no branch correto (`branchName` do prd.json). Se não, crie: `git checkout -b ralph/vendza-v1`
+3. Crie um feature branch com nome adequado: `git checkout -b feat/nome-da-story`
 4. Escolha a **story de maior prioridade** com `passes: false`
 5. Implemente **somente essa story**
 6. Rode os quality checks (abaixo)
 7. Se checks passarem, faça commit de TODAS as mudanças
-8. Marque `passes: true` no prd.json para a story concluída
-9. Appende seu progresso em `progress.txt`
-10. Se todas as stories tiverem `passes: true`, responda com `<promise>COMPLETE</promise>`
+8. Faça push do branch: `git push origin feat/nome-da-story`
+9. Marque `passes: true` no prd.json para a story concluída
+10. Appende seu progresso em `progress.txt`
+11. Se todas as stories tiverem `passes: true`, responda com `<promise>COMPLETE</promise>`
+
+**Stories prioritárias no momento (consultar prd.json para detalhes):**
+- P3-03: GitHub Actions CI (typecheck + build no PR)
+- P4-01: Playwright — setup e testes e2e básicos
+- P4-03: Playwright — testes do fluxo de checkout
+- P5-01: Design system — atualização de logo e identidade
+- P5-02: Design system — componentes visuais revisados
+- P2-08: Storefront — carrinho via localStorage
+- P2-09: Storefront — persistência de sessão no web-client
 
 ---
 
@@ -60,20 +91,20 @@ O time de design disponível:
 
 ```
 INF_Adega_Oficial/
-├── app/                    ← RAIZ DO MONOREPO (trabalhe aqui)
+├── app/                    <- RAIZ DO MONOREPO (trabalhe aqui)
 │   ├── apps/
-│   │   ├── api/            ← Fastify 5 + TypeScript — porta 3333
-│   │   ├── web-client/     ← Next.js 15 — porta 3000 (vitrine cliente)
-│   │   └── web-partner/    ← Next.js 15 — porta 3001 (painel parceiro)
+│   │   ├── api/            <- Fastify 5 + TypeScript — porta 3333
+│   │   ├── web-client/     <- Next.js 15 — porta 3000 (vitrine cliente)
+│   │   └── web-partner/    <- Next.js 15 — porta 3001 (painel parceiro)
 │   ├── packages/
-│   │   ├── database/       ← Prisma 7 + schema
-│   │   ├── types/          ← Tipos compartilhados
-│   │   ├── ui/             ← Componentes compartilhados
-│   │   └── utils/          ← Utilitários (formatCurrency etc)
-│   ├── prd.json            ← Este arquivo de stories
-│   ├── progress.txt        ← Log de progresso
-│   └── CLAUDE.md           ← Este arquivo
-└── .git/                   ← Git repo (um nível acima de app/)
+│   │   ├── database/       <- Prisma 7 + schema
+│   │   ├── types/          <- Tipos compartilhados
+│   │   ├── ui/             <- Componentes compartilhados
+│   │   └── utils/          <- Utilitários (formatCurrency etc)
+│   ├── prd.json            <- Stories do produto (V1/V2 completas, próximas pendentes)
+│   ├── progress.txt        <- Log de progresso
+│   └── CLAUDE.md           <- Este arquivo
+└── .git/                   <- Git repo (um nível acima de app/)
 ```
 
 **IMPORTANTE:** O git root está em `../` (um nível acima). Comandos git funcionam normalmente de dentro de `app/`.
@@ -89,7 +120,7 @@ cd "C:/Users/USER/OneDrive/Área de Trabalho/INF_Adega/INF_Adega_Oficial/app"
 # Typecheck (DEVE passar com 0 erros)
 corepack pnpm typecheck
 
-# Build (obrigatório nas stories S5-*)
+# Build (obrigatório nas stories de infra/CI)
 corepack pnpm build
 ```
 
@@ -220,9 +251,9 @@ font-family: 'Space Grotesk', sans-serif; /* valores numéricos, slugs */
 
 **NUNCA viole estas regras. São não-negociáveis:**
 
-- **Stories S2-\* (web-client):** NUNCA toque, modifique, mova, renomeie ou delete arquivos dentro de `apps/web-partner/`. Somente crie/edite arquivos em `apps/web-client/`.
-- **Stories S3-\*/S4-\* (API/Socket):** NUNCA delete arquivos existentes em `apps/web-client/` ou `apps/web-partner/`. Apenas adicione/edite arquivos em `apps/api/`.
-- **Stories S5-\* (build/infra):** Pode tocar todos os apps, mas NUNCA delete arquivos que já existem.
+- **Stories de web-client:** NUNCA toque, modifique, mova, renomeie ou delete arquivos dentro de `apps/web-partner/`. Somente crie/edite arquivos em `apps/web-client/`.
+- **Stories de API:** NUNCA delete arquivos existentes em `apps/web-client/` ou `apps/web-partner/`. Apenas adicione/edite arquivos em `apps/api/`.
+- **Stories de infra/build:** Pode tocar todos os apps, mas NUNCA delete arquivos que já existem.
 - **Regra geral:** Se uma story foca em um app específico, **apenas esse app** é tocado.
 - **NUNCA delete arquivos existentes** sem certeza absoluta de que são obsoletos (ex: `page.tsx`, `layout.tsx`, `globals.css` são SEMPRE preservados).
 
@@ -259,7 +290,7 @@ font-family: 'Space Grotesk', sans-serif; /* valores numéricos, slugs */
 
 12. **vitest no web-partner:** Já instalado como devDependency. Se typecheck falhar com "cannot find module 'vitest'", rodar `corepack pnpm install` do diretório `app/`.
 
-13. **Brand Bible — web-partner globals.css:** O arquivo `apps/web-partner/src/app/globals.css` contém o design system completo com tokens `--blue: #1B3A4B`, `--green: #2D6A4F`, `--amber: #E07B39`, `--cream: #F7F3EE`. NUNCA sobrescreva ou simplif ique este arquivo — ele define toda a identidade visual do painel parceiro.
+13. **Brand Bible — web-partner globals.css:** O arquivo `apps/web-partner/src/app/globals.css` contém o design system completo com tokens `--blue: #1B3A4B`, `--green: #2D6A4F`, `--amber: #E07B39`, `--cream: #F7F3EE`. NUNCA sobrescreva ou simplifique este arquivo — ele define toda a identidade visual do painel parceiro.
 
 ---
 
@@ -269,7 +300,7 @@ font-family: 'Space Grotesk', sans-serif; /* valores numéricos, slugs */
 feat: [STORY-ID] - [Story Title]
 ```
 
-Exemplo: `feat: S1-01 - Storefront API config, categories e products com Prisma real`
+Exemplo: `feat: P3-03 - GitHub Actions CI com typecheck e build`
 
 ---
 

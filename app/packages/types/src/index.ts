@@ -275,6 +275,7 @@ export interface Order {
   paymentMethod: string;
   totalCents: number;
   placedAt: string;
+  deliveredAt: string | null;
   items: OrderItemResumo[];
 }
 
@@ -349,7 +350,7 @@ export interface InventoryItem {
   id: string;
   productId: string;
   currentStock: number;
-  lowStockThreshold: number;
+  safetyStock: number;
   product: { name: string };
 }
 

@@ -1,6 +1,15 @@
 # Modelo de Negócio — Vendza
 
 > Documento criado em 2026-04-07. Substitui qualquer referência de precificação em versões anteriores.
+> Última atualização: 2026-04-29
+
+---
+
+## Status Atual
+
+**Primeiro cliente ativo: Adega Ideal — onboarding em andamento (2026-04-29)**
+
+A Adega Ideal está migrando o sistema atual para o Vendza. O piloto fechado está em execução, com onboarding conduzido pelo fundador. Este é o primeiro cliente real da plataforma.
 
 ---
 
@@ -71,8 +80,9 @@ O produto se paga no primeiro mês para qualquer adega com mais de R$ 6.000/mês
 
 | Prazo | MRR Alvo | Clientes (ticket R$1.500) | Clientes (ticket R$2.500) |
 |-------|----------|--------------------------|--------------------------|
-| 2026-Q3 (piloto) | R$ 0 | 0 | 0 |
-| 2026-Q4 (early adopters) | R$ 3.000 | 2 | — |
+| 2026-Q2 (piloto) | R$ 0 | 1 cliente piloto ativo | — |
+| 2026-Q3 (early adopters) | R$ 1.500 | 1 | — |
+| 2026-Q4 | R$ 3.000 | 2 | — |
 | 2027-Q1 | R$ 5.000 | 4 | 2 |
 | 2027-Q2 | R$ 10.000 | 7 | 4 |
 
@@ -129,14 +139,17 @@ A venda é **consultiva**, não self-service. Ninguém assina R$ 1.500/mês sem 
 
 ## Estratégia de GTM
 
-### Fase 1 — Piloto Fechado (2026-Q2)
-- 2–3 adegas selecionadas manualmente
-- Gratuito durante o piloto (máx. 30 dias)
-- Onboarding pelo fundador, suporte intensivo
-- Objetivo: coletar feedback, documentar resultado
+### Fase 1 — Piloto Fechado (2026-Q2) — EM ANDAMENTO
+
+**Status: piloto ativo com a Adega Ideal desde 2026-04-29.**
+
+- Cliente migrando o sistema atual para o Vendza
+- Onboarding conduzido pelo fundador, suporte intensivo
+- Objetivo: validar fluxo completo (pedidos, catálogo, automação WhatsApp), coletar feedback e documentar resultado mensurável
+- Meta: primeiro pedido real processado pelo Vendza dentro das próximas 2 semanas
 
 ### Fase 2 — Early Adopters (2026-Q3)
-- Abrir para 5–10 adegas
+- Abrir para 5–10 adegas com base no case da Adega Ideal
 - Cobrar a partir da segunda semana (após primeiro pedido real)
 - Outreach via WhatsApp direto para donos de adega
 - Parcerias com distribuidoras de bebida (Ambev, regionais)

@@ -117,7 +117,10 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
 
     fetchComAuth<{ produtos: ProdutoResumo[] }>("/partner/products")
       .then((res) => setProdutos(Array.isArray(res) ? res : (res.produtos ?? [])))
-      .catch(() => setProdutos([]));
+      .catch((err) => {
+        setProdutos([]);
+        setErro(`Erro ao carregar produtos: ${err instanceof Error ? err.message : "tente novamente."}`);
+      });
   }, [aberto]);
 
   // Fechar com Escape
@@ -449,6 +452,16 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
                 />
               </div>
 
+              {/* Erro de carregamento de produtos */}
+              {erro && produtos.length === 0 && (
+                <div style={{
+                  background: "#fef2f2", border: "1px solid #fecaca",
+                  borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#dc2626",
+                }}>
+                  {erro}
+                </div>
+              )}
+
               {/* Lista de produtos */}
               <div style={{
                 border: "1px solid var(--s6)", borderRadius: 10,
@@ -456,7 +469,7 @@ export function PedidoManualModal({ aberto, onFechar }: Props) {
               }}>
                 {produtosFiltrados.length === 0 ? (
                   <div style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "var(--text-muted)" }}>
-                    Nenhum produto encontrado.
+                    {erro ? "Falha ao carregar — reabra o modal para tentar novamente." : "Nenhum produto encontrado."}
                   </div>
                 ) : (
                   produtosFiltrados.map((p) => (

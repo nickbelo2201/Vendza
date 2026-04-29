@@ -8,6 +8,37 @@
 
 ---
 
+## WORKFLOW DE BRANCHES — REGRA ABSOLUTA
+
+**NUNCA fazer push direto para `main`.** Existe um git pre-push hook que bloqueia pushes diretos para `main` automaticamente.
+
+### Fluxo obrigatório para todo desenvolvimento:
+
+```bash
+# 1. Criar feature branch a partir de main
+git checkout -b feat/nome-da-feature
+
+# 2. Implementar, commitar normalmente
+git add <arquivos>
+git commit -m "feat: descrição da mudança"
+
+# 3. Push para o branch remoto (gera preview URL automática no Vercel)
+git push origin feat/nome-da-feature
+
+# 4. Abrir Pull Request no GitHub
+# → O fundador (Nicholas Belo) testa na preview URL do Vercel
+# → O fundador faz o merge e push para main pessoalmente
+```
+
+**Quem autoriza merges para `main`:** somente o fundador Nicholas Belo.
+
+**O agente NUNCA deve:**
+- Fazer `git push origin main`
+- Tentar fazer merge de PR programaticamente
+- Pular etapas do fluxo acima
+
+---
+
 ## Repository Structure
 
 ```
@@ -16,7 +47,7 @@ INF_Adega_Oficial/app/       # Main product workspace (monorepo root)
 │   ├── api/                 # Fastify 5 backend (TypeScript) — port 3333
 │   ├── web-client/          # Customer storefront (Next.js 15) — port 3000
 │   ├── web-partner/         # Store partner dashboard (Next.js 15) — port 3001
-│   └── mobile/              # Reserved for V2
+│   └── mobile/              # Reserved for V3
 ├── packages/
 │   ├── database/            # Prisma 7 ORM + migrations + seed
 │   ├── types/               # Shared TypeScript types
@@ -25,7 +56,7 @@ INF_Adega_Oficial/app/       # Main product workspace (monorepo root)
 ├── infra/
 │   ├── docker/              # docker-compose (Postgres 16, Redis 7)
 │   └── terraform/           # IaC
-├── docs/                    # 16 strategic and technical docs (all in PT-BR)
+├── docs/                    # Documentação estratégica e técnica (PT-BR)
 └── .claude/                 # Claude Code plugins & agent marketplace
 ```
 
@@ -123,21 +154,15 @@ corepack pnpm lint             # Linting
 
 ---
 
-## Current V1 Status (as of 2026-03-30)
+## Status do Produto
 
-**Done:**
-- Full monorepo setup (pnpm, Turbo, TypeScript)
-- Fastify API with all partner + public routes
-- Prisma schema (complete, tenant-ready)
-- Docker Compose for local dev
-- Web-partner routing structure (layout, pages)
-- Web-client storefront structure
+### V1 — COMPLETA (2026-04-06, commit f2c7c23)
 
-**V1 Status: COMPLETE ✅ (2026-04-06, commit f2c7c23)**
+Todas as 20 stories da V1 entregues. Produto em produção com clientes reais.
 
-All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
+### V2 — COMPLETA (2026-04-29)
 
-**V2 In Progress (see app/prd.json for full details):**
+Todas as stories da V2 entregues e em produção:
 - V2-A1: Painel de pedidos funcional (listar, filtrar, mudar status, realtime)
 - V2-A2: CRUD de produtos e categorias com upload de imagem
 - V2-A3: CRM de clientes com histórico
@@ -148,12 +173,29 @@ All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 - V2-C1: Busca de produtos no web-client
 - V2-C2: SEO e metatags dinâmicas por produto
 
-**V3 Backlog (não iniciar até V2 completa):**
-- Testes e2e Playwright
-- Mobile app, WhatsApp automação, multi-tenant
+### Próximas Tarefas (Backlog ativo)
+
+Consultar `app/prd.json` para detalhes completos. Prioridade atual:
+
+| Story | Descrição |
+|-------|-----------|
+| P3-03 | GitHub Actions CI (typecheck + build no PR) |
+| P4-01 | Playwright — setup e testes e2e básicos |
+| P4-03 | Playwright — testes do fluxo de checkout |
+| P5-01 | Design system — atualização de logo e identidade |
+| P5-02 | Design system — componentes visuais revisados |
+| P2-08 | Storefront — carrinho via localStorage |
+| P2-09 | Storefront — persistência de sessão no web-client |
+
+### V3 Backlog (não iniciar até stories acima concluídas)
+
+- Mobile app
+- WhatsApp automação
+- Multi-tenant avançado
 - **ÚLTIMA FEAT V3: Mercado Pago (checkout online)**
 
-**Out of scope (todos os versions):**
+### Fora de escopo (todas as versões)
+
 - Polygon-based delivery zones (usa bairro + radius)
 - IA generativa (V3+)
 
@@ -184,24 +226,14 @@ All 20 V1 stories shipped. See `app/prd.json` for V2 stories.
 | API | `https://vendza-production.up.railway.app` | `main` | Railway |
 | web-partner | `https://web-partner-three.vercel.app` | `main` | Vercel |
 
-**Workflow de push:**
-```bash
-git push origin main    # deploya Railway + Vercel automaticamente
-```
+**Deploy em produção acontece APENAS via merge para `main` pelo fundador.**
 
-**`main` é o único branch permanente.** Todo desenvolvimento acontece direto nele.
+Feature branches geram preview URLs automáticas no Vercel para validação antes do merge.
 
-**Para testar mudanças sem afetar produção**, use feature branches:
-```bash
-git checkout -b feat/minha-mudanca
-git push origin feat/minha-mudanca
-# Vercel gera preview URL automática para essa branch
-```
-
-**Antes de fazer push para `main`:**
+**Antes de abrir PR:**
 1. `corepack pnpm typecheck` — deve passar com 0 erros
 2. Todos os arquivos modificados devem estar commitados
-3. Variáveis de ambiente novas devem estar no Vercel/Railway
+3. Variáveis de ambiente novas devem estar documentadas no PR
 
 Ver `app/docs/18-deploy-e-producao.md` para documentação completa de infraestrutura.
 
@@ -210,10 +242,11 @@ Ver `app/docs/18-deploy-e-producao.md` para documentação completa de infraestr
 ## Important Rules
 
 1. **Language:** All code comments, variable names, and user-facing strings should stay in Portuguese (BR) to match the existing codebase.
-2. **storeId isolation:** Never skip the `storeId` filter on partner queries — this is a security and data isolation requirement.
-3. **Append-only logs:** Never UPDATE or DELETE `InventoryMovement` or `OrderEvent` records.
-4. **Stub tracking:** When creating stub/mock responses, always set `meta.stub: true` in the response envelope so they can be easily found and replaced.
-5. **Package manager:** Always use `pnpm` (via corepack), never `npm` or `yarn`.
-6. **Node version:** Must be >=22.0.0.
-7. **next.config.ts:** Nunca adicionar `outputFileTracingRoot` sem `output: 'standalone'` — quebra o runtime do Vercel.
-8. **Commits atômicos:** Sempre commitar TODOS os arquivos relacionados à mudança juntos. Arquivos uncommitted não são deployados.
+2. **Branch workflow:** NUNCA fazer push para `main`. Sempre usar feature branch → PR → fundador faz merge.
+3. **storeId isolation:** Never skip the `storeId` filter on partner queries — this is a security and data isolation requirement.
+4. **Append-only logs:** Never UPDATE or DELETE `InventoryMovement` or `OrderEvent` records.
+5. **Stub tracking:** When creating stub/mock responses, always set `meta.stub: true` in the response envelope so they can be easily found and replaced.
+6. **Package manager:** Always use `pnpm` (via corepack), never `npm` or `yarn`.
+7. **Node version:** Must be >=22.0.0.
+8. **next.config.ts:** Nunca adicionar `outputFileTracingRoot` sem `output: 'standalone'` — quebra o runtime do Vercel.
+9. **Commits atômicos:** Sempre commitar TODOS os arquivos relacionados à mudança juntos. Arquivos uncommitted não são deployados.

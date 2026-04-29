@@ -59,6 +59,7 @@ export type PartnerOrderRecord = {
   discountCents: number;
   totalCents: number;
   placedAt: string;
+  deliveredAt: string | null;
   note: string | null;
   address: PartnerOrderAddress;
   items: PartnerOrderItem[];
@@ -129,6 +130,7 @@ function toPartnerOrderRecord(order: {
   discountCents: number;
   totalCents: number;
   placedAt: Date;
+  deliveredAt: Date | null;
   notes: string | null;
   deliveryStreet: string;
   deliveryNumber: string;
@@ -163,6 +165,7 @@ function toPartnerOrderRecord(order: {
     discountCents: order.discountCents,
     totalCents: order.totalCents,
     placedAt: order.placedAt.toISOString(),
+    deliveredAt: order.deliveredAt?.toISOString() ?? null,
     note: order.notes,
     address: {
       line1: order.deliveryStreet,

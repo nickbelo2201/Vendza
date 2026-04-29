@@ -116,23 +116,34 @@ export default async function PartnerHomePage() {
       ]
     : [];
 
+  // Janelas de visibilidade do kanban — pedidos mais antigos ficam só na aba Pedidos
+  const VINTE_QUATRO_HORAS_MS = 24 * 60 * 60 * 1000;
+  const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
+  const agora = Date.now();
+
   // Agrupar pedidos por status para o Kanban
   const kanbanCols = [
     {
       label: "Preparando",
       items: orders
-        .filter((o) => ["pending", "confirmed", "preparing"].includes(o.status))
+        .filter((o) => {
+          if (!["pending", "confirmed", "preparing"].includes(o.status)) return false;
+          return agora - new Date(o.placedAt).getTime() < SETE_DIAS_MS;
+        })
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
           cliente: o.customerName,
-          tempo: o.placedAt, // ISO timestamp — KanbanBoard calcula o tempo decorrido
+          tempo: o.placedAt,
         })),
     },
     {
       label: "Entregando",
       items: orders
-        .filter((o) => ["ready_for_delivery", "out_for_delivery"].includes(o.status))
+        .filter((o) => {
+          if (!["ready_for_delivery", "out_for_delivery"].includes(o.status)) return false;
+          return agora - new Date(o.placedAt).getTime() < SETE_DIAS_MS;
+        })
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
@@ -143,7 +154,12 @@ export default async function PartnerHomePage() {
     {
       label: "Entregue",
       items: orders
-        .filter((o) => o.status === "delivered")
+        .filter((o) => {
+          if (o.status !== "delivered") return false;
+          // deliveredAt pode ser null em pedidos antigos — usa placedAt como referência
+          const ref = o.deliveredAt ? new Date(o.deliveredAt).getTime() : new Date(o.placedAt).getTime();
+          return agora - ref < VINTE_QUATRO_HORAS_MS;
+        })
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
@@ -155,22 +171,22 @@ export default async function PartnerHomePage() {
 
   // Itens de estoque crítico: filtra produtos abaixo ou igual ao threshold, exclui sem threshold
   const estoqueItens = inventory
-    .filter((item) => item.lowStockThreshold > 0 && item.currentStock <= item.lowStockThreshold)
+    .filter((item) => item.safetyStock > 0 && item.currentStock <= item.safetyStock)
     .slice(0, 5)
     .map((item) => {
       // Cor baseada na gravidade do alerta
       const barColor =
         item.currentStock === 0
           ? "#DC2626"
-          : item.currentStock < item.lowStockThreshold / 2
+          : item.currentStock < item.safetyStock / 2
           ? "#F59E0B"
           : "#D97706";
 
       return {
         nome: item.product.name,
-        qty: `${item.currentStock} / ${item.lowStockThreshold} un.`,
+        qty: `${item.currentStock} / ${item.safetyStock} un.`,
         barWidth:
-          Math.min(100, Math.round((item.currentStock / item.lowStockThreshold) * 100)) + "%",
+          Math.min(100, Math.round((item.currentStock / item.safetyStock) * 100)) + "%",
         barColor,
         alertColor: barColor,
       };
