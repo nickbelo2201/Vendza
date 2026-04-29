@@ -171,7 +171,7 @@ export default async function PartnerHomePage() {
 
   // Itens de estoque crítico: filtra produtos abaixo ou igual ao threshold, exclui sem threshold
   const estoqueItens = inventory
-    .filter((item) => item.safetyStock > 0 && item.currentStock <= item.safetyStock)
+    .filter((item) => item.product != null && item.safetyStock > 0 && item.currentStock <= item.safetyStock)
     .slice(0, 5)
     .map((item) => {
       // Cor baseada na gravidade do alerta
