@@ -62,17 +62,29 @@ export default async function HomePage({
   let categories: StorefrontCategory[] = [];
   let products: ProdutoStorefront[] = [];
 
-  try {
-    const [configResult, categoriesResult, productsResult] = await Promise.all([
-      fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
-      fetchStorefrontCatalog<StorefrontCategory[]>("/catalog/categories"),
-      fetchStorefrontCatalog<ProductsResponse>(produtosUrl),
-    ]);
-    config = configResult;
-    categories = categoriesResult;
-    products = productsResult.items;
-  } catch {
-    // API indisponível — exibe estado vazio
+  // Cada chamada é independente — uma falha não derruba as outras
+  const [configResult, categoriesResult, productsResult] = await Promise.allSettled([
+    fetchStorefrontConfig<StorefrontConfig>("/storefront/config"),
+    fetchStorefrontCatalog<StorefrontCategory[]>("/catalog/categories"),
+    fetchStorefrontCatalog<ProductsResponse>(produtosUrl),
+  ]);
+
+  if (configResult.status === "fulfilled") {
+    config = configResult.value;
+  } else {
+    console.error("[storefront] /storefront/config falhou:", configResult.reason);
+  }
+
+  if (categoriesResult.status === "fulfilled") {
+    categories = categoriesResult.value;
+  } else {
+    console.error("[storefront] /catalog/categories falhou:", categoriesResult.reason);
+  }
+
+  if (productsResult.status === "fulfilled") {
+    products = productsResult.value.items ?? [];
+  } else {
+    console.error("[storefront] /catalog/products falhou:", productsResult.reason);
   }
 
   const produtosExibidos: ProdutoStorefront[] = products;
