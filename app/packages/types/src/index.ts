@@ -275,6 +275,7 @@ export interface Order {
   paymentMethod: string;
   totalCents: number;
   placedAt: string;
+  deliveredAt: string | null;
   items: OrderItemResumo[];
 }
 

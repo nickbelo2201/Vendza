@@ -116,6 +116,10 @@ export default async function PartnerHomePage() {
       ]
     : [];
 
+  // Pedidos entregues há menos de 24h ficam visíveis no kanban; os demais só aparecem na aba Pedidos
+  const VINTE_QUATRO_HORAS_MS = 24 * 60 * 60 * 1000;
+  const agora = Date.now();
+
   // Agrupar pedidos por status para o Kanban
   const kanbanCols = [
     {
@@ -143,7 +147,11 @@ export default async function PartnerHomePage() {
     {
       label: "Entregue",
       items: orders
-        .filter((o) => o.status === "delivered")
+        .filter((o) => {
+          if (o.status !== "delivered") return false;
+          if (!o.deliveredAt) return true; // fallback: exibe se não tiver timestamp
+          return agora - new Date(o.deliveredAt).getTime() < VINTE_QUATRO_HORAS_MS;
+        })
         .map((o) => ({
           id: o.publicId,
           orderId: o.id,
