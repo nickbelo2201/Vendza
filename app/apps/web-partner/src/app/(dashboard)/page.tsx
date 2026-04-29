@@ -156,8 +156,9 @@ export default async function PartnerHomePage() {
       items: orders
         .filter((o) => {
           if (o.status !== "delivered") return false;
-          if (!o.deliveredAt) return true; // fallback: exibe se não tiver timestamp
-          return agora - new Date(o.deliveredAt).getTime() < VINTE_QUATRO_HORAS_MS;
+          // deliveredAt pode ser null em pedidos antigos — usa placedAt como referência
+          const ref = o.deliveredAt ? new Date(o.deliveredAt).getTime() : new Date(o.placedAt).getTime();
+          return agora - ref < VINTE_QUATRO_HORAS_MS;
         })
         .map((o) => ({
           id: o.publicId,
