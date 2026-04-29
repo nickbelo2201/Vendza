@@ -170,22 +170,22 @@ export default async function PartnerHomePage() {
 
   // Itens de estoque crítico: filtra produtos abaixo ou igual ao threshold, exclui sem threshold
   const estoqueItens = inventory
-    .filter((item) => item.lowStockThreshold > 0 && item.currentStock <= item.lowStockThreshold)
+    .filter((item) => item.safetyStock > 0 && item.currentStock <= item.safetyStock)
     .slice(0, 5)
     .map((item) => {
       // Cor baseada na gravidade do alerta
       const barColor =
         item.currentStock === 0
           ? "#DC2626"
-          : item.currentStock < item.lowStockThreshold / 2
+          : item.currentStock < item.safetyStock / 2
           ? "#F59E0B"
           : "#D97706";
 
       return {
         nome: item.product.name,
-        qty: `${item.currentStock} / ${item.lowStockThreshold} un.`,
+        qty: `${item.currentStock} / ${item.safetyStock} un.`,
         barWidth:
-          Math.min(100, Math.round((item.currentStock / item.lowStockThreshold) * 100)) + "%",
+          Math.min(100, Math.round((item.currentStock / item.safetyStock) * 100)) + "%",
         barColor,
         alertColor: barColor,
       };

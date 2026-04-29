@@ -350,7 +350,7 @@ export interface InventoryItem {
   id: string;
   productId: string;
   currentStock: number;
-  lowStockThreshold: number;
+  safetyStock: number;
   product: { name: string };
 }
 
