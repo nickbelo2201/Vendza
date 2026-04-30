@@ -168,16 +168,27 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
         throw new Error(mensagem);
       }
 
-      const { data: { signedUrl, token: uploadToken, path, publicUrl } } = await signedRes.json();
+      const { data: { signedUrl, publicUrl } } = await signedRes.json();
 
-      // Faz upload direto para o Supabase Storage via URL assinada
-      const supabase = createClient();
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .uploadToSignedUrl(path, uploadToken, blob, { upsert: true });
+      // Upload direto via fetch PUT na signedUrl (mais confiável que o SDK em preview URLs)
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        body: blob,
+        headers: {
+          "Content-Type": blob.type || "image/jpeg",
+          "x-upsert": "true",
+        },
+      });
 
-      if (uploadError) {
-        throw new Error(uploadError.message);
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text().catch(() => "");
+        throw new Error(`Upload falhou (${uploadRes.status})${errText ? `: ${errText}` : ""}`);
+      }
+
+      // Verifica se a publicUrl está acessível antes de salvar
+      const verifyRes = await fetch(publicUrl, { method: "HEAD" });
+      if (!verifyRes.ok) {
+        throw new Error(`Imagem enviada mas URL não acessível (${verifyRes.status}). O bucket pode estar privado.`);
       }
 
       setForm((prev) => ({ ...prev, imageUrl: publicUrl }));
