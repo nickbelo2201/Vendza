@@ -102,8 +102,8 @@ function ModalAbrirCaixa({ onFechar, onConcluido }: { onFechar: () => void; onCo
         {/* Header com ícone */}
         <div style={{
           padding: "32px 32px 24px",
-          background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-          borderBottom: "1px solid #bbf7d0",
+          background: "var(--gl, #e8f5f0)",
+          borderBottom: "1px solid var(--g-border, rgba(26,122,94,0.18))",
           textAlign: "center",
         }}>
           <div style={{
@@ -204,12 +204,12 @@ function ModalAbrirCaixa({ onFechar, onConcluido }: { onFechar: () => void; onCo
             )}
 
             <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-              <button type="button" className="wp-btn wp-btn-secondary" onClick={onFechar} style={{ flex: 1 }}>
+              <button type="button" className="wp-button wp-button-secondary" onClick={onFechar} style={{ flex: 1 }}>
                 Cancelar
               </button>
               <button
                 type="button"
-                className="wp-btn wp-btn-primary"
+                className="wp-button"
                 onClick={handleAbrir}
                 disabled={loading}
                 style={{ flex: 2 }}
@@ -366,15 +366,15 @@ function ModalFecharCaixa({
             )}
 
             <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-              <button type="button" className="wp-btn wp-btn-secondary" onClick={onFechar} style={{ flex: 1 }}>
+              <button type="button" className="wp-button wp-button-secondary" onClick={onFechar} style={{ flex: 1 }}>
                 Cancelar
               </button>
               <button
                 type="button"
-                className="wp-btn"
+                className="wp-button"
                 onClick={handleFechar}
                 disabled={loading}
-                style={{ flex: 2, background: "#dc2626", color: "#fff", border: "none" }}
+                style={{ flex: 2, background: "#dc2626" }}
               >
                 {loading ? "Fechando..." : "Confirmar Fechamento"}
               </button>

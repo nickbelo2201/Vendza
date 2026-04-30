@@ -314,6 +314,7 @@ select {
   border: 1px solid var(--s6);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  color: var(--carbon);
 }
 
 .wp-panel {
