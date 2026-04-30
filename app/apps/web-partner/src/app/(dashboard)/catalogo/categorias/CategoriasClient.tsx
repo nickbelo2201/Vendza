@@ -16,6 +16,27 @@ async function getToken(): Promise<string | null> {
   }
 }
 
+function CategoryThumb({ imageUrl, slug, name, size }: { imageUrl: string | null | undefined; slug: string; name: string; size: number }) {
+  const [imgError, setImgError] = useState(false);
+  const src = imageUrl ?? `/images/categories/${slug}.png`;
+  if (!imgError) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={name}
+        style={{ width: size, height: size, objectFit: "cover" }}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    </svg>
+  );
+}
+
 function gerarSlug(nome: string): string {
   return nome
     .toLowerCase()
@@ -328,18 +349,7 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
                         justifyContent: "center",
                         flexShrink: 0,
                       }}>
-                        {c.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={c.imageUrl}
-                            alt={c.name}
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          />
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                          </svg>
-                        )}
+                        <CategoryThumb imageUrl={c.imageUrl} slug={c.slug} name={c.name} size={44} />
                       </div>
                     </td>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
@@ -513,7 +523,7 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
                       onChange={handleFileUpload}
                     />
                   </div>
-                  {form.imageUrl && (
+                  {(form.imageUrl || editando?.slug) && (
                     <div style={{
                       width: 80,
                       height: 80,
@@ -521,12 +531,15 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
                       border: "1px solid var(--border)",
                       overflow: "hidden",
                       background: "var(--cream)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={form.imageUrl}
-                        alt="Preview"
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      <CategoryThumb
+                        imageUrl={form.imageUrl}
+                        slug={editando?.slug ?? form.slug}
+                        name="Preview"
+                        size={80}
                       />
                     </div>
                   )}
