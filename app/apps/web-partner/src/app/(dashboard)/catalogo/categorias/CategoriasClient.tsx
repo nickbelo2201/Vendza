@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Categoria } from "@vendza/types";
 import { createClient } from "@/utils/supabase/client";
 
@@ -18,6 +18,7 @@ async function getToken(): Promise<string | null> {
 
 function CategoryThumb({ imageUrl, slug, name, size }: { imageUrl: string | null | undefined; slug: string; name: string; size: number }) {
   const [imgError, setImgError] = useState(false);
+  useEffect(() => { setImgError(false); }, [imageUrl]);
   const src = imageUrl ?? `/images/categories/${slug}.png`;
   if (!imgError) {
     return (
