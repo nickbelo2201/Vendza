@@ -64,6 +64,12 @@ type LojaInput = {
   status?: "open" | "closed" | "paused";
   minimumOrderValueCents?: number;
   logoUrl?: string | null;
+  addressStreet?: string | null;
+  addressNeighborhood?: string | null;
+  addressCity?: string | null;
+  addressState?: string | null;
+  addressZipCode?: string | null;
+  addressComplement?: string | null;
 };
 
 type ContaBancariaInput = {
@@ -90,6 +96,12 @@ export async function getLoja(context: PartnerContext) {
       status: true,
       minimumOrderValueCents: true,
       logoUrl: true,
+      addressStreet: true,
+      addressNeighborhood: true,
+      addressCity: true,
+      addressState: true,
+      addressZipCode: true,
+      addressComplement: true,
     },
   });
 
@@ -101,6 +113,12 @@ export async function getLoja(context: PartnerContext) {
     status: store.status,
     minimumOrderValueCents: store.minimumOrderValueCents,
     logoUrl: store.logoUrl ?? null,
+    addressStreet: store.addressStreet ?? null,
+    addressNeighborhood: store.addressNeighborhood ?? null,
+    addressCity: store.addressCity ?? null,
+    addressState: store.addressState ?? null,
+    addressZipCode: store.addressZipCode ?? null,
+    addressComplement: store.addressComplement ?? null,
   };
 }
 
@@ -116,6 +134,12 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
         ? { minimumOrderValueCents: input.minimumOrderValueCents }
         : {}),
       ...(input.logoUrl !== undefined ? { logoUrl: input.logoUrl } : {}),
+      ...(input.addressStreet !== undefined ? { addressStreet: input.addressStreet } : {}),
+      ...(input.addressNeighborhood !== undefined ? { addressNeighborhood: input.addressNeighborhood } : {}),
+      ...(input.addressCity !== undefined ? { addressCity: input.addressCity } : {}),
+      ...(input.addressState !== undefined ? { addressState: input.addressState } : {}),
+      ...(input.addressZipCode !== undefined ? { addressZipCode: input.addressZipCode } : {}),
+      ...(input.addressComplement !== undefined ? { addressComplement: input.addressComplement } : {}),
     },
     select: {
       id: true,
@@ -125,6 +149,12 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       status: true,
       minimumOrderValueCents: true,
       logoUrl: true,
+      addressStreet: true,
+      addressNeighborhood: true,
+      addressCity: true,
+      addressState: true,
+      addressZipCode: true,
+      addressComplement: true,
     },
   });
 
@@ -139,6 +169,12 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
     status: store.status,
     minimumOrderValueCents: store.minimumOrderValueCents,
     logoUrl: store.logoUrl ?? null,
+    addressStreet: store.addressStreet ?? null,
+    addressNeighborhood: store.addressNeighborhood ?? null,
+    addressCity: store.addressCity ?? null,
+    addressState: store.addressState ?? null,
+    addressZipCode: store.addressZipCode ?? null,
+    addressComplement: store.addressComplement ?? null,
   };
 }
 

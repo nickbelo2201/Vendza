@@ -7,6 +7,7 @@ import {
   ContaBancariaSection,
   ZonasSection,
   UsuariosSection,
+  EnderecoSection,
 } from "./SuspenseWrappers";
 
 function SkeletonFallback() {
@@ -127,6 +128,10 @@ export default async function SettingsPage() {
 
             <Suspense fallback={<SkeletonFallback />}>
               <ContaBancariaSection />
+            </Suspense>
+
+            <Suspense fallback={<SkeletonFallback />}>
+              <EnderecoSection />
             </Suspense>
 
             <Suspense fallback={<SkeletonFallback />}>

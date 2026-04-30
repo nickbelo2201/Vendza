@@ -2,6 +2,7 @@ import { Suspense, ReactNode } from "react";
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { DadosBancarios } from "./DadosBancarios";
 import { FormConfiguracoes } from "./FormConfiguracoes";
+import { FormEndereco } from "./FormEndereco";
 import { HorariosForm } from "./HorariosForm";
 import { MapaZonasEntrega } from "./MapaZonasEntrega";
 import { UsuariosConfig } from "./UsuariosConfig";
@@ -14,6 +15,12 @@ type StoreSettings = {
   status: string;
   minimumOrderValueCents: number;
   logoUrl: string | null;
+  addressStreet: string | null;
+  addressNeighborhood: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  addressZipCode: string | null;
+  addressComplement: string | null;
 };
 
 type Zona = {
@@ -207,6 +214,24 @@ export async function UsuariosSection() {
       <UsuariosConfig
         usuarios={usuarios ?? []}
         currentUserId={sessao?.userId ?? ""}
+      />
+    </section>
+  );
+}
+
+export async function EnderecoSection() {
+  const s = await getSettings();
+  return (
+    <section id="endereco">
+      <FormEndereco
+        address={{
+          addressStreet: s?.addressStreet ?? null,
+          addressNeighborhood: s?.addressNeighborhood ?? null,
+          addressCity: s?.addressCity ?? null,
+          addressState: s?.addressState ?? null,
+          addressZipCode: s?.addressZipCode ?? null,
+          addressComplement: s?.addressComplement ?? null,
+        }}
       />
     </section>
   );
