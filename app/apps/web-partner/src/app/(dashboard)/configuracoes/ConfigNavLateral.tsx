@@ -6,6 +6,7 @@ const SECOES = [
   { id: "loja", label: "Informações da Loja" },
   { id: "horarios", label: "Horários" },
   { id: "dados-bancarios", label: "Dados Bancários" },
+  { id: "endereco", label: "Endereço" },
   { id: "zonas", label: "Zonas de Entrega" },
   { id: "usuarios", label: "Usuários" },
 ];

@@ -35,6 +35,14 @@ const LojaResponseSchema = Type.Object({
   status: Type.String(),
   minimumOrderValueCents: Type.Integer(),
   logoUrl: Type.Union([Type.String(), Type.Null()]),
+  addressStreet: Type.Union([Type.String(), Type.Null()]),
+  addressNeighborhood: Type.Union([Type.String(), Type.Null()]),
+  addressCity: Type.Union([Type.String(), Type.Null()]),
+  addressState: Type.Union([Type.String(), Type.Null()]),
+  addressZipCode: Type.Union([Type.String(), Type.Null()]),
+  addressComplement: Type.Union([Type.String(), Type.Null()]),
+  storeLat: Type.Union([Type.Number(), Type.Null()]),
+  storeLng: Type.Union([Type.Number(), Type.Null()]),
 });
 
 /** Schema de horário de funcionamento */
@@ -131,6 +139,12 @@ const LojaUpdateSchema = Type.Object({
   status: Type.Optional(Type.Union([Type.Literal("open"), Type.Literal("closed"), Type.Literal("paused")])),
   minimumOrderValueCents: Type.Optional(Type.Integer({ minimum: 0 })),
   logoUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressStreet: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressNeighborhood: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressCity: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressState: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressZipCode: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressComplement: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
 /** Schema de URL assinada para upload de logo */
