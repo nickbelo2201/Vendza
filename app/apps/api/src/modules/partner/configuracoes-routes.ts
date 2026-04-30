@@ -41,6 +41,8 @@ const LojaResponseSchema = Type.Object({
   addressState: Type.Union([Type.String(), Type.Null()]),
   addressZipCode: Type.Union([Type.String(), Type.Null()]),
   addressComplement: Type.Union([Type.String(), Type.Null()]),
+  storeLat: Type.Union([Type.Number(), Type.Null()]),
+  storeLng: Type.Union([Type.Number(), Type.Null()]),
 });
 
 /** Schema de horário de funcionamento */

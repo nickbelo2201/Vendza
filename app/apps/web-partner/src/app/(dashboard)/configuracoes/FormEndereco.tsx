@@ -167,7 +167,7 @@ export function FormEndereco({ address }: EnderecoProps) {
         >
           <button
             type="submit"
-            className="wp-button"
+            className="wp-btn wp-btn-primary"
             disabled={pending}
             style={{ opacity: pending ? 0.7 : 1, cursor: pending ? "not-allowed" : "pointer" }}
           >

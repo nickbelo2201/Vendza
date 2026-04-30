@@ -21,6 +21,8 @@ type StoreSettings = {
   addressState: string | null;
   addressZipCode: string | null;
   addressComplement: string | null;
+  storeLat: number | null;
+  storeLng: number | null;
 };
 
 type Zona = {
@@ -198,10 +200,14 @@ export async function ContaBancariaSection() {
 }
 
 export async function ZonasSection() {
-  const zonas = await getZonas();
+  const [zonas, settings] = await Promise.all([getZonas(), getSettings()]);
   return (
     <section id="zonas">
-      <MapaZonasEntrega zonas={zonas ?? []} />
+      <MapaZonasEntrega
+        zonas={zonas ?? []}
+        storeLat={settings?.storeLat ?? null}
+        storeLng={settings?.storeLng ?? null}
+      />
     </section>
   );
 }
