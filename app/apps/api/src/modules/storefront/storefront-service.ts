@@ -83,10 +83,11 @@ export function getCategories(storeId: string) {
         id: true,
         name: true,
         slug: true,
+        imageUrl: true,
         sortOrder: true,
         children: {
           where: { isActive: true },
-          select: { id: true, name: true, slug: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, imageUrl: true, sortOrder: true },
           orderBy: { sortOrder: "asc" },
         },
       },

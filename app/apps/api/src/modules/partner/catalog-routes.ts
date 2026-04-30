@@ -37,6 +37,7 @@ const SubCategoryResponseSchema = Type.Object({
   parentCategoryId: Type.Union([Type.String(), Type.Null()]),
   name: Type.String(),
   slug: Type.String(),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
   sortOrder: Type.Integer(),
   isActive: Type.Boolean(),
   createdAt: Type.String(),
@@ -50,6 +51,7 @@ const CategoryResponseSchema = Type.Object({
   parentCategoryId: Type.Union([Type.String(), Type.Null()]),
   name: Type.String(),
   slug: Type.String(),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
   sortOrder: Type.Integer(),
   isActive: Type.Boolean(),
   createdAt: Type.String(),
@@ -119,12 +121,14 @@ const CategoryCreateSchema = Type.Object({
   slug: Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" }),
   isActive: Type.Optional(Type.Boolean()),
   parentCategoryId: Type.Optional(Type.String()),
+  imageUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
 const CategoryPatchSchema = Type.Object({
   name: Type.Optional(Type.String({ minLength: 1 })),
   slug: Type.Optional(Type.String({ minLength: 1, pattern: "^[a-z0-9-]+$" })),
   isActive: Type.Optional(Type.Boolean()),
+  imageUrl: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
 const ProductFiltersSchema = Type.Object({

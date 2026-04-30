@@ -46,6 +46,7 @@ const SubcategorySchema = Type.Object({
   id: Type.String(),
   name: Type.String(),
   slug: Type.String(),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
   sortOrder: Type.Integer(),
 });
 
@@ -54,6 +55,7 @@ const CategorySchema = Type.Object({
   id: Type.String(),
   name: Type.String(),
   slug: Type.String(),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
   sortOrder: Type.Integer(),
   children: Type.Array(SubcategorySchema),
 });

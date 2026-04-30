@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { Categoria } from "@vendza/types";
 import { createClient } from "@/utils/supabase/client";
 
@@ -25,10 +25,35 @@ function gerarSlug(nome: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
+async function comprimirImagem(file: File, maxWidthPx = 1200, qualidade = 0.82): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = Math.min(1, maxWidthPx / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Falha ao comprimir imagem."));
+      }, mimeType, qualidade);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Falha ao carregar imagem.")); };
+    img.src = url;
+  });
+}
+
 type FormState = {
   name: string;
   slug: string;
   isActive: boolean;
+  imageUrl: string | null;
 };
 
 type Props = {
@@ -40,8 +65,10 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState<Categoria | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [uploadando, setUploadando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>({ name: "", slug: "", isActive: true });
+  const [form, setForm] = useState<FormState>({ name: "", slug: "", isActive: true, imageUrl: null });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function recarregar() {
     try {
@@ -60,14 +87,14 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
 
   function abrirCriar() {
     setEditando(null);
-    setForm({ name: "", slug: "", isActive: true });
+    setForm({ name: "", slug: "", isActive: true, imageUrl: null });
     setErro(null);
     setModalAberto(true);
   }
 
   function abrirEditar(c: Categoria) {
     setEditando(c);
-    setForm({ name: c.name, slug: c.slug, isActive: c.isActive ?? true });
+    setForm({ name: c.name, slug: c.slug, isActive: c.isActive ?? true, imageUrl: c.imageUrl ?? null });
     setErro(null);
     setModalAberto(true);
   }
@@ -84,6 +111,60 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
       name: valor,
       slug: editando ? prev.slug : gerarSlug(valor),
     }));
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setErro(null);
+    setUploadando(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+
+      // Comprime a imagem antes do upload
+      const blob = await comprimirImagem(file, 1200, 0.82);
+
+      // Solicita URL de upload assinada ao backend
+      const token = await getToken();
+      const signedRes = await fetch(`${API_URL}/v1/partner/upload/signed-url`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ ext }),
+      });
+
+      if (!signedRes.ok) {
+        const text = await signedRes.text().catch(() => "");
+        let mensagem = `Erro ${signedRes.status}`;
+        try {
+          const json = JSON.parse(text);
+          mensagem = json.error?.message ?? json.message ?? mensagem;
+        } catch {}
+        throw new Error(mensagem);
+      }
+
+      const { data: { signedUrl, token: uploadToken, path, publicUrl } } = await signedRes.json();
+
+      // Faz upload direto para o Supabase Storage via URL assinada
+      const supabase = createClient();
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .uploadToSignedUrl(path, uploadToken, blob, { upsert: true });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      setForm((prev) => ({ ...prev, imageUrl: publicUrl }));
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao enviar imagem.");
+    } finally {
+      setUploadando(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   async function handleSalvar() {
@@ -104,9 +185,12 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
         ? `${API_URL}/v1/partner/categories/${editando.id}`
         : `${API_URL}/v1/partner/categories`;
 
-      const body = editando
-        ? { name: form.name, slug: form.slug, isActive: form.isActive }
-        : { name: form.name, slug: form.slug, isActive: form.isActive };
+      const body = {
+        name: form.name,
+        slug: form.slug,
+        isActive: form.isActive,
+        imageUrl: form.imageUrl,
+      };
 
       const token = await getToken();
       const res = await fetch(url, {
@@ -220,6 +304,7 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
             <table className="wp-table">
               <thead>
                 <tr>
+                  <th>Foto</th>
                   <th>Nome</th>
                   <th>Slug</th>
                   <th>Subcategorias</th>
@@ -230,6 +315,33 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
               <tbody>
                 {categorias.map((c) => (
                   <tr key={c.id}>
+                    <td>
+                      <div style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        background: "var(--cream)",
+                        border: "1px solid var(--border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}>
+                        {c.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={c.imageUrl}
+                            alt={c.name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                          </svg>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
                     <td>
                       <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, color: "var(--text-muted)" }}>
@@ -363,6 +475,64 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
                 </span>
               </div>
 
+              {/* Upload de imagem */}
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--carbon)" }}>
+                  Imagem da categoria
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <button
+                      type="button"
+                      className="wp-btn wp-btn-secondary"
+                      style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
+                      disabled={uploadando || carregando}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      {uploadando ? "Enviando..." : "Selecionar arquivo"}
+                    </button>
+                    {form.imageUrl && !uploadando && (
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, imageUrl: null }))}
+                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--red, #dc2626)", padding: 0 }}
+                      >
+                        Remover foto
+                      </button>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                  {form.imageUrl && (
+                    <div style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      overflow: "hidden",
+                      background: "var(--cream)",
+                    }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={form.imageUrl}
+                        alt="Preview"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <input
                   type="checkbox"
@@ -394,7 +564,7 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
                   type="button"
                   className="wp-btn wp-btn-secondary"
                   onClick={fecharModal}
-                  disabled={carregando}
+                  disabled={carregando || uploadando}
                 >
                   Cancelar
                 </button>
@@ -402,9 +572,9 @@ export function CategoriasClient({ categorias: categoriasIniciais }: Props) {
                   type="button"
                   className="wp-btn wp-btn-primary"
                   onClick={handleSalvar}
-                  disabled={carregando}
+                  disabled={carregando || uploadando}
                 >
-                  {carregando ? "Salvando..." : editando ? "Salvar alterações" : "Criar categoria"}
+                  {carregando ? "Salvando..." : uploadando ? "Aguardando upload..." : editando ? "Salvar alterações" : "Criar categoria"}
                 </button>
               </div>
             </div>
