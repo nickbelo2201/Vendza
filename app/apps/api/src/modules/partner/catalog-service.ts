@@ -10,12 +10,14 @@ type CategoryCreateInput = {
   slug: string;
   isActive?: boolean;
   parentCategoryId?: string;
+  imageUrl?: string | null;
 };
 
 type CategoryPatchInput = Partial<{
   name: string;
   slug: string;
   isActive: boolean;
+  imageUrl: string | null;
 }>;
 
 function mapCategory(category: {
@@ -24,6 +26,7 @@ function mapCategory(category: {
   parentCategoryId: string | null;
   name: string;
   slug: string;
+  imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
@@ -34,6 +37,7 @@ function mapCategory(category: {
     parentCategoryId: string | null;
     name: string;
     slug: string;
+    imageUrl: string | null;
     sortOrder: number;
     isActive: boolean;
     createdAt: Date;
@@ -46,6 +50,7 @@ function mapCategory(category: {
     parentCategoryId: category.parentCategoryId,
     name: category.name,
     slug: category.slug,
+    imageUrl: category.imageUrl,
     sortOrder: category.sortOrder,
     isActive: category.isActive,
     createdAt: category.createdAt.toISOString(),
@@ -56,6 +61,7 @@ function mapCategory(category: {
       parentCategoryId: c.parentCategoryId,
       name: c.name,
       slug: c.slug,
+      imageUrl: c.imageUrl,
       sortOrder: c.sortOrder,
       isActive: c.isActive,
       createdAt: c.createdAt.toISOString(),
@@ -95,6 +101,7 @@ export async function createPartnerCategory(context: PartnerContext, input: Cate
       storeId: context.storeId,
       name: input.name,
       slug: input.slug,
+      imageUrl: input.imageUrl ?? null,
       isActive: input.isActive ?? true,
       parentCategoryId: input.parentCategoryId ?? null,
       sortOrder: 0,
@@ -122,6 +129,7 @@ export async function updatePartnerCategory(context: PartnerContext, id: string,
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.slug !== undefined ? { slug: input.slug } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+      ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
     },
   });
 

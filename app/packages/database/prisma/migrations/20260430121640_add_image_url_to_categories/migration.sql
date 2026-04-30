@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "categories" ADD COLUMN IF NOT EXISTS "image_url" TEXT;
+ALTER TABLE "categories" ADD COLUMN     "image_url" TEXT;

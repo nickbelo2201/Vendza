@@ -76,6 +76,7 @@ export interface CategoriaFilha {
   name: string;
   slug: string;
   parentCategoryId: string | null;
+  imageUrl?: string | null;
 }
 
 /** Categoria completa, opcionalmente com filhos. */
@@ -84,6 +85,7 @@ export interface Categoria {
   name: string;
   slug: string;
   parentCategoryId: string | null;
+  imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
   children?: CategoriaFilha[];
@@ -374,6 +376,7 @@ export interface StorefrontCategory {
   id: string;
   name: string;
   slug: string;
+  imageUrl?: string | null;
 }
 
 // ─── Tipos legados preservados para compatibilidade ──────────────────────────

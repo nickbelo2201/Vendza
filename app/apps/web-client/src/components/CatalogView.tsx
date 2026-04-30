@@ -35,7 +35,8 @@ function CategoryCarouselItem({ category, isActive, onClick }: {
   onClick: () => void;
 }) {
   const [imgError, setImgError] = useState(false);
-  const imageUrl = `/images/categories/${category.slug}.png`;
+  // Usa imageUrl da API se disponível, caso contrário tenta a imagem local por slug
+  const imageUrl = category.imageUrl ?? `/images/categories/${category.slug}.png`;
 
   return (
     <button
