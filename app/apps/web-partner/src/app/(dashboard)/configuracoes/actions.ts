@@ -27,6 +27,23 @@ export async function salvarConfiguracoes(dados: {
   revalidatePath("/configuracoes");
 }
 
+// ─── Aba Endereço ────────────────────────────────────────────────────────────
+
+export async function salvarEndereco(dados: {
+  addressStreet?: string | null;
+  addressNeighborhood?: string | null;
+  addressCity?: string | null;
+  addressState?: string | null;
+  addressZipCode?: string | null;
+  addressComplement?: string | null;
+}) {
+  await fetchAPI("/partner/configuracoes/loja", {
+    method: "PUT",
+    body: dados,
+  });
+  revalidatePath("/configuracoes");
+}
+
 // ─── Aba Zonas de Entrega ─────────────────────────────────────────────────────
 
 type ZonaPayload = {

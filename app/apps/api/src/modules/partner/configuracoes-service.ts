@@ -64,7 +64,36 @@ type LojaInput = {
   status?: "open" | "closed" | "paused";
   minimumOrderValueCents?: number;
   logoUrl?: string | null;
+  addressStreet?: string | null;
+  addressNeighborhood?: string | null;
+  addressCity?: string | null;
+  addressState?: string | null;
+  addressZipCode?: string | null;
+  addressComplement?: string | null;
 };
+
+async function geocodeEndereco(input: LojaInput): Promise<{ lat: number; lng: number } | null> {
+  const parts = [
+    input.addressStreet,
+    input.addressNeighborhood,
+    input.addressCity,
+    input.addressState,
+  ].filter(Boolean);
+  if (parts.length < 2) return null;
+  const query = encodeURIComponent(parts.join(", "));
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`,
+      { headers: { "User-Agent": "Vendza/1.0 (contato@vendza.com.br)" } },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as Array<{ lat: string; lon: string }>;
+    if (!json[0]) return null;
+    return { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
+  } catch {
+    return null;
+  }
+}
 
 type ContaBancariaInput = {
   keyType: string;
@@ -90,6 +119,14 @@ export async function getLoja(context: PartnerContext) {
       status: true,
       minimumOrderValueCents: true,
       logoUrl: true,
+      addressStreet: true,
+      addressNeighborhood: true,
+      addressCity: true,
+      addressState: true,
+      addressZipCode: true,
+      addressComplement: true,
+      storeLat: true,
+      storeLng: true,
     },
   });
 
@@ -101,10 +138,39 @@ export async function getLoja(context: PartnerContext) {
     status: store.status,
     minimumOrderValueCents: store.minimumOrderValueCents,
     logoUrl: store.logoUrl ?? null,
+    addressStreet: store.addressStreet ?? null,
+    addressNeighborhood: store.addressNeighborhood ?? null,
+    addressCity: store.addressCity ?? null,
+    addressState: store.addressState ?? null,
+    addressZipCode: store.addressZipCode ?? null,
+    addressComplement: store.addressComplement ?? null,
+    storeLat: store.storeLat ?? null,
+    storeLng: store.storeLng ?? null,
   };
 }
 
 export async function updateLoja(context: PartnerContext, input: LojaInput) {
+  const addressChanged =
+    input.addressStreet !== undefined ||
+    input.addressNeighborhood !== undefined ||
+    input.addressCity !== undefined ||
+    input.addressState !== undefined;
+
+  let coordenadas: { lat: number; lng: number } | null = null;
+  if (addressChanged) {
+    const current = await prisma.store.findUniqueOrThrow({
+      where: { id: context.storeId },
+      select: { addressStreet: true, addressNeighborhood: true, addressCity: true, addressState: true },
+    });
+    const merged: LojaInput = {
+      addressStreet: input.addressStreet !== undefined ? input.addressStreet : current.addressStreet,
+      addressNeighborhood: input.addressNeighborhood !== undefined ? input.addressNeighborhood : current.addressNeighborhood,
+      addressCity: input.addressCity !== undefined ? input.addressCity : current.addressCity,
+      addressState: input.addressState !== undefined ? input.addressState : current.addressState,
+    };
+    coordenadas = await geocodeEndereco(merged);
+  }
+
   const store = await prisma.store.update({
     where: { id: context.storeId },
     data: {
@@ -116,6 +182,13 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
         ? { minimumOrderValueCents: input.minimumOrderValueCents }
         : {}),
       ...(input.logoUrl !== undefined ? { logoUrl: input.logoUrl } : {}),
+      ...(input.addressStreet !== undefined ? { addressStreet: input.addressStreet } : {}),
+      ...(input.addressNeighborhood !== undefined ? { addressNeighborhood: input.addressNeighborhood } : {}),
+      ...(input.addressCity !== undefined ? { addressCity: input.addressCity } : {}),
+      ...(input.addressState !== undefined ? { addressState: input.addressState } : {}),
+      ...(input.addressZipCode !== undefined ? { addressZipCode: input.addressZipCode } : {}),
+      ...(input.addressComplement !== undefined ? { addressComplement: input.addressComplement } : {}),
+      ...(coordenadas ? { storeLat: coordenadas.lat, storeLng: coordenadas.lng } : {}),
     },
     select: {
       id: true,
@@ -125,6 +198,14 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       status: true,
       minimumOrderValueCents: true,
       logoUrl: true,
+      addressStreet: true,
+      addressNeighborhood: true,
+      addressCity: true,
+      addressState: true,
+      addressZipCode: true,
+      addressComplement: true,
+      storeLat: true,
+      storeLng: true,
     },
   });
 
@@ -139,6 +220,14 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
     status: store.status,
     minimumOrderValueCents: store.minimumOrderValueCents,
     logoUrl: store.logoUrl ?? null,
+    addressStreet: store.addressStreet ?? null,
+    addressNeighborhood: store.addressNeighborhood ?? null,
+    addressCity: store.addressCity ?? null,
+    addressState: store.addressState ?? null,
+    addressZipCode: store.addressZipCode ?? null,
+    addressComplement: store.addressComplement ?? null,
+    storeLat: store.storeLat ?? null,
+    storeLng: store.storeLng ?? null,
   };
 }
 

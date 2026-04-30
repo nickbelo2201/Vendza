@@ -194,7 +194,9 @@ export default async function PartnerHomePage() {
         nome: item.productName,
         qty: `${item.currentStock} / ${item.safetyStock} un.`,
         barWidth:
-          Math.min(100, Math.round((item.currentStock / item.safetyStock) * 100)) + "%",
+          item.safetyStock > 0
+            ? Math.min(100, Math.round((item.currentStock / item.safetyStock) * 100)) + "%"
+            : "0%",
         barColor,
         alertColor: barColor,
       };

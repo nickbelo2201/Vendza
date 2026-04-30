@@ -5,6 +5,30 @@ import { formatCurrency } from "@vendza/utils";
 import { StatusBadge } from "@/components/StatusBadge";
 import { createClient } from "@/utils/supabase/client";
 
+async function comprimirImagem(file: File, maxWidthPx = 1200, qualidade = 0.82): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = Math.min(1, maxWidthPx / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Falha ao comprimir imagem."));
+      }, mimeType, qualidade);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Falha ao carregar imagem.")); };
+    img.src = url;
+  });
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
 async function getToken(): Promise<string | null> {
@@ -141,6 +165,7 @@ type FormState = {
   description: string;
   priceCents: number;
   isActive: boolean;
+  imageUrl: string | null;
   items: ItemForm[];
   complementGroups: ComboComplementGroupInput[];
   extras: ExtraForm[];
@@ -162,6 +187,7 @@ const FORM_INICIAL: FormState = {
   description: "",
   priceCents: 0,
   isActive: true,
+  imageUrl: null,
   items: [],
   complementGroups: [],
   extras: [],
@@ -177,7 +203,9 @@ export function CombosClient({ combosIniciais }: Props) {
   const [editando, setEditando] = useState<Combo | null>(null);
   const [form, setForm] = useState<FormState>(FORM_INICIAL);
   const [salvando, setSalvando] = useState(false);
+  const [uploadando, setUploadando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [produtos, setProdutos] = useState<ProdutoSimples[]>([]);
   const produtosBuscadosRef = useRef(false);
@@ -254,6 +282,7 @@ export function CombosClient({ combosIniciais }: Props) {
       description: combo.description ?? "",
       priceCents: combo.priceCents,
       isActive: combo.isActive,
+      imageUrl: combo.imageUrl ?? null,
       items: combo.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
       complementGroups: (combo.complementGroups ?? []).map((g, idx) => ({
         complementGroupId: g.groupId,
@@ -287,6 +316,57 @@ export function CombosClient({ combosIniciais }: Props) {
       name: valor,
       slug: editando ? f.slug : gerarSlug(valor),
     }));
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setErro(null);
+    setUploadando(true);
+    try {
+      const ext = file.type.includes("png") ? "png" : "jpg";
+
+      const blob = await comprimirImagem(file, 1200, 0.82);
+
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v1/partner/upload/signed-url`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ ext }),
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        const msg = (json?.error?.message ?? json?.message ?? `Erro ${res.status}`) as string;
+        throw new Error(msg);
+      }
+      const { path, token: uploadToken, publicUrl } = (await res.json()).data as {
+        signedUrl: string;
+        token: string;
+        path: string;
+        publicUrl: string;
+      };
+
+      const supabase = createClient();
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .uploadToSignedUrl(path, uploadToken, blob, { upsert: true });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      setForm((prev) => ({ ...prev, imageUrl: publicUrl }));
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao enviar imagem.");
+    } finally {
+      setUploadando(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   function adicionarItem() {
@@ -393,6 +473,7 @@ export function CombosClient({ combosIniciais }: Props) {
         description: form.description || undefined,
         priceCents: form.priceCents,
         isActive: form.isActive,
+        imageUrl: form.imageUrl,
         items: form.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         ...(form.complementGroups.length > 0 ? { complementGroups: form.complementGroups } : {}),
         ...(form.extras.length > 0 ? { extras: form.extras } : {}),
@@ -668,6 +749,73 @@ export function CombosClient({ combosIniciais }: Props) {
                   rows={3}
                   style={{ width: "100%", resize: "vertical" }}
                 />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Foto do combo</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {form.imageUrl ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={form.imageUrl}
+                        alt="Preview do combo"
+                        style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
+                      />
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <button
+                          type="button"
+                          className="wp-btn wp-btn-secondary"
+                          style={{ fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}
+                          disabled={uploadando || salvando}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                          </svg>
+                          {uploadando ? "Enviando..." : "Trocar foto"}
+                        </button>
+                        <button
+                          type="button"
+                          className="wp-btn wp-btn-secondary"
+                          style={{ fontSize: 12, color: "var(--red, #dc2626)", display: "inline-flex", alignItems: "center", gap: 6 }}
+                          disabled={uploadando || salvando}
+                          onClick={() => setForm((f) => ({ ...f, imageUrl: null }))}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="wp-btn wp-btn-secondary"
+                      style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}
+                      disabled={uploadando || salvando}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      {uploadando ? "Enviando..." : "Selecionar arquivo"}
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleFileUpload}
+                  />
+                </div>
               </div>
 
               <div>

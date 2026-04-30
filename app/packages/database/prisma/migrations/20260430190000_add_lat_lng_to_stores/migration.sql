@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "stores" ADD COLUMN "store_lat" DOUBLE PRECISION;
+ALTER TABLE "stores" ADD COLUMN "store_lng" DOUBLE PRECISION;
