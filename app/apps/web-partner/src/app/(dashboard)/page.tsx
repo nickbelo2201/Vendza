@@ -1,9 +1,18 @@
 import { formatCurrency } from "@vendza/utils";
-import type { DashboardSummary, Order, OrdersResponse, InventoryItem } from "@vendza/types";
+import type { DashboardSummary, Order, OrdersResponse } from "@vendza/types";
 
 import { ApiError, fetchAPI } from "../../lib/api";
 import { KanbanBoard } from "../../components/KanbanBoard";
 import { NovoPedidoFAB } from "./NovoPedidoFAB";
+
+type ItemEstoqueDashboard = {
+  id: string;
+  productId: string;
+  productName: string;
+  currentStock: number;
+  safetyStock: number;
+  status: "ok" | "atencao" | "critico";
+};
 
 /* ── Sparkline SVG inline ── */
 function Sparkline({ points, color }: { points: string; color: string }) {
@@ -59,14 +68,14 @@ async function getDashboardData() {
     const [summary, ordersResp, inventory] = await Promise.all([
       fetchAPI<DashboardSummary>("/partner/dashboard/summary"),
       fetchAPI<OrdersResponse>("/partner/orders"),
-      fetchAPI<InventoryItem[]>("/partner/estoque")
-        .catch(() => [] as InventoryItem[]),
+      fetchAPI<ItemEstoqueDashboard[]>("/partner/estoque")
+        .catch(() => [] as ItemEstoqueDashboard[]),
     ]);
     const orders = ordersResp?.orders ?? [];
     return { summary, orders, inventory };
   } catch (err) {
-    if (err instanceof ApiError) return { summary: null, orders: [] as Order[], inventory: [] as InventoryItem[] };
-    return { summary: null, orders: [] as Order[], inventory: [] as InventoryItem[] };
+    if (err instanceof ApiError) return { summary: null, orders: [] as Order[], inventory: [] as ItemEstoqueDashboard[] };
+    return { summary: null, orders: [] as Order[], inventory: [] as ItemEstoqueDashboard[] };
   }
 }
 
@@ -169,12 +178,11 @@ export default async function PartnerHomePage() {
     },
   ];
 
-  // Itens de estoque crítico: filtra produtos abaixo ou igual ao threshold, exclui sem threshold
+  // Itens de estoque crítico: usa status calculado pela API (critico = currentStock <= safetyStock)
   const estoqueItens = inventory
-    .filter((item) => item.safetyStock > 0 && item.currentStock <= item.safetyStock)
+    .filter((item) => item.status === "critico")
     .slice(0, 5)
     .map((item) => {
-      // Cor baseada na gravidade do alerta
       const barColor =
         item.currentStock === 0
           ? "#DC2626"
@@ -183,7 +191,7 @@ export default async function PartnerHomePage() {
           : "#D97706";
 
       return {
-        nome: item.product.name,
+        nome: item.productName,
         qty: `${item.currentStock} / ${item.safetyStock} un.`,
         barWidth:
           Math.min(100, Math.round((item.currentStock / item.safetyStock) * 100)) + "%",
