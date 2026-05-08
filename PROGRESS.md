@@ -21,11 +21,10 @@
 
 | Prioridade | Task | Observacao |
 |---|---|---|
-| 1 | Construção visual do web-client e web-partner (melhorar design, colocar efeitos e usar time de design para design MELHOR que zé delivery )
-| 2 | Login/sessao web-partner ponta a ponta com Supabase | Backend pronto; falta fechar fluxo do frontend |
-| 3 | Consumo real da API no frontend web-partner | Trocar consumo mockado por chamadas reais |
-| 4 | Start de producao da API via artefato final | Validar comando final de runtime do build fora do modo `tsx` |
-| 5 | Observabilidade basica da API | Logs, health e erros de producao com mais contexto |
+| 1 | Login/sessao web-partner ponta a ponta com Supabase | Backend pronto; falta fechar fluxo do frontend |
+| 2 | Consumo real da API no frontend web-partner | Trocar consumo mockado por chamadas reais |
+| 3 | Start de producao da API via artefato final | Validar comando final de runtime do build fora do modo `tsx` |
+| 4 | Observabilidade basica da API | Logs, health e erros de producao com mais contexto |
 
 ---
 

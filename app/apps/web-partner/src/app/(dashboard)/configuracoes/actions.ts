@@ -36,12 +36,18 @@ export async function salvarEndereco(dados: {
   addressState?: string | null;
   addressZipCode?: string | null;
   addressComplement?: string | null;
+  storeLat?: number | null;
+  storeLng?: number | null;
 }) {
-  await fetchAPI("/partner/configuracoes/loja", {
+  const loja = await fetchAPI<{
+    storeLat: number | null;
+    storeLng: number | null;
+  }>("/partner/configuracoes/loja", {
     method: "PUT",
     body: dados,
   });
   revalidatePath("/configuracoes");
+  return loja;
 }
 
 // ─── Aba Zonas de Entrega ─────────────────────────────────────────────────────

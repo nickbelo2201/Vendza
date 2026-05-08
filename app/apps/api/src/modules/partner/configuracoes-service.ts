@@ -70,6 +70,8 @@ type LojaInput = {
   addressState?: string | null;
   addressZipCode?: string | null;
   addressComplement?: string | null;
+  storeLat?: number | null;
+  storeLng?: number | null;
 };
 
 async function geocodeEndereco(input: LojaInput): Promise<{ lat: number; lng: number } | null> {
@@ -150,6 +152,9 @@ export async function getLoja(context: PartnerContext) {
 }
 
 export async function updateLoja(context: PartnerContext, input: LojaInput) {
+  const hasStoreLat = input.storeLat !== undefined && (input.storeLat === null || Number.isFinite(input.storeLat));
+  const hasStoreLng = input.storeLng !== undefined && (input.storeLng === null || Number.isFinite(input.storeLng));
+  const explicitStoreCoords = hasStoreLat || hasStoreLng;
   const addressChanged =
     input.addressStreet !== undefined ||
     input.addressNeighborhood !== undefined ||
@@ -157,7 +162,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
     input.addressState !== undefined;
 
   let coordenadas: { lat: number; lng: number } | null = null;
-  if (addressChanged) {
+  if (addressChanged && !explicitStoreCoords) {
     const current = await prisma.store.findUniqueOrThrow({
       where: { id: context.storeId },
       select: { addressStreet: true, addressNeighborhood: true, addressCity: true, addressState: true },
@@ -188,6 +193,8 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       ...(input.addressState !== undefined ? { addressState: input.addressState } : {}),
       ...(input.addressZipCode !== undefined ? { addressZipCode: input.addressZipCode } : {}),
       ...(input.addressComplement !== undefined ? { addressComplement: input.addressComplement } : {}),
+      ...(hasStoreLat ? { storeLat: input.storeLat } : {}),
+      ...(hasStoreLng ? { storeLng: input.storeLng } : {}),
       ...(coordenadas ? { storeLat: coordenadas.lat, storeLng: coordenadas.lng } : {}),
     },
     select: {

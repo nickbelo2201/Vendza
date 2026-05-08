@@ -52,6 +52,7 @@ export function MapaInterativo({
   const containerRef = useRef<HTMLDivElement>(null);
   const drawnLayersRef = useRef<L.FeatureGroup | null>(null);
   const zonaLayersRef = useRef<Map<string, L.Layer>>(new Map());
+  const storeMarkerRef = useRef<L.Marker | null>(null);
 
   // Guardar callbacks em refs para evitar re-registro de eventos no mapa
   const onZonaCriadaRef = useRef(onZonaCriada);
@@ -87,9 +88,10 @@ export function MapaInterativo({
       iconSize: [14, 14],
       iconAnchor: [7, 7],
     });
-    L.marker([centerLat, centerLng], { icon: lojaIcon })
+    const storeMarker = L.marker([centerLat, centerLng], { icon: lojaIcon })
       .bindTooltip("Sua loja")
       .addTo(map);
+    storeMarkerRef.current = storeMarker;
 
     // FeatureGroup para as camadas desenhadas
     const drawnLayers = new L.FeatureGroup();
@@ -160,6 +162,7 @@ export function MapaInterativo({
     return () => {
       map.remove();
       mapRef.current = null;
+      storeMarkerRef.current = null;
     };
     // Inicialização depende apenas das coordenadas da loja — não reexecutar por mudanças de estado
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,6 +208,15 @@ export function MapaInterativo({
       zonaLayersRef.current.set(zona.zonaId, layer);
     });
   }, [zonas, selectedZonaId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const storeMarker = storeMarkerRef.current;
+    if (!map || !storeMarker) return;
+
+    storeMarker.setLatLng([centerLat, centerLng]);
+    map.setView([centerLat, centerLng], map.getZoom(), { animate: true });
+  }, [centerLat, centerLng]);
 
   return (
     <div

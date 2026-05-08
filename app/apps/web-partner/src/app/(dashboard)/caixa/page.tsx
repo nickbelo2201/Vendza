@@ -101,18 +101,18 @@ function ModalAbrirCaixa({ onFechar, onConcluido }: { onFechar: () => void; onCo
 
         {/* Header com ícone */}
         <div style={{
-          padding: "32px 32px 24px",
-          background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-          borderBottom: "1px solid #bbf7d0",
+          padding: "24px 32px 20px",
+          borderBottom: "1px solid var(--border)",
           textAlign: "center",
+          background: "var(--surface)",
         }}>
           <div style={{
             width: 56, height: 56, borderRadius: 16,
-            background: "var(--g)", margin: "0 auto 14px",
+            background: "var(--s8)", margin: "0 auto 14px",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 8px 24px rgba(45,106,79,.35)",
+            border: "1px solid var(--border)",
           }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--night)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="7" width="20" height="14" rx="2"/>
               <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
               <line x1="12" y1="12" x2="12" y2="16"/>
@@ -167,8 +167,8 @@ function ModalAbrirCaixa({ onFechar, onConcluido }: { onFechar: () => void; onCo
                     onClick={() => setSaldo(v === 0 ? "0" : String(v))}
                     style={{
                       padding: "6px 14px", borderRadius: 8,
-                      border: `1.5px solid ${saldo === String(v) || (v === 0 && saldo === "0") ? "var(--g)" : "var(--border)"}`,
-                      background: saldo === String(v) || (v === 0 && saldo === "0") ? "var(--g)" : "transparent",
+                      border: `1.5px solid ${saldo === String(v) || (v === 0 && saldo === "0") ? "var(--night)" : "var(--border)"}`,
+                      background: saldo === String(v) || (v === 0 && saldo === "0") ? "var(--night)" : "transparent",
                       color: saldo === String(v) || (v === 0 && saldo === "0") ? "#fff" : "var(--text-muted)",
                       fontSize: 13, fontWeight: 600, cursor: "pointer",
                       fontFamily: "'Space Grotesk', sans-serif",

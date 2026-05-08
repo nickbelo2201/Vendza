@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 import { salvarZonasEntrega } from "./actions";
@@ -111,8 +111,28 @@ function propParaEstado(z: ZonaProp): ZonaEstado {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props) {
-  const centerLat = storeLat ?? -23.5505;
-  const centerLng = storeLng ?? -46.6333;
+  const [centroMapa, setCentroMapa] = useState<{ lat: number; lng: number }>({
+    lat: storeLat ?? -23.5505,
+    lng: storeLng ?? -46.6333,
+  });
+
+  useEffect(() => {
+    setCentroMapa({
+      lat: storeLat ?? -23.5505,
+      lng: storeLng ?? -46.6333,
+    });
+  }, [storeLat, storeLng]);
+
+  useEffect(() => {
+    function handleEnderecoAtualizado(event: Event) {
+      const detail = (event as CustomEvent<{ storeLat?: number | null; storeLng?: number | null }>).detail;
+      if (typeof detail?.storeLat !== "number" || typeof detail?.storeLng !== "number") return;
+      setCentroMapa({ lat: detail.storeLat, lng: detail.storeLng });
+    }
+
+    window.addEventListener("config:endereco-atualizado", handleEnderecoAtualizado);
+    return () => window.removeEventListener("config:endereco-atualizado", handleEnderecoAtualizado);
+  }, []);
 
   const [zonas, setZonas] = useState<ZonaEstado[]>(
     zonasProp.map(propParaEstado)
@@ -121,6 +141,10 @@ export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props
   const [selectedZonaId, setSelectedZonaId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  useEffect(() => {
+    setZonas(zonasProp.map(propParaEstado));
+  }, [zonasProp]);
 
   // Zonas que possuem geometria para exibir no mapa
   const zonasNoMapa: ZonaNoMapa[] = zonas
@@ -280,8 +304,8 @@ export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props
         {/* Mapa */}
         <div className="conf-mapa-map" style={{ flex: "0 0 60%", position: "relative" }}>
           <MapaInterativo
-            centerLat={centerLat}
-            centerLng={centerLng}
+            centerLat={centroMapa.lat}
+            centerLng={centroMapa.lng}
             zonas={zonasNoMapa}
             selectedZonaId={selectedZonaId}
             onZonaCriada={handleZonaCriada}

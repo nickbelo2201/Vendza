@@ -20,6 +20,30 @@ type Props = {
   topProducts?: { name: string; quantity: number; revenueCents: number }[];
 };
 
+function getKpiVisual(id: string) {
+  if (id === "faturamento") {
+    return {
+      card: { background: "var(--night)", borderColor: "var(--night)" },
+      heading: "rgba(255,255,255,.86)",
+      value: "#ffffff",
+    };
+  }
+
+  if (id === "cancelamento" || id === "pedidos-cancelados") {
+    return {
+      card: { background: "#991b1b", borderColor: "#991b1b" },
+      heading: "rgba(255,255,255,.9)",
+      value: "#ffffff",
+    };
+  }
+
+  return {
+    card: {},
+    heading: "var(--text-muted)",
+    value: "var(--carbon)",
+  };
+}
+
 export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
   const [drillAberto, setDrillAberto] = useState<TipoDrill>(null);
 
@@ -40,6 +64,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
       >
         {kpis.map((kpi) => {
           const clicavel = Boolean(kpi.drillTipo);
+          const visual = getKpiVisual(kpi.id);
           return (
             <div
               key={kpi.id}
@@ -65,6 +90,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
                 ...(kpi.destaque
                   ? { borderLeft: "3px solid var(--g, #1A7A5E)" }
                   : {}),
+                ...visual.card,
               }}
               onMouseEnter={
                 clicavel
@@ -91,7 +117,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
                   alignItems: "center",
                   gap: 8,
                   marginBottom: 12,
-                  color: kpi.destaque ? "var(--g, #1A7A5E)" : "var(--text-muted)",
+                  color: kpi.destaque && kpi.id !== "faturamento" ? "var(--g, #1A7A5E)" : visual.heading,
                   justifyContent: "space-between",
                 }}
               >
@@ -129,7 +155,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontSize: 22,
                   fontWeight: 700,
-                  color: "var(--carbon)",
+                  color: visual.value,
                   lineHeight: 1,
                   marginBottom: kpi.deltaPercent !== undefined ? 6 : 0,
                 }}

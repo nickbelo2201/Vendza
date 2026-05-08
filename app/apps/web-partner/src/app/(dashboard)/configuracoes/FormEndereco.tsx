@@ -39,7 +39,7 @@ export function FormEndereco({ address }: EnderecoProps) {
 
     startTransition(async () => {
       try {
-        await salvarEndereco({
+        const lojaAtualizada = await salvarEndereco({
           addressStreet: String(data.get("addressStreet") ?? "").trim() || null,
           addressNeighborhood: String(data.get("addressNeighborhood") ?? "").trim() || null,
           addressCity: String(data.get("addressCity") ?? "").trim() || null,
@@ -47,6 +47,15 @@ export function FormEndereco({ address }: EnderecoProps) {
           addressZipCode: cepDisplay.replace(/\D/g, "") || null,
           addressComplement: String(data.get("addressComplement") ?? "").trim() || null,
         });
+
+        window.dispatchEvent(
+          new CustomEvent("config:endereco-atualizado", {
+            detail: {
+              storeLat: lojaAtualizada?.storeLat ?? null,
+              storeLng: lojaAtualizada?.storeLng ?? null,
+            },
+          }),
+        );
         toast.success("Endereço salvo com sucesso");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Erro ao salvar endereço.");
