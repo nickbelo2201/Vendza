@@ -395,6 +395,26 @@ select {
 }
 
 /* ─────────────────────────────────────────
+   KPI GRID COMPONENTS (Relatórios)
+   Garantem contraste adequado em light/dark
+───────────────────────────────────────── */
+.kpi-icon {
+  color: var(--text-muted);
+}
+
+.kpi-label-text {
+  color: var(--text-muted);
+}
+
+.kpi-value-display {
+  color: var(--night);
+}
+
+.kpi-delta {
+  /* Cores já definidas inline, mantém como está */
+}
+
+/* ─────────────────────────────────────────
    STAT (alias simples)
 ───────────────────────────────────────── */
 .wp-stat {
@@ -2206,6 +2226,23 @@ html[data-theme="dark"] body {
 
 [data-theme="dark"] .wp-kpi-label {
   color: #64748B;
+}
+
+/* KPI Grid components em dark mode */
+[data-theme="dark"] .kpi-icon {
+  color: #64748B;
+}
+
+[data-theme="dark"] .kpi-label-text {
+  color: #64748B;
+}
+
+[data-theme="dark"] .kpi-value-display {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .kpi-delta {
+  /* Verde e vermelho já têm contraste suficiente em dark mode */
 }
 
 [data-theme="dark"] .wp-empty-title {

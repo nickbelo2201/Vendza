@@ -86,23 +86,34 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
               }
             >
               <div
+                className="kpi-header-row"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   marginBottom: 12,
-                  color: kpi.destaque ? "var(--g, #1A7A5E)" : "var(--text-muted)",
                   justifyContent: "space-between",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {kpi.icone}
                   <span
+                    className="kpi-icon"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: kpi.destaque ? "var(--g, #1A7A5E)" : undefined,
+                    }}
+                  >
+                    {kpi.icone}
+                  </span>
+                  <span
+                    className="kpi-label-text"
                     style={{
                       fontSize: 11,
                       fontWeight: 600,
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
+                      color: kpi.destaque ? "var(--g, #1A7A5E)" : undefined,
                     }}
                   >
                     {kpi.titulo}
@@ -125,11 +136,11 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
               </div>
 
               <div
+                className="kpi-value-display"
                 style={{
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontSize: 22,
                   fontWeight: 700,
-                  color: "var(--carbon)",
                   lineHeight: 1,
                   marginBottom: kpi.deltaPercent !== undefined ? 6 : 0,
                 }}
@@ -139,6 +150,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
 
               {kpi.deltaPercent !== undefined && (
                 <div
+                  className="kpi-delta"
                   style={{
                     fontSize: 11,
                     fontWeight: 600,
