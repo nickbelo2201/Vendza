@@ -531,11 +531,10 @@ export function KpiDrillDrawer({ tipo, from, to, onClose, topProducts = [] }: Pr
                       {dados.map((p) => (
                         <div
                           key={p.id}
+                          className="drill-card-cancelamento"
                           style={{
                             padding: "12px 14px",
                             borderRadius: 10,
-                            border: "1px solid #fecaca",
-                            background: "#fff5f5",
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -546,10 +545,10 @@ export function KpiDrillDrawer({ tipo, from, to, onClose, topProducts = [] }: Pr
                               {new Date(p.placedAt).toLocaleDateString("pt-BR")}
                             </span>
                           </div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--carbon)", marginBottom: 4 }}>
+                          <div className="drill-card-cancelamento-cliente" style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
                             {p.customerName}
                           </div>
-                          <div style={{ fontSize: 12, color: "#dc2626" }}>
+                          <div className="drill-card-cancelamento-motivo" style={{ fontSize: 12 }}>
                             Motivo: {p.cancellationReason ?? "—"}
                           </div>
                         </div>

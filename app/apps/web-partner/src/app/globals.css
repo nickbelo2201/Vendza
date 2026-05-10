@@ -395,6 +395,35 @@ select {
 }
 
 /* ─────────────────────────────────────────
+   KPI DRILL DRAWER - Cards de Cancelamento
+───────────────────────────────────────── */
+.drill-card-cancelamento {
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+}
+
+.drill-card-cancelamento-cliente {
+  color: var(--night);
+}
+
+.drill-card-cancelamento-motivo {
+  color: #dc2626;
+}
+
+[data-theme="dark"] .drill-card-cancelamento {
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+[data-theme="dark"] .drill-card-cancelamento-cliente {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .drill-card-cancelamento-motivo {
+  color: #FCA5A5;
+}
+
+/* ─────────────────────────────────────────
    KPI GRID COMPONENTS (Relatórios)
    Garantem contraste adequado em light/dark
 ───────────────────────────────────────── */
