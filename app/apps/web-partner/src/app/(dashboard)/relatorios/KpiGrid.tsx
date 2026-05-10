@@ -43,7 +43,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
           return (
             <div
               key={kpi.id}
-              className="wp-panel"
+              className={`wp-panel kpi-card ${clicavel ? "kpi-card-clicavel" : ""}`}
               onClick={() => handleKpiClick(kpi.drillTipo ?? null)}
               role={clicavel ? "button" : undefined}
               tabIndex={clicavel ? 0 : undefined}
@@ -60,30 +60,10 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
               aria-label={clicavel ? `Ver detalhes: ${kpi.titulo}` : undefined}
               style={{
                 padding: "18px 20px",
-                cursor: clicavel ? "pointer" : "default",
-                transition: clicavel ? "box-shadow 0.15s, transform 0.12s" : undefined,
                 ...(kpi.destaque
                   ? { borderLeft: "3px solid var(--g, #1A7A5E)" }
                   : {}),
               }}
-              onMouseEnter={
-                clicavel
-                  ? (e) => {
-                      const el = e.currentTarget as HTMLDivElement;
-                      el.style.boxShadow = "0 4px 20px rgba(0,0,0,.1)";
-                      el.style.transform = "translateY(-1px)";
-                    }
-                  : undefined
-              }
-              onMouseLeave={
-                clicavel
-                  ? (e) => {
-                      const el = e.currentTarget as HTMLDivElement;
-                      el.style.boxShadow = "";
-                      el.style.transform = "";
-                    }
-                  : undefined
-              }
             >
               <div
                 className="kpi-header-row"

@@ -398,6 +398,26 @@ select {
    KPI GRID COMPONENTS (Relatórios)
    Garantem contraste adequado em light/dark
 ───────────────────────────────────────── */
+.kpi-card {
+  /* Base styles já definidos em .wp-panel */
+}
+
+.kpi-card-clicavel {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+}
+
+.kpi-card-clicavel:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  border-color: rgba(26, 122, 94, 0.2);
+}
+
+[data-theme="dark"] .kpi-card-clicavel:hover {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
 .kpi-icon {
   color: var(--text-muted);
 }
