@@ -45,6 +45,16 @@ export async function salvarEndereco(dados: {
   revalidatePath("/configuracoes");
 }
 
+// ─── Posição da loja no mapa ─────────────────────────────────────────────────
+
+export async function salvarPosicaoLoja(dados: { lat: number; lng: number }) {
+  await fetchAPI("/partner/configuracoes/loja", {
+    method: "PUT",
+    body: { storeLat: dados.lat, storeLng: dados.lng },
+  });
+  revalidatePath("/configuracoes");
+}
+
 // ─── Aba Zonas de Entrega ─────────────────────────────────────────────────────
 
 type ZonaPayload = {
