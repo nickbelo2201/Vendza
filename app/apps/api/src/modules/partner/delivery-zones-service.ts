@@ -48,7 +48,7 @@ function mapZona(zone: {
 
 export async function listDeliveryZones(context: PartnerContext) {
   const zones = await prisma.deliveryZone.findMany({
-    where: { storeId: context.storeId },
+    where: { storeId: context.storeId, isActive: true },
     orderBy: { createdAt: "asc" },
   });
   return zones.map(mapZona);
