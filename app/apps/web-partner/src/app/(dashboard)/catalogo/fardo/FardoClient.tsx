@@ -15,7 +15,7 @@ async function apiFetch<T>(path: string, opts: { method?: string; body?: unknown
     method: opts.method ?? "GET",
     cache: "no-store",
     headers: {
-      "Content-Type": "application/json",
+      ...(opts.body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
