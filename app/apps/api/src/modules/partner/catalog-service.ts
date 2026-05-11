@@ -272,6 +272,7 @@ async function findStoreProduct(context: PartnerContext, id: string) {
   return prisma.product.findFirst({
     where: {
       storeId: context.storeId,
+      isDeleted: false,
       OR: [{ id }, { slug: id }],
     },
     include: {
@@ -293,7 +294,7 @@ export async function listPartnerProducts(context: PartnerContext, filters?: Lis
   const limite = Math.min(filters?.limite ?? 20, 100);
   const skip = (pagina - 1) * limite;
 
-  const where: Record<string, unknown> = { storeId: context.storeId };
+  const where: Record<string, unknown> = { storeId: context.storeId, isDeleted: false };
 
   // Busca por nome (ILIKE)
   if (filters?.busca) {
@@ -345,7 +346,7 @@ export async function listPartnerProducts(context: PartnerContext, filters?: Lis
 
 export async function findProductByBarcode(context: PartnerContext, barcode: string) {
   const product = await prisma.product.findFirst({
-    where: { storeId: context.storeId, barcode },
+    where: { storeId: context.storeId, barcode, isDeleted: false },
     include: { category: categoryFullSelect },
   });
   return product ? mapProduct(product) : null;
@@ -504,11 +505,11 @@ export async function deletePartnerProduct(context: PartnerContext, productId: s
     return null;
   }
 
-  // Soft-delete: marcar como indisponível para preservar InventoryMovement (append-only).
-  // Não deletar InventoryItem nem Product para manter integridade do histórico.
+  // Soft-delete: isDeleted=true remove do catálogo; isAvailable=false impede venda.
+  // Hard-delete impossível: OrderItem.productId tem onDelete: Restrict.
   const product = await prisma.product.update({
     where: { id: existing.id },
-    data: { isAvailable: false },
+    data: { isDeleted: true, isAvailable: false },
     include: {
       category: categoryFullSelect,
     },
