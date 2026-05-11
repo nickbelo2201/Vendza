@@ -1,4 +1,4 @@
-import { Suspense, ReactNode } from "react";
+import { Suspense, ReactNode, cache } from "react";
 import { ApiError, fetchAPI } from "../../../lib/api";
 import { DadosBancarios } from "./DadosBancarios";
 import { FormConfiguracoes } from "./FormConfiguracoes";
@@ -108,14 +108,18 @@ export function SettingsSuspenseWrapper({
   );
 }
 
-async function getSettings(): Promise<StoreSettings | null> {
+const getSettings = cache(async (): Promise<StoreSettings | null> => {
   try {
     return await fetchAPI<StoreSettings>("/partner/configuracoes/loja");
   } catch (err) {
-    if (err instanceof ApiError) return null;
+    if (err instanceof ApiError) {
+      console.error("[getSettings] ApiError", { status: err.status, message: err.message });
+    } else {
+      console.error("[getSettings] erro inesperado", err);
+    }
     return null;
   }
-}
+});
 
 async function getZonas(): Promise<Zona[]> {
   try {
@@ -229,16 +233,22 @@ export async function EnderecoSection() {
   const s = await getSettings();
   return (
     <section id="endereco">
-      <FormEndereco
-        address={{
-          addressStreet: s?.addressStreet ?? null,
-          addressNeighborhood: s?.addressNeighborhood ?? null,
-          addressCity: s?.addressCity ?? null,
-          addressState: s?.addressState ?? null,
-          addressZipCode: s?.addressZipCode ?? null,
-          addressComplement: s?.addressComplement ?? null,
-        }}
-      />
+      {!s ? (
+        <div className="wp-note">
+          Não foi possível carregar o endereço da loja. Verifique a conexão com a API.
+        </div>
+      ) : (
+        <FormEndereco
+          address={{
+            addressStreet: s.addressStreet ?? null,
+            addressNeighborhood: s.addressNeighborhood ?? null,
+            addressCity: s.addressCity ?? null,
+            addressState: s.addressState ?? null,
+            addressZipCode: s.addressZipCode ?? null,
+            addressComplement: s.addressComplement ?? null,
+          }}
+        />
+      )}
     </section>
   );
 }

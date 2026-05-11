@@ -81,16 +81,20 @@ async function geocodeEndereco(input: LojaInput): Promise<{ lat: number; lng: nu
   ].filter(Boolean);
   if (parts.length < 2) return null;
   const query = encodeURIComponent(parts.join(", "));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`,
-      { headers: { "User-Agent": "Vendza/1.0 (contato@vendza.com.br)" } },
+      { headers: { "User-Agent": "Vendza/1.0 (contato@vendza.com.br)" }, signal: controller.signal },
     );
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const json = (await res.json()) as Array<{ lat: string; lon: string }>;
     if (!json[0]) return null;
     return { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
   } catch {
+    clearTimeout(timeout);
     return null;
   }
 }
