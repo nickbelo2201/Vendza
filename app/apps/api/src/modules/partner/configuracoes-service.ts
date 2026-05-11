@@ -71,6 +71,8 @@ type LojaInput = {
   addressZipCode?: string | null;
   addressComplement?: string | null;
   addressNumber?: string | null;
+  storeLat?: number | null;
+  storeLng?: number | null;
 };
 
 async function geocodeEndereco(input: LojaInput): Promise<{ lat: number; lng: number } | null> {
@@ -203,7 +205,9 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       ...(input.addressZipCode !== undefined ? { addressZipCode: input.addressZipCode } : {}),
       ...(input.addressComplement !== undefined ? { addressComplement: input.addressComplement } : {}),
       ...(input.addressNumber !== undefined ? { addressNumber: input.addressNumber } : {}),
-      ...(coordenadas ? { storeLat: coordenadas.lat, storeLng: coordenadas.lng } : {}),
+      // Posição manual tem prioridade; geocoding só atualiza quando não há posição manual
+      ...(input.storeLat !== undefined ? { storeLat: input.storeLat } : coordenadas ? { storeLat: coordenadas.lat } : {}),
+      ...(input.storeLng !== undefined ? { storeLng: input.storeLng } : coordenadas ? { storeLng: coordenadas.lng } : {}),
     },
     select: {
       id: true,

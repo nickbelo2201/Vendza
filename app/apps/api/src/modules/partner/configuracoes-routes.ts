@@ -147,6 +147,8 @@ const LojaUpdateSchema = Type.Object({
   addressZipCode: Type.Optional(Type.Union([Type.String(), Type.Null()])),
   addressComplement: Type.Optional(Type.Union([Type.String(), Type.Null()])),
   addressNumber: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  storeLat: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
+  storeLng: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
 });
 
 /** Schema de URL assinada para upload de logo */
