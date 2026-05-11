@@ -134,6 +134,16 @@ export function MapaInterativo({
     });
     map.addControl(drawControl);
 
+    // Bloquear drag do pin enquanto qualquer ferramenta de desenho/edição estiver ativa
+    const lockPin = () => lojaMarker.dragging?.disable();
+    const unlockPin = () => lojaMarker.dragging?.enable();
+    map.on(LAny.Draw.Event.DRAWSTART, lockPin);
+    map.on(LAny.Draw.Event.DRAWSTOP, unlockPin);
+    map.on(LAny.Draw.Event.EDITSTART, lockPin);
+    map.on(LAny.Draw.Event.EDITSTOP, unlockPin);
+    map.on(LAny.Draw.Event.DELETESTART, lockPin);
+    map.on(LAny.Draw.Event.DELETESTOP, unlockPin);
+
     // Evento: zona criada pelo usuário
     map.on(LAny.Draw.Event.CREATED, (e: any) => {
       const layer = e.layer;

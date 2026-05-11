@@ -145,11 +145,24 @@ export async function deletePartnerCategory(
 ): Promise<{ deleted: true } | { error: string }> {
   const existing = await prisma.category.findFirst({
     where: { id, storeId: context.storeId },
-    include: { _count: { select: { products: { where: { isDeleted: false } } } } },
+    include: {
+      _count: {
+        select: {
+          products: { where: { isDeleted: false } },
+          children: true,
+        },
+      },
+    },
   });
 
   if (!existing) {
     return { error: "Categoria nao encontrada." };
+  }
+
+  if (existing._count.children > 0) {
+    return {
+      error: `Nao e possivel excluir a categoria "${existing.name}" pois ela possui ${existing._count.children} subcategoria(s) vinculada(s). Exclua as subcategorias antes de remover a categoria.`,
+    };
   }
 
   if (existing._count.products > 0) {
