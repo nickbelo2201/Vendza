@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { salvarZonasEntrega } from "./actions";
+import { salvarPosicaoLoja, salvarZonasEntrega } from "./actions";
 import type { ZonaGeometria, ZonaNoMapa } from "./MapaInterativo";
 
 // Leaflet não suporta SSR — carregamento dinâmico obrigatório
@@ -121,6 +121,8 @@ export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props
   const [selectedZonaId, setSelectedZonaId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [pinEditado, setPinEditado] = useState<{ lat: number; lng: number } | null>(null);
+  const [salvandoPin, setSalvandoPin] = useState(false);
 
   // Zonas que possuem geometria para exibir no mapa
   const zonasNoMapa: ZonaNoMapa[] = zonas
@@ -135,6 +137,25 @@ export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props
   const zonaSelecionada = zonas.find((z) => z.zonaId === selectedZonaId) ?? null;
 
   // ── Handlers do mapa ──────────────────────────────────────────────────────
+
+  const handlePinMoved = useCallback((lat: number, lng: number) => {
+    setPinEditado({ lat, lng });
+  }, []);
+
+  async function salvarPin() {
+    if (!pinEditado) return;
+    setSalvandoPin(true);
+    setFeedback(null);
+    try {
+      await salvarPosicaoLoja(pinEditado);
+      setPinEditado(null);
+      setFeedback({ ok: true, msg: "Posição da loja salva com sucesso." });
+    } catch {
+      setFeedback({ ok: false, msg: "Erro ao salvar a posição da loja." });
+    } finally {
+      setSalvandoPin(false);
+    }
+  }
 
   const handleZonaCriada = useCallback((zonaId: string, geometria: ZonaGeometria) => {
     setZonas((prev) => [
@@ -287,6 +308,7 @@ export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props
             onZonaCriada={handleZonaCriada}
             onZonaSelecionada={setSelectedZonaId}
             onZonaRemovida={handleZonaRemovida}
+            onPinMoved={handlePinMoved}
           />
         </div>
 
@@ -490,8 +512,23 @@ export function MapaZonasEntrega({ zonas: zonasProp, storeLat, storeLng }: Props
         </div>
       )}
 
-      {/* Botão salvar */}
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+      {/* Dica de ajuste de posição */}
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10, marginBottom: 0 }}>
+        Arraste o pin verde no mapa para ajustar a posição exata da loja.
+      </p>
+
+      {/* Botões de ação */}
+      <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+        {pinEditado && (
+          <button
+            type="button"
+            className="wp-btn wp-btn-secondary"
+            onClick={salvarPin}
+            disabled={salvandoPin}
+          >
+            {salvandoPin ? "Salvando..." : "Salvar posição da loja"}
+          </button>
+        )}
         <button
           type="button"
           className="wp-btn wp-btn-primary"

@@ -37,6 +37,7 @@ type Props = {
   onZonaCriada: (zonaId: string, geometria: ZonaGeometria) => void;
   onZonaSelecionada: (zonaId: string) => void;
   onZonaRemovida: (zonaId: string) => void;
+  onPinMoved?: (lat: number, lng: number) => void;
 };
 
 export function MapaInterativo({
@@ -47,6 +48,7 @@ export function MapaInterativo({
   onZonaCriada,
   onZonaSelecionada,
   onZonaRemovida,
+  onPinMoved,
 }: Props) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,7 @@ export function MapaInterativo({
   const onZonaCriadaRef = useRef(onZonaCriada);
   const onZonaSelecionadaRef = useRef(onZonaSelecionada);
   const onZonaRemovidaRef = useRef(onZonaRemovida);
+  const onPinMovedRef = useRef(onPinMoved);
 
   useEffect(() => {
     onZonaCriadaRef.current = onZonaCriada;
@@ -67,6 +70,9 @@ export function MapaInterativo({
   useEffect(() => {
     onZonaRemovidaRef.current = onZonaRemovida;
   }, [onZonaRemovida]);
+  useEffect(() => {
+    onPinMovedRef.current = onPinMoved;
+  }, [onPinMoved]);
 
   // Inicializar mapa uma única vez
   useEffect(() => {
@@ -80,16 +86,24 @@ export function MapaInterativo({
       attribution: "© OpenStreetMap contributors",
     }).addTo(map);
 
-    // Marcador da loja
+    // Marcador da loja (draggable para ajuste manual de posição)
     const lojaIcon = L.divIcon({
       html: `<div style="background:var(--green,#2D6A4F);border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
       className: "",
       iconSize: [14, 14],
       iconAnchor: [7, 7],
     });
-    L.marker([centerLat, centerLng], { icon: lojaIcon })
-      .bindTooltip("Sua loja")
-      .addTo(map);
+    const lojaMarker = L.marker([centerLat, centerLng], {
+      icon: lojaIcon,
+      draggable: true,
+      title: "Arraste para ajustar a posição da loja",
+    });
+    lojaMarker.bindTooltip("Sua loja — arraste para ajustar");
+    lojaMarker.on("dragend", () => {
+      const { lat, lng } = lojaMarker.getLatLng();
+      onPinMovedRef.current?.(lat, lng);
+    });
+    lojaMarker.addTo(map);
 
     // FeatureGroup para as camadas desenhadas
     const drawnLayers = new L.FeatureGroup();
