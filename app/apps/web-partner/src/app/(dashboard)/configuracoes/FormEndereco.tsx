@@ -8,6 +8,7 @@ import { salvarEndereco } from "./actions";
 type EnderecoProps = {
   address: {
     addressStreet: string | null;
+    addressNumber: string | null;
     addressNeighborhood: string | null;
     addressCity: string | null;
     addressState: string | null;
@@ -41,6 +42,7 @@ export function FormEndereco({ address }: EnderecoProps) {
       try {
         await salvarEndereco({
           addressStreet: String(data.get("addressStreet") ?? "").trim() || null,
+          addressNumber: String(data.get("addressNumber") ?? "").trim() || null,
           addressNeighborhood: String(data.get("addressNeighborhood") ?? "").trim() || null,
           addressCity: String(data.get("addressCity") ?? "").trim() || null,
           addressState: String(data.get("addressState") ?? "").trim() || null,
@@ -74,19 +76,34 @@ export function FormEndereco({ address }: EnderecoProps) {
         >
           {/* Coluna esquerda */}
           <div className="wp-stack">
-            <div className="wp-field">
-              <label htmlFor="addressZipCode" className="wp-label">CEP</label>
-              <input
-                id="addressZipCode"
-                name="addressZipCode"
-                type="text"
-                value={cepDisplay}
-                onChange={handleCepChange}
-                placeholder="00000-000"
-                inputMode="numeric"
-                className="wp-input conf-input"
-                style={{ maxWidth: 160 }}
-              />
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-end" }}>
+              <div className="wp-field" style={{ flex: "0 0 auto" }}>
+                <label htmlFor="addressZipCode" className="wp-label">CEP</label>
+                <input
+                  id="addressZipCode"
+                  name="addressZipCode"
+                  type="text"
+                  value={cepDisplay}
+                  onChange={handleCepChange}
+                  placeholder="00000-000"
+                  inputMode="numeric"
+                  className="wp-input conf-input"
+                  style={{ maxWidth: 160 }}
+                />
+              </div>
+
+              <div className="wp-field" style={{ flex: "0 0 auto" }}>
+                <label htmlFor="addressNumber" className="wp-label">Número</label>
+                <input
+                  id="addressNumber"
+                  name="addressNumber"
+                  type="text"
+                  defaultValue={address.addressNumber ?? ""}
+                  placeholder="Ex: 123"
+                  className="wp-input conf-input"
+                  style={{ maxWidth: 120 }}
+                />
+              </div>
             </div>
 
             <div className="wp-field">
@@ -96,7 +113,7 @@ export function FormEndereco({ address }: EnderecoProps) {
                 name="addressStreet"
                 type="text"
                 defaultValue={address.addressStreet ?? ""}
-                placeholder="Ex: Rua das Flores, 123"
+                placeholder="Ex: Rua das Flores"
                 className="wp-input conf-input"
               />
             </div>

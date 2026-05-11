@@ -94,6 +94,7 @@ model Store {
   addressState           String?     @map("address_state")
   addressZipCode         String?     @map("address_zip_code")
   addressComplement      String?     @map("address_complement")
+  addressNumber          String?     @map("address_number")
   storeLat               Float?      @map("store_lat")
   storeLng               Float?      @map("store_lng")
   templateIds            String      @map("template_ids") @default("[]")
@@ -320,6 +321,7 @@ model Product {
   salePriceCents Int?     @map("sale_price_cents")
   isAvailable    Boolean  @default(true) @map("is_available")
   isFeatured     Boolean  @default(false) @map("is_featured")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
   barcode        String?
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -334,6 +336,7 @@ model Product {
 
   @@unique([storeId, slug])
   @@index([storeId, categoryId, isAvailable])
+  @@index([storeId, isDeleted])
   @@index([storeId, barcode])
   @@map("products")
 }

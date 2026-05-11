@@ -31,6 +31,7 @@ export async function salvarConfiguracoes(dados: {
 
 export async function salvarEndereco(dados: {
   addressStreet?: string | null;
+  addressNumber?: string | null;
   addressNeighborhood?: string | null;
   addressCity?: string | null;
   addressState?: string | null;

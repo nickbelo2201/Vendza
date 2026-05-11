@@ -16,6 +16,7 @@ type StoreSettings = {
   minimumOrderValueCents: number;
   logoUrl: string | null;
   addressStreet: string | null;
+  addressNumber: string | null;
   addressNeighborhood: string | null;
   addressCity: string | null;
   addressState: string | null;
@@ -241,6 +242,7 @@ export async function EnderecoSection() {
         <FormEndereco
           address={{
             addressStreet: s.addressStreet ?? null,
+            addressNumber: s.addressNumber ?? null,
             addressNeighborhood: s.addressNeighborhood ?? null,
             addressCity: s.addressCity ?? null,
             addressState: s.addressState ?? null,

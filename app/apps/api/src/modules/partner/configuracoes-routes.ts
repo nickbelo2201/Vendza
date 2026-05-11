@@ -41,6 +41,7 @@ const LojaResponseSchema = Type.Object({
   addressState: Type.Union([Type.String(), Type.Null()]),
   addressZipCode: Type.Union([Type.String(), Type.Null()]),
   addressComplement: Type.Union([Type.String(), Type.Null()]),
+  addressNumber: Type.Union([Type.String(), Type.Null()]),
   storeLat: Type.Union([Type.Number(), Type.Null()]),
   storeLng: Type.Union([Type.Number(), Type.Null()]),
 });
@@ -145,6 +146,7 @@ const LojaUpdateSchema = Type.Object({
   addressState: Type.Optional(Type.Union([Type.String(), Type.Null()])),
   addressZipCode: Type.Optional(Type.Union([Type.String(), Type.Null()])),
   addressComplement: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  addressNumber: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
 /** Schema de URL assinada para upload de logo */
