@@ -150,14 +150,12 @@ function TooltipFaturamento({
   if (!item) return null;
   return (
     <div
+      className="chart-tooltip"
       style={{
-        background: "var(--night, #0f172a)",
-        color: "#fff",
         padding: "8px 12px",
         borderRadius: 8,
         fontSize: 12,
         lineHeight: 1.6,
-        boxShadow: "0 4px 16px rgba(0,0,0,.2)",
         maxWidth: 220,
       }}
     >
