@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { ProdutosResponse } from "@vendza/types";
 
-import { fetchAPI } from "../../../lib/api";
+import { ApiError, fetchAPI } from "../../../lib/api";
 
 export async function buscarProdutos(params: {
   busca?: string;
@@ -71,8 +71,13 @@ export async function editarProduto(id: string, body: {
 }
 
 export async function deletarProduto(id: string) {
-  await fetchAPI(`/partner/products/${id}`, {
-    method: "DELETE",
-  });
+  try {
+    await fetchAPI(`/partner/products/${id}`, {
+      method: "DELETE",
+    });
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 500;
+    throw new Error(`Falha ao deletar produto (HTTP ${status})`);
+  }
   revalidatePath("/catalogo");
 }

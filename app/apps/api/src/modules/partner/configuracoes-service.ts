@@ -70,27 +70,37 @@ type LojaInput = {
   addressState?: string | null;
   addressZipCode?: string | null;
   addressComplement?: string | null;
+  addressNumber?: string | null;
 };
 
 async function geocodeEndereco(input: LojaInput): Promise<{ lat: number; lng: number } | null> {
-  const parts = [
-    input.addressStreet,
-    input.addressNeighborhood,
-    input.addressCity,
-    input.addressState,
-  ].filter(Boolean);
-  if (parts.length < 2) return null;
-  const query = encodeURIComponent(parts.join(", "));
+  if (!input.addressCity && !input.addressState) return null;
+
+  const params = new URLSearchParams({ format: "json", limit: "1", countrycodes: "br" });
+  if (input.addressCity) params.set("city", input.addressCity);
+  if (input.addressState) params.set("state", input.addressState);
+  if (input.addressStreet) {
+    const street = input.addressNumber
+      ? `${input.addressNumber} ${input.addressStreet}`
+      : input.addressStreet;
+    params.set("street", street);
+  }
+  if (input.addressNeighborhood) params.set("suburb", input.addressNeighborhood);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`,
-      { headers: { "User-Agent": "Vendza/1.0 (contato@vendza.com.br)" } },
+      `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+      { headers: { "User-Agent": "Vendza/1.0 (contato@vendza.com.br)" }, signal: controller.signal },
     );
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const json = (await res.json()) as Array<{ lat: string; lon: string }>;
     if (!json[0]) return null;
     return { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
   } catch {
+    clearTimeout(timeout);
     return null;
   }
 }
@@ -125,6 +135,7 @@ export async function getLoja(context: PartnerContext) {
       addressState: true,
       addressZipCode: true,
       addressComplement: true,
+      addressNumber: true,
       storeLat: true,
       storeLng: true,
     },
@@ -144,6 +155,7 @@ export async function getLoja(context: PartnerContext) {
     addressState: store.addressState ?? null,
     addressZipCode: store.addressZipCode ?? null,
     addressComplement: store.addressComplement ?? null,
+    addressNumber: store.addressNumber ?? null,
     storeLat: store.storeLat ?? null,
     storeLng: store.storeLng ?? null,
   };
@@ -154,19 +166,21 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
     input.addressStreet !== undefined ||
     input.addressNeighborhood !== undefined ||
     input.addressCity !== undefined ||
-    input.addressState !== undefined;
+    input.addressState !== undefined ||
+    input.addressNumber !== undefined;
 
   let coordenadas: { lat: number; lng: number } | null = null;
   if (addressChanged) {
     const current = await prisma.store.findUniqueOrThrow({
       where: { id: context.storeId },
-      select: { addressStreet: true, addressNeighborhood: true, addressCity: true, addressState: true },
+      select: { addressStreet: true, addressNeighborhood: true, addressCity: true, addressState: true, addressNumber: true },
     });
     const merged: LojaInput = {
       addressStreet: input.addressStreet !== undefined ? input.addressStreet : current.addressStreet,
       addressNeighborhood: input.addressNeighborhood !== undefined ? input.addressNeighborhood : current.addressNeighborhood,
       addressCity: input.addressCity !== undefined ? input.addressCity : current.addressCity,
       addressState: input.addressState !== undefined ? input.addressState : current.addressState,
+      addressNumber: input.addressNumber !== undefined ? input.addressNumber : current.addressNumber,
     };
     coordenadas = await geocodeEndereco(merged);
   }
@@ -188,6 +202,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       ...(input.addressState !== undefined ? { addressState: input.addressState } : {}),
       ...(input.addressZipCode !== undefined ? { addressZipCode: input.addressZipCode } : {}),
       ...(input.addressComplement !== undefined ? { addressComplement: input.addressComplement } : {}),
+      ...(input.addressNumber !== undefined ? { addressNumber: input.addressNumber } : {}),
       ...(coordenadas ? { storeLat: coordenadas.lat, storeLng: coordenadas.lng } : {}),
     },
     select: {
@@ -204,6 +219,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
       addressState: true,
       addressZipCode: true,
       addressComplement: true,
+      addressNumber: true,
       storeLat: true,
       storeLng: true,
     },
@@ -226,6 +242,7 @@ export async function updateLoja(context: PartnerContext, input: LojaInput) {
     addressState: store.addressState ?? null,
     addressZipCode: store.addressZipCode ?? null,
     addressComplement: store.addressComplement ?? null,
+    addressNumber: store.addressNumber ?? null,
     storeLat: store.storeLat ?? null,
     storeLng: store.storeLng ?? null,
   };
