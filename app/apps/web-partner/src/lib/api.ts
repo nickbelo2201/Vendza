@@ -42,7 +42,7 @@ export async function fetchAPI<T>(path: string, options: FetchAPIOptions = {}): 
   const res = await fetch(`${API_URL}/v1${path}`, {
     ...restOptions,
     headers: {
-      "Content-Type": "application/json",
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(extraHeaders ?? {}),
     },
