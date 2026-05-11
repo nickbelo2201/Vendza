@@ -383,7 +383,6 @@ export default async function catalogExtrasRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     "/partner/combos/:id",
     {
-      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(DeletedResponseSchema) },
@@ -461,7 +460,6 @@ export default async function catalogExtrasRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     "/partner/complement-groups/:id",
     {
-      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(DeletedResponseSchema) },
@@ -565,7 +563,6 @@ export default async function catalogExtrasRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     "/partner/complements/:id",
     {
-      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(DeletedResponseSchema) },
@@ -649,7 +646,6 @@ export default async function catalogExtrasRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     "/partner/extras/:id",
     {
-      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(DeletedResponseSchema) },
@@ -722,7 +718,6 @@ export default async function catalogExtrasRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     "/partner/product-bundles/:id",
     {
-      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(DeletedResponseSchema) },
