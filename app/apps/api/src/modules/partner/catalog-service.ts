@@ -145,7 +145,7 @@ export async function deletePartnerCategory(
 ): Promise<{ deleted: true } | { error: string }> {
   const existing = await prisma.category.findFirst({
     where: { id, storeId: context.storeId },
-    include: { _count: { select: { products: true } } },
+    include: { _count: { select: { products: { where: { isDeleted: false } } } } },
   });
 
   if (!existing) {

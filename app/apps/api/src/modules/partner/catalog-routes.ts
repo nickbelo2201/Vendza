@@ -219,7 +219,6 @@ export default async function catalogRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     "/partner/categories/:id",
     {
-      preHandler: requireRole("owner", "manager"),
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: envelopeSchema(DeleteCategoryResponseSchema) },
