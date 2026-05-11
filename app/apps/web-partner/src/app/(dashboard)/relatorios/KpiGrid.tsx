@@ -43,7 +43,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
           return (
             <div
               key={kpi.id}
-              className="wp-panel"
+              className={`wp-panel kpi-card ${clicavel ? "kpi-card-clicavel" : ""}`}
               onClick={() => handleKpiClick(kpi.drillTipo ?? null)}
               role={clicavel ? "button" : undefined}
               tabIndex={clicavel ? 0 : undefined}
@@ -60,49 +60,40 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
               aria-label={clicavel ? `Ver detalhes: ${kpi.titulo}` : undefined}
               style={{
                 padding: "18px 20px",
-                cursor: clicavel ? "pointer" : "default",
-                transition: clicavel ? "box-shadow 0.15s, transform 0.12s" : undefined,
                 ...(kpi.destaque
                   ? { borderLeft: "3px solid var(--g, #1A7A5E)" }
                   : {}),
               }}
-              onMouseEnter={
-                clicavel
-                  ? (e) => {
-                      const el = e.currentTarget as HTMLDivElement;
-                      el.style.boxShadow = "0 4px 20px rgba(0,0,0,.1)";
-                      el.style.transform = "translateY(-1px)";
-                    }
-                  : undefined
-              }
-              onMouseLeave={
-                clicavel
-                  ? (e) => {
-                      const el = e.currentTarget as HTMLDivElement;
-                      el.style.boxShadow = "";
-                      el.style.transform = "";
-                    }
-                  : undefined
-              }
             >
               <div
+                className="kpi-header-row"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   marginBottom: 12,
-                  color: kpi.destaque ? "var(--g, #1A7A5E)" : "var(--text-muted)",
                   justifyContent: "space-between",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {kpi.icone}
                   <span
+                    className="kpi-icon"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: kpi.destaque ? "var(--g, #1A7A5E)" : undefined,
+                    }}
+                  >
+                    {kpi.icone}
+                  </span>
+                  <span
+                    className="kpi-label-text"
                     style={{
                       fontSize: 11,
                       fontWeight: 600,
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
+                      color: kpi.destaque ? "var(--g, #1A7A5E)" : undefined,
                     }}
                   >
                     {kpi.titulo}
@@ -125,11 +116,11 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
               </div>
 
               <div
+                className="kpi-value-display"
                 style={{
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontSize: 22,
                   fontWeight: 700,
-                  color: "var(--carbon)",
                   lineHeight: 1,
                   marginBottom: kpi.deltaPercent !== undefined ? 6 : 0,
                 }}
@@ -139,6 +130,7 @@ export function KpiGrid({ kpis, from, to, topProducts = [] }: Props) {
 
               {kpi.deltaPercent !== undefined && (
                 <div
+                  className="kpi-delta"
                   style={{
                     fontSize: 11,
                     fontWeight: 600,
