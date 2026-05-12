@@ -19,6 +19,8 @@
     "db:migrate:dev": "prisma migrate dev --config ./prisma.config.ts",
     "db:push": "echo 'AVISO: db:push foi descontinuado. Use db:migrate para produção ou db:migrate:dev para desenvolvimento' && exit 1",
     "db:seed": "tsx prisma/seed.ts",
+    "db:reset-adega-ideal": "tsx prisma/reset-adega-ideal.ts",
+    "db:seed-categorias-adega-ideal": "tsx prisma/seed-categorias-adega-ideal.ts",
     "db:studio": "prisma studio --config ./prisma.config.ts"
   },
   "dependencies": {
